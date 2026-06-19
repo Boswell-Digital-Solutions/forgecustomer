@@ -1,4 +1,4 @@
-## 9. Configuration and Operations
+# §12 — Configuration & Operations
 
 Configuration is loaded from environment variables in `api/src/config.rs`. Missing
 required variables fail startup. Empty token-verification secrets fail token validation.

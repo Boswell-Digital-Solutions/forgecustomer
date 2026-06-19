@@ -1,4 +1,4 @@
-## 1. Overview
+# §1 — Overview & Philosophy
 
 ForgeCustomer is the customer, commerce, licensing, entitlement, installation, device,
 fleet/update, usage, privacy, and commercial-audit authority for Boswell Digital

@@ -1,4 +1,4 @@
-## 11. Governance and Change Control
+# §9 — Change Control
 
 This repository treats documentation as part of the system contract. Changes that alter
 customer/commercial behavior must update this canonical source tree and any supporting

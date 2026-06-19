@@ -1,4 +1,4 @@
-## 8. Security and Privacy
+# §11 — Security & Privacy
 
 ForgeCustomer is a fail-closed commercial authority. Security decisions must be explicit,
 testable, and boring.

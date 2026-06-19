@@ -1,4 +1,4 @@
-## 2. Authority Boundaries
+# §10 — Authority Boundaries
 
 ForgeCustomer exists to remove data-ownership ambiguity. Each authority has a narrow
 role, and the API must preserve those boundaries even when integrations fail.

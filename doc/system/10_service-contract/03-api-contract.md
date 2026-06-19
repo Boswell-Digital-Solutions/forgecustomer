@@ -1,4 +1,4 @@
-## 4. API Contract
+# §3 — API Contract
 
 The HTTP API uses JSON over HTTPS with base path `/v1`. The machine-readable contract is
 `contracts/openapi.yaml`; the router implementation is in `api/src/routes`.

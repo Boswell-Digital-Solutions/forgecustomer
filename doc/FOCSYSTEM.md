@@ -1,37 +1,45 @@
-# FOCSYSTEM.md - ForgeCustomer Canonical System Reference
+# ForgeCustomer — Compiled System Reference
 
-**Document version:** 1.0 (bootstrap)
-**Document date:** 2026-06-10
-**Protocol:** Forge Documentation Protocol v1
-**Documentation structure class:** `system`
+**Designation:** FOC
+**Document role:** Canonical compiled technical reference for the ForgeCustomer customer/commercial authority
+**Source:** `doc/system/`
+**Build command:** `bash doc/system/BUILD.sh`
+**Document version:** 2.0 (2026-06-19) — BDS canonical-compliance migration (7-group class-aware structure, truth classes, designation-bound fail-closed assembly, governance trio)
+**Protocol:** BDS Documentation Protocol v2.0; BDS Repo Documentation System Canonical Compliance Standard
 
-This `doc/system/` tree is the canonical authored source for the ForgeCustomer system
-reference. The assembled artifact is generated and should not be edited directly.
+> **Generated artifact warning:** `doc/FOCSYSTEM.md` is assembled output. Edit the
+> source modules under `doc/system/` and rebuild. Hand edits to the compiled
+> artifact are overwritten by the next build.
 
 Assembly contract:
 
 - Command: `bash doc/system/BUILD.sh`
-- Validation: `bash doc/system/validate_snapshots.sh doc/FOCSYSTEM.md`
+- Validation: `bash doc/system/validate_snapshots.sh` runs during assembly
 - Primary output: `doc/FOCSYSTEM.md`
-- Generated artifact rule: edit `doc/system/*.md`, then rebuild.
 
-Supporting reference material remains in `docs/`, `contracts/`, `supabase/migrations/`,
-and the Rust API crate. When those sources disagree, the live implementation and this
-generated canonical reference must be reconciled in the same change.
+This `doc/system/` tree is the canonical source of truth for ForgeCustomer. It uses
+explicit **truth classes**: *canonical facts* define the customer/commercial
+authority, licensing/entitlement model, mutation discipline, and ecosystem
+boundaries; *snapshot facts* are dated, audit-derived counts (routes, tables,
+migrations, tests). See §7 for the scope/authority boundary and §8 for ownership
+and designation doctrine.
 
 | Part | File | Contents |
 | --- | --- | --- |
-| 1 | `00-overview.md` | Mission, current readiness, and repository ownership. |
-| 2 | `01-authority-boundaries.md` | Data authority, source-of-truth rules, and out-of-scope data. |
-| 3 | `02-architecture-runtime.md` | Runtime components, request lifecycle, and process behavior. |
-| 4 | `03-api-contract.md` | HTTP routes, auth boundaries, errors, and correlation behavior. |
-| 5 | `04-data-model.md` | Supabase/Postgres schema domains and RLS posture. |
-| 6 | `05-domain-subsystems.md` | Commerce, licensing, entitlement, usage, privacy, and admin semantics. |
-| 7 | `06-integrations-events.md` | Stripe, DataForge outbox, contracts, and event hygiene. |
-| 8 | `07-security-privacy.md` | Token validation, secret handling, signing, PII, and fail-closed rules. |
-| 9 | `08-configuration-operations.md` | Environment variables, deployment, migrations, and runbook notes. |
-| 10 | `09-verification-status.md` | Tests, CI gates, runnable proof, and known MVP gaps. |
-| 11 | `90-governance-change-control.md` | Change-control rules for keeping the system document current. |
+| §1 | `00_overview/01-overview.md` | Service identity, customer/commercial authority |
+| §2 | `00_overview/02-architecture-runtime.md` | Architecture & runtime (Rust/Axum + Supabase) |
+| §3 | `10_service-contract/03-api-contract.md` | API contract (incl. `/v1/admin/*`) |
+| §4 | `20_runtime/04-data-model.md` | Data model |
+| §5 | `20_runtime/05-domain-subsystems.md` | Domain subsystems (licensing, entitlements, usage, billing) |
+| §6 | `30_dependencies/06-integrations-events.md` | Integrations & events (Stripe, DataForge outbox) |
+| §7 | `40_governance/07-scope.md` | Service authority boundary, mutation discipline, truth classes |
+| §8 | `40_governance/08-governance.md` | Ownership, designation doctrine, authority hierarchy |
+| §9 | `40_governance/09-change-control.md` | Change control |
+| §10 | `40_governance/10-authority-boundaries.md` | Detailed authority/ownership boundaries |
+| §11 | `40_governance/11-security-privacy.md` | Security & privacy |
+| §12 | `50_operations/12-configuration-operations.md` | Configuration & operations |
+| §13 | `50_operations/13-verification-status.md` | Verification & status |
+| §14 | `99_appendices/14-appendices.md` | Glossary, cross-references, revision history |
 
 ## Quick Assembly
 
@@ -41,7 +49,7 @@ bash doc/system/BUILD.sh
 
 ---
 
-## 1. Overview
+# §1 — Overview & Philosophy
 
 ForgeCustomer is the customer, commerce, licensing, entitlement, installation, device,
 fleet/update, usage, privacy, and commercial-audit authority for Boswell Digital
@@ -156,61 +164,7 @@ doc/FOCSYSTEM.md        Generated canonical system artifact
 
 ---
 
-## 2. Authority Boundaries
-
-ForgeCustomer exists to remove data-ownership ambiguity. Each authority has a narrow
-role, and the API must preserve those boundaries even when integrations fail.
-
-### Sources of truth
-
-| Authority | Owns | Does not own |
-| --- | --- | --- |
-| Supabase Auth | Login identity, email verification, sessions, refresh tokens, provider identities. | Business customer status, subscriptions, licenses, usage, entitlements. |
-| ForgeCustomer PostgreSQL | Customer profiles, commercial status, subscriptions projection, licenses, installations, devices, fleets, release eligibility, update campaigns/outcomes, entitlements, quotas, usage ledger, audit, deletion workflow. | Raw payment processing, card data, manuscripts, prompts, operational repair findings. |
-| Stripe | Payment processing, invoices, payment methods, raw payment events. | Product entitlement truth, device activation, local content access. |
-| DataForge | Sanitized downstream evidence from the outbox. | Customer identity, licensing, subscriptions, billing truth, creative content. |
-| AuthorForge and product clients | Local creative work and local product state. | Commercial authority, entitlement minting, usage-ledger mutation. |
-| Forge Command/operator tooling | Operator workflows through admin APIs. | Bypassing ForgeCustomer mutation paths. |
-
-ForgeCustomer PostgreSQL is the customer and commercial source of truth.
-
-### Boundary rules
-
-- `auth.users.id` is an identity subject, not the business customer identifier.
-  ForgeCustomer maps it to its own `customer_profiles.id`.
-- Customer JWTs are valid only for customer routes. Admin routes use a separate issuer,
-  audience, and secret.
-- Customer clients may read their own commercial state but may not directly write
-  subscriptions, Stripe mappings, licenses, entitlement grants, usage totals, audit
-  records, or outbox events.
-- Stripe webhooks normalize payment state into ForgeCustomer tables. Stripe remains the
-  payment processor, but ForgeCustomer owns product-facing subscription projection.
-- DataForge is a sink. It receives pseudonymous sanitized events; it must never be used
-  to reconstruct or override commercial truth.
-- Local creative data never crosses into ForgeCustomer. Product access doctrine must
-  preserve local work when cloud or billing systems are unavailable.
-
-### Explicitly out of scope
-
-ForgeCustomer must not introduce tables, APIs, logs, outbox payloads, or documents that
-store or imply ownership over:
-
-- Manuscripts or creative project content.
-- Prompt content or model-output text.
-- Diagnostics, findings, repair data, Sentinel records, or ecosystem knowledge.
-- Raw card data, payment methods, passwords, refresh tokens, or Supabase service-role
-  keys.
-
-### Conflict resolution
-
-If implementation pressure creates overlap, resolve it by moving the data to the owning
-system rather than expanding ForgeCustomer. A new table or endpoint is acceptable only
-when it preserves the authority matrix above and has a corresponding migration,
-contract/doc update, and test.
-
----
-
-## 3. Architecture and Runtime
+# §2 — Architecture & Runtime
 
 ForgeCustomer is a single Rust API process with a lazily connected PostgreSQL pool and
 optional background outbox publisher.
@@ -293,7 +247,7 @@ attempt count. Event publishing must remain asynchronous to the customer transac
 
 ---
 
-## 4. API Contract
+# §3 — API Contract
 
 The HTTP API uses JSON over HTTPS with base path `/v1`. The machine-readable contract is
 `contracts/openapi.yaml`; the router implementation is in `api/src/routes`.
@@ -512,7 +466,7 @@ responses still carry the correlation and security headers.
 
 ---
 
-## 5. Data Model
+# §4 — Data Model
 
 Supabase/PostgreSQL is the authoritative store for customer and commercial state. The
 schema is additive and deterministic under `supabase/migrations`.
@@ -572,7 +526,7 @@ repository functions rather than embedding ad hoc SQL in route handlers.
 
 ---
 
-## 6. Domain Subsystems
+# §5 — Domain Subsystems
 
 The service separates pure domain rules from route wiring. Pure logic is testable without
 Stripe, Supabase, or a live database.
@@ -764,7 +718,7 @@ implemented admin mutation:
 
 ---
 
-## 7. Integrations and Events
+# §6 — Integrations & Events
 
 ForgeCustomer integrates with Supabase, Stripe, DataForge, and product clients. Each
 integration is constrained by the authority boundaries in this document.
@@ -849,7 +803,245 @@ CI validates OpenAPI with Redocly and checks JSON schema files parse.
 
 ---
 
-## 8. Security and Privacy
+# §7 — Scope
+
+**Truth class:** canonical doctrine
+
+This `doc/system/` tree is the modular source of the **ForgeCustomer compiled
+system reference**, assembled into the designation-bound artifact
+`doc/FOCSYSTEM.md` (designation `FOC`) via `bash doc/system/BUILD.sh`. This chapter
+defines ForgeCustomer's service authority and where it ends. ForgeCustomer is an
+internal Forge ecosystem service — single-operator, governed — not a public
+product and not externally release-certified.
+
+## ForgeCustomer Service Authority
+
+ForgeCustomer is the ecosystem's **customer / commercial authority**: it owns
+customer identity, licensing, subscriptions, installations, devices, usage
+metering, billing, and customer privacy — backed by its **own Supabase database**
+(Rust/Axum service). This is durable commercial truth: no other Forge service owns
+or writes it except through ForgeCustomer's API. Full authority detail is in §10.
+
+## What ForgeCustomer Owns
+
+- **Customer identity** and account state.
+- **Licensing & entitlements** — including the permanent one-time-purchase license
+  model and cloud subscriptions (Stripe-webhook driven); revocation is manual,
+  admin-only.
+- **Installations, devices, and usage metering / billing.**
+- **Customer privacy** of the above.
+- The `/v1/admin/*` admin API surface (role-gated, reason-required, audited) and
+  the customer-facing surfaces.
+
+## What ForgeCustomer Does Not Own
+
+- **CSSA / cloud-service entitlements + policy bundles.** Which ecosystem
+  principal/app may call which backend service remains Forge_Command's authority;
+  Forge_Command is the *operator admin client* of ForgeCustomer's `/v1/admin/*`
+  routes, not the owner of customer/commercial truth.
+- **Operator/control-plane authority.** ForgeCommand orchestrates; it consumes
+  ForgeCustomer through the admin API (mutations there are role-gated, audited).
+- **Durable systems memory / analytics truth** beyond its own commercial domain —
+  that is DataForge's.
+
+## Mutation Discipline
+
+Customer/commercial mutations occur only through the ForgeCustomer API and are
+role-gated, reason-required, and audited. Forge_Command and other clients must not
+own or write this truth except through that API.
+
+## Release / Readiness Language Restrictions
+
+This documentation describes an internal service under governed development. It
+must be described as a verification-current internal service, not as externally
+release-certified, and must not claim public-release/SaaS readiness or present
+coverage percentages as guarantees unless a later governed slice proves the claim.
+
+## Documentation truth classes
+
+- **Canonical facts** define ForgeCustomer's customer/commercial authority,
+  licensing/entitlement model, mutation discipline, and ecosystem boundaries. They
+  change only through deliberate change control (§9).
+- **Snapshot facts** are audit-derived counts (routes, tables, migrations, tests)
+  labelled with a measurement date and corrected by re-measurement, not change
+  control.
+
+Ownership, designation doctrine, and the authority hierarchy that govern this tree
+are defined in §8. Detailed authority boundaries are in §10; security & privacy in
+§11.
+
+---
+
+# §8 — Governance
+
+**Truth class:** canonical doctrine
+
+Ownership, review, and change-authority boundaries for this documentation system.
+§7 defines ForgeCustomer's *service* authority; this chapter defines the
+*documentation* authority that governs how this `doc/system/` tree is owned,
+designated, and changed.
+
+## Ownership
+
+| Artifact | Owner |
+|----------|-------|
+| `doc/system/` source modules | ForgeCustomer repository (this repo) |
+| `doc/FOCSYSTEM.md` compiled artifact | ForgeCustomer repository — generated, never hand-edited |
+| `FOC` designation | ForgeCommand designation registry (governed registry state, not local repo opinion) |
+| Ecosystem composite compiled system reference | ForgeCommand |
+
+The operating context is a single-operator governed environment: compliance state
+must be explicit, visible, and reconstructable; remediation is bounded and
+reviewable; approval remains human-authoritative.
+
+## Designation doctrine
+
+- The designation is exactly three letters (`FOC`), unique across the governed
+  repo registry, and stable once assigned.
+- The compiled artifact filename is bound to the designation:
+  `doc/{DESIGNATION}SYSTEM.md` → `doc/FOCSYSTEM.md`. `BUILD.sh` fails closed if the requested
+  output path does not end in `FOCSYSTEM.md`.
+- Designation changes occur only through explicit change control in the
+  ForgeCommand registry, never by local edit.
+- Legacy outputs (`SYSTEM.md` at repo root, two-letter prefixed artifacts, the
+  bootstrap `doc/SYSTEM.md`) are non-canonical; if detected they are migration
+  signals, not truth surfaces.
+
+## Authority hierarchy
+
+When documentation sources conflict, resolve in this order:
+
+1. `doc/FOCSYSTEM.md` — the compiled system reference (implemented reality)
+2. `CLAUDE.md` — AI implementation instructions and working rules
+3. Module/feature specs and plans under `docs/`
+4. README and ad-hoc notes
+
+The compiled system reference wins because it describes implemented reality; all
+other surfaces describe intent, instruction, or history.
+
+## Truth-class enforcement
+
+Every statement in this tree is a **canonical fact** (service role, contracts, and
+invariants — changed only through change control, §9) or a **snapshot fact**
+(audit-derived counts: routes, tables, tests, coverage — labelled with a
+measurement date and corrected by re-measurement, not change control). Snapshot
+facts must never be promoted to guarantees; release/readiness language is
+constrained per §7.
+
+## Editing rule
+
+Source modules under `doc/system/` are the only editing surface. The compiled
+artifact is regenerated by `bash doc/system/BUILD.sh` and validated by
+`doc/system/validate_snapshots.sh` during assembly. A hand edit to `doc/FOCSYSTEM.md` is a
+governance violation and is overwritten by the next build.
+
+## Enforcement
+
+ForgeCommand is the enforcement surface for documentation compliance. Where
+automated enforcement is not yet wired up for this repo, enforcement is manual but
+explicit: the change-control workflow in §9.
+
+---
+
+# §9 — Change Control
+
+This repository treats documentation as part of the system contract. Changes that alter
+customer/commercial behavior must update this canonical source tree and any supporting
+contract files in the same change.
+
+### Canonical doc workflow
+
+1. Edit the relevant file under `doc/system/`.
+2. Rebuild with `bash doc/system/BUILD.sh`.
+3. Review `doc/FOCSYSTEM.md`.
+4. Run the relevant Rust, migration, and contract checks.
+
+Do not edit `doc/FOCSYSTEM.md` directly except as a generated output from the build
+script.
+
+### Supporting docs
+
+The existing `docs/` tree remains useful for domain detail. It is not the generated
+canonical artifact. When domain docs and `doc/FOCSYSTEM.md` diverge, update both or
+record why the domain doc is stale.
+
+### Change boundaries
+
+Any change that does one of the following requires a documentation update:
+
+- Adds or removes an API route.
+- Changes auth, admin, customer, RLS, or token validation behavior.
+- Adds a table, migration, event type, schema, or outbox payload field.
+- Changes Stripe, DataForge, Supabase, signing, privacy, or deletion behavior.
+- Marks a `NOT_IMPLEMENTED` route as implemented.
+- Changes local-access/offline entitlement doctrine.
+
+### Review checklist
+
+- Authority matrix still has no overlap.
+- Secrets remain server-side only.
+- DataForge remains a sanitized sink.
+- Usage and audit state remain append-only.
+- Creative content remains out of scope.
+- CI and local proof match the claims in this document.
+
+---
+
+# §10 — Authority Boundaries
+
+ForgeCustomer exists to remove data-ownership ambiguity. Each authority has a narrow
+role, and the API must preserve those boundaries even when integrations fail.
+
+### Sources of truth
+
+| Authority | Owns | Does not own |
+| --- | --- | --- |
+| Supabase Auth | Login identity, email verification, sessions, refresh tokens, provider identities. | Business customer status, subscriptions, licenses, usage, entitlements. |
+| ForgeCustomer PostgreSQL | Customer profiles, commercial status, subscriptions projection, licenses, installations, devices, fleets, release eligibility, update campaigns/outcomes, entitlements, quotas, usage ledger, audit, deletion workflow. | Raw payment processing, card data, manuscripts, prompts, operational repair findings. |
+| Stripe | Payment processing, invoices, payment methods, raw payment events. | Product entitlement truth, device activation, local content access. |
+| DataForge | Sanitized downstream evidence from the outbox. | Customer identity, licensing, subscriptions, billing truth, creative content. |
+| AuthorForge and product clients | Local creative work and local product state. | Commercial authority, entitlement minting, usage-ledger mutation. |
+| Forge Command/operator tooling | Operator workflows through admin APIs. | Bypassing ForgeCustomer mutation paths. |
+
+ForgeCustomer PostgreSQL is the customer and commercial source of truth.
+
+### Boundary rules
+
+- `auth.users.id` is an identity subject, not the business customer identifier.
+  ForgeCustomer maps it to its own `customer_profiles.id`.
+- Customer JWTs are valid only for customer routes. Admin routes use a separate issuer,
+  audience, and secret.
+- Customer clients may read their own commercial state but may not directly write
+  subscriptions, Stripe mappings, licenses, entitlement grants, usage totals, audit
+  records, or outbox events.
+- Stripe webhooks normalize payment state into ForgeCustomer tables. Stripe remains the
+  payment processor, but ForgeCustomer owns product-facing subscription projection.
+- DataForge is a sink. It receives pseudonymous sanitized events; it must never be used
+  to reconstruct or override commercial truth.
+- Local creative data never crosses into ForgeCustomer. Product access doctrine must
+  preserve local work when cloud or billing systems are unavailable.
+
+### Explicitly out of scope
+
+ForgeCustomer must not introduce tables, APIs, logs, outbox payloads, or documents that
+store or imply ownership over:
+
+- Manuscripts or creative project content.
+- Prompt content or model-output text.
+- Diagnostics, findings, repair data, Sentinel records, or ecosystem knowledge.
+- Raw card data, payment methods, passwords, refresh tokens, or Supabase service-role
+  keys.
+
+### Conflict resolution
+
+If implementation pressure creates overlap, resolve it by moving the data to the owning
+system rather than expanding ForgeCustomer. A new table or endpoint is acceptable only
+when it preserves the authority matrix above and has a corresponding migration,
+contract/doc update, and test.
+
+---
+
+# §11 — Security & Privacy
 
 ForgeCustomer is a fail-closed commercial authority. Security decisions must be explicit,
 testable, and boring.
@@ -929,7 +1121,7 @@ Forged snapshots must fail verification. Private signing keys must never be logg
 
 ---
 
-## 9. Configuration and Operations
+# §12 — Configuration & Operations
 
 Configuration is loaded from environment variables in `api/src/config.rs`. Missing
 required variables fail startup. Empty token-verification secrets fail token validation.
@@ -1019,7 +1211,7 @@ in `docs/STRIPE.md`, `docs/LICENSING.md`, `docs/ENTITLEMENTS.md`, `docs/USAGE.md
 
 ---
 
-## 10. Verification and Status
+# §13 — Verification & Status
 
 The current proof layer is a mix of Rust tests, migration validation, contract linting,
 schema parsing, secret scanning, and dependency audit.
@@ -1131,44 +1323,29 @@ A feature is not releasable until it has:
 
 ---
 
-## 11. Governance and Change Control
+# §14 — Appendices
 
-This repository treats documentation as part of the system contract. Changes that alter
-customer/commercial behavior must update this canonical source tree and any supporting
-contract files in the same change.
+**Truth class:** mixed (reference + snapshot)
 
-### Canonical doc workflow
+## Glossary
 
-1. Edit the relevant file under `doc/system/`.
-2. Rebuild with `bash doc/system/BUILD.sh`.
-3. Review `doc/FOCSYSTEM.md`.
-4. Run the relevant Rust, migration, and contract checks.
+| Term | Meaning |
+|------|---------|
+| FOC | ForgeCustomer designation (names `doc/FOCSYSTEM.md`) |
+| Entitlement | A granted capability/quota attached to a customer/license |
+| Permanent license | One-time-purchase, non-expiring license model |
+| Operator admin client | Forge_Command, consuming `/v1/admin/*` (does not own this truth) |
+| CSSA | Cloud-service entitlements/policy bundles — Forge_Command's authority, not ForgeCustomer's |
 
-Do not edit `doc/FOCSYSTEM.md` directly except as a generated output from the build
-script.
+## Cross-References
 
-### Supporting docs
+- Scope & authority boundary → §7; detailed authority boundaries → §10
+- Ownership / designation doctrine → §8
+- Change control → §9
+- API contract → §3; data model → §4; security & privacy → §11
 
-The existing `docs/` tree remains useful for domain detail. It is not the generated
-canonical artifact. When domain docs and `doc/FOCSYSTEM.md` diverge, update both or
-record why the domain doc is stale.
+## Revision History
 
-### Change boundaries
-
-Any change that does one of the following requires a documentation update:
-
-- Adds or removes an API route.
-- Changes auth, admin, customer, RLS, or token validation behavior.
-- Adds a table, migration, event type, schema, or outbox payload field.
-- Changes Stripe, DataForge, Supabase, signing, privacy, or deletion behavior.
-- Marks a `NOT_IMPLEMENTED` route as implemented.
-- Changes local-access/offline entitlement doctrine.
-
-### Review checklist
-
-- Authority matrix still has no overlap.
-- Secrets remain server-side only.
-- DataForge remains a sanitized sink.
-- Usage and audit state remain append-only.
-- Creative content remains out of scope.
-- CI and local proof match the claims in this document.
+| Version | Date | Note |
+|---------|------|------|
+| 2.0 | 2026-06-19 | BDS canonical-compliance migration (7-group structure, truth classes, governance trio) |

@@ -1,4 +1,4 @@
-## 10. Verification and Status
+# §13 — Verification & Status
 
 The current proof layer is a mix of Rust tests, migration validation, contract linting,
 schema parsing, secret scanning, and dependency audit.

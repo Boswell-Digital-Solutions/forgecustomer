@@ -1,4 +1,4 @@
-## 6. Domain Subsystems
+# §5 — Domain Subsystems
 
 The service separates pure domain rules from route wiring. Pure logic is testable without
 Stripe, Supabase, or a live database.

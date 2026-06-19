@@ -1,4 +1,4 @@
-## 7. Integrations and Events
+# §6 — Integrations & Events
 
 ForgeCustomer integrates with Supabase, Stripe, DataForge, and product clients. Each
 integration is constrained by the authority boundaries in this document.

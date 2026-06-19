@@ -1,4 +1,4 @@
-## 3. Architecture and Runtime
+# §2 — Architecture & Runtime
 
 ForgeCustomer is a single Rust API process with a lazily connected PostgreSQL pool and
 optional background outbox publisher.

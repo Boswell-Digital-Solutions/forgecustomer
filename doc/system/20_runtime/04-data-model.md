@@ -1,4 +1,4 @@
-## 5. Data Model
+# §4 — Data Model
 
 Supabase/PostgreSQL is the authoritative store for customer and commercial state. The
 schema is additive and deterministic under `supabase/migrations`.
