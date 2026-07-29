@@ -1,68 +1,61 @@
-# CLAUDE.md — ForgeCustomer engineering doctrine
+# ForgeCustomer — Claude Code Context
 
-This file orients any agent (or human) working in this repository. Read it before
-making changes. It encodes non-negotiable rules; violating them is a defect.
+Authority for customer identity, commerce, licensing, entitlements, installations, devices, usage,
+and commercial audit for BDS products (first: AuthorForge). Rust + Axum, entry `api/src/main.rs`.
 
-## What this system is
+Canonical reference: `doc/FOCSYSTEM.md` (build: `bash doc/system/BUILD.sh`).
+Ownership matrix: [docs/DATA_AUTHORITY.md](docs/DATA_AUTHORITY.md).
+Contracts: [contracts/](contracts/) — `openapi.yaml`, `entitlement-v1.schema.json`,
+`lease-v1.schema.json`, `events/`.
 
-ForgeCustomer is the authority for **customer identity, commerce, licensing,
-entitlements, installations, devices, usage, and commercial audit** for Boswell Digital
-Solutions products (first: AuthorForge). See `doc/FOCSYSTEM.md` for the generated
-canonical system reference and `docs/DATA_AUTHORITY.md` for the ownership matrix.
+---
 
-## Hard rules (fail the change if violated)
+## Hard rules (violating one is a defect)
 
-1. **Authority boundaries are sacred.** Supabase Auth owns login identity. Stripe owns
-   payment processing. ForgeCustomer owns customer/commercial truth. DataForge only
-   *receives* sanitized evidence and is never a source of truth.
-2. **Customer clients never receive the service-role key or Stripe secrets.** Secrets
-   stay server-side. All privileged mutations pass through the ForgeCustomer API.
-3. **Customers never directly alter commercial truth** (subscriptions, licenses,
-   entitlements, usage totals, audit). Those are service-role / RLS-protected.
-4. **Usage and audit ledgers are append-only.** Corrections are compensating events,
-   never edits or deletes.
-5. **Fail closed** for license and entitlement mutations and for auth.
-6. **Stripe webhook processing is idempotent** and tolerant of out-of-order/duplicate
-   events. Browser redirects never activate entitlements — only verified webhooks do.
-7. **DataForge integration is asynchronous through the outbox.** A DataForge outage must
-   never break a customer transaction.
+1. **Authority boundaries are sacred.** Supabase Auth owns login identity. Stripe owns payment
+   processing. ForgeCustomer owns customer/commercial truth. DataForge only *receives* sanitized
+   evidence and is never a source of truth here.
+2. **Customer clients never receive the service-role key or Stripe secrets.** Privileged mutations
+   pass through the ForgeCustomer API.
+3. **Customers never directly alter commercial truth** — subscriptions, licenses, entitlements,
+   usage totals, audit are service-role / RLS-protected.
+4. **Usage and audit ledgers are append-only.** Corrections are compensating events, never edits
+   or deletes.
+5. **Fail closed** on license and entitlement mutations and on auth.
+6. **Only verified webhooks activate entitlements** — never a browser redirect. Stripe webhook
+   processing is idempotent and tolerates duplicate and out-of-order delivery.
+7. **DataForge integration is asynchronous through the outbox.** A DataForge outage must never
+   break a customer transaction.
 8. **Never store creative customer content** (manuscripts, prompts) here.
-9. **Preserve local product access when cloud is unavailable.** Expired subscriptions
-   never block manuscript access; offline leases bridge connectivity gaps.
-10. **Migrations are additive** and deterministic on rerun. One canonical migration
-    system under `supabase/migrations`.
-11. **Strict Rust error handling.** No `unwrap()`/`expect()` in production paths; use the
-    `AppError` contract in `api/src/error.rs`.
-12. **Update documentation in the same change as implementation.**
+9. **Preserve local product access when cloud is unavailable.** An expired subscription never
+   blocks manuscript access; offline leases bridge connectivity gaps.
+10. **Migrations are additive** and deterministic on rerun — one canonical system under
+    `supabase/migrations/`.
+11. **No `unwrap()` / `expect()` in production paths.** Use the `AppError` contract in
+    `api/src/error.rs`.
 
-## Layout
+Enforced by `supabase/tests/rls_customer_write_denial.sql`,
+`update_eligibility_matrix.sql`, `release_pipeline_smoke.sql`, and the unprotected-table assertion
+in `.github/workflows/ci.yml`.
 
-- `api/` — Rust + Axum service. Entry `api/src/main.rs`.
-  - `config.rs` env config, `error.rs` error contract, `state.rs` shared state.
-  - `auth/` JWT validation & context, `middleware/` tower layers,
-    `domain/` types & pure logic, `services/` business logic,
-    `repositories/` DB access, `integrations/` Stripe/DataForge, `routes/` HTTP,
-    `workers/` background (outbox publisher).
-- `supabase/migrations/` — ordered SQL (`0001_..` → `0010_..`).
-- `contracts/` — `openapi.yaml`, `entitlement-v1.schema.json`, `events/`.
-- `tests/` — integration / security / stripe / licensing / entitlement.
-- `doc/system/` — canonical system source tree; build `doc/FOCSYSTEM.md` with
-  `bash doc/system/BUILD.sh`.
-- `docs/` — supporting design, authority, API, domain, and runbook docs.
+---
 
-## Build & test
+## Verification
 
 ```bash
-cd api
-cargo fmt --all
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test
+cd api && cargo fmt --all --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --all
 ```
 
-SQLx is used via the **runtime query API** (no compile-time macros), so the crate
-builds without a live database.
+That is what CI runs. The SQL suites above run against a live Postgres in the same workflow.
 
-## Phase model
+---
 
-Work phase by phase (see the implementation plan). Documentation precedes broad
-implementation. Add tests with every feature.
+## Non-obvious
+
+- **SQLx uses the runtime query API, not compile-time macros** — the crate builds and
+  `cargo test` runs with no live database.
+- Docker here requires sudo; for a real database use a throwaway Postgres from
+  `/usr/lib/postgresql/16/bin` on port 5433 rather than the docker path.
+- Admin auth is an **HS256 JWT**, which does not match the EdDSA scheme used on the customer
+  storefront side — the two ends are not interchangeable.
+- Documentation ships in the same change as the implementation.
