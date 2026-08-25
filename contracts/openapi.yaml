@@ -137,6 +137,36 @@ paths:
               schema: { $ref: "#/components/schemas/AccountProvisionResponse" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { description: Profile validation failed }
+  /v1/account/mfa-status:
+    post:
+      tags: [account]
+      summary: Record whether the customer has TOTP MFA enrolled
+      description: >
+        ForgeCustomer never stores the MFA factor itself (Supabase Auth owns enrollment
+        entirely); this only records whether one exists, so other customer routes can
+        require the corresponding assurance level. The call itself requires the caller's
+        own token to already carry `"aal": "aal2"` — Supabase only issues that after a
+        real TOTP challenge succeeds, so a stolen password (`aal1`) can never be used to
+        enable or disable this for someone else.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountMfaStatusRequest" }
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccountMfaStatusResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: >
+            Authenticated but not at aal2 (or account suspended/closed) —
+            `error.code` is `MFA_REQUIRED` when the aal2 step-up is what's missing.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
   /v1/subscriptions:
     get:
       tags: [subscriptions]
@@ -1330,6 +1360,17 @@ components:
         created:
           type: boolean
           description: True when this request inserted the profile; false when it returned an existing one.
+    AccountMfaStatusRequest:
+      type: object
+      additionalProperties: false
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    AccountMfaStatusResponse:
+      type: object
+      required: [mfa_required]
+      properties:
+        mfa_required: { type: boolean }
     CheckoutCreateRequest:
       type: object
       additionalProperties: false

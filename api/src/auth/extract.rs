@@ -52,15 +52,17 @@ impl FromRequestParts<AppState> for CustomerContext {
             .await
             .map_err(|e| attach(AppError::from(e)))?;
 
-        let (customer_id, status) = match row {
-            Some(r) => (Some(r.id), Some(r.status)),
-            None => (None, None),
+        let (customer_id, status, mfa_required) = match row {
+            Some(r) => (Some(r.id), Some(r.status), r.mfa_required),
+            None => (None, None, false),
         };
 
         Ok(CustomerContext {
             auth_user_id: claims.sub,
             customer_id,
             status,
+            aal: claims.aal,
+            mfa_required,
         })
     }
 }
@@ -83,6 +85,9 @@ impl CustomerContext {
                 ErrorCode::Forbidden,
                 "This customer account is closed.",
             ));
+        }
+        if self.mfa_required {
+            self.require_aal2()?;
         }
         Ok(id)
     }

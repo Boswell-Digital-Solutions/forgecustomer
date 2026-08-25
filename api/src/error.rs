@@ -16,6 +16,7 @@ pub enum ErrorCode {
     Forbidden,
     BadRequest,
     CustomerSuspended,
+    MfaRequired,
     NotFound,
     Conflict,
     NoBillingAccount,
@@ -40,6 +41,7 @@ impl ErrorCode {
             ErrorCode::Forbidden => "FORBIDDEN",
             ErrorCode::BadRequest => "BAD_REQUEST",
             ErrorCode::CustomerSuspended => "CUSTOMER_SUSPENDED",
+            ErrorCode::MfaRequired => "MFA_REQUIRED",
             ErrorCode::NotFound => "NOT_FOUND",
             ErrorCode::Conflict => "CONFLICT",
             ErrorCode::NoBillingAccount => "NO_BILLING_ACCOUNT",
@@ -61,9 +63,10 @@ impl ErrorCode {
             | ErrorCode::InvalidToken
             | ErrorCode::TokenExpired
             | ErrorCode::WrongAudience => StatusCode::UNAUTHORIZED,
-            ErrorCode::Forbidden | ErrorCode::CustomerSuspended | ErrorCode::Revoked => {
-                StatusCode::FORBIDDEN
-            }
+            ErrorCode::Forbidden
+            | ErrorCode::CustomerSuspended
+            | ErrorCode::Revoked
+            | ErrorCode::MfaRequired => StatusCode::FORBIDDEN,
             ErrorCode::BadRequest => StatusCode::BAD_REQUEST,
             ErrorCode::NotFound => StatusCode::NOT_FOUND,
             ErrorCode::Conflict | ErrorCode::NoBillingAccount | ErrorCode::IdempotencyReplay => {
@@ -116,6 +119,9 @@ impl AppError {
     }
     pub fn forbidden(msg: impl Into<String>) -> Self {
         Self::new(ErrorCode::Forbidden, msg)
+    }
+    pub fn mfa_required(msg: impl Into<String>) -> Self {
+        Self::new(ErrorCode::MfaRequired, msg)
     }
     pub fn bad_request(msg: impl Into<String>) -> Self {
         Self::new(ErrorCode::BadRequest, msg)

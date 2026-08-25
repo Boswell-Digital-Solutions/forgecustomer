@@ -553,6 +553,23 @@ async fn deletion_routes_require_customer_auth() {
 }
 
 #[tokio::test]
+async fn mfa_status_route_requires_customer_auth() {
+    // The aal2-required gate itself (`CustomerContext::require_aal2`) is unit-tested in
+    // `auth::mod::tests` — `CustomerContext` resolves via a DB lookup this suite's
+    // unreachable test database can't satisfy, so a valid-but-aal1 token can't be
+    // distinguished from "DB unreachable" through this router-level harness. This test
+    // covers what the harness *can* prove: the route is wired and rejects no-token/
+    // malformed requests the same as every other customer route.
+    let req = Request::builder()
+        .method("POST")
+        .uri("/v1/account/mfa-status")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"enabled":true}"#))
+        .unwrap();
+    assert_eq!(status_of(req).await, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
 async fn usage_routes_require_customer_auth() {
     let req = Request::builder()
         .uri("/v1/usage/current")

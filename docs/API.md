@@ -30,7 +30,7 @@ All errors share this shape:
 ```
 
 Representative codes: `UNAUTHENTICATED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`,
-`WRONG_AUDIENCE`, `FORBIDDEN`, `BAD_REQUEST`, `CUSTOMER_SUSPENDED`, `NOT_FOUND`, `CONFLICT`,
+`WRONG_AUDIENCE`, `FORBIDDEN`, `BAD_REQUEST`, `CUSTOMER_SUSPENDED`, `MFA_REQUIRED`, `NOT_FOUND`, `CONFLICT`,
 `NO_BILLING_ACCOUNT`, `IDEMPOTENCY_REPLAY`, `VALIDATION_FAILED`, `QUOTA_EXCEEDED`, `DEVICE_LIMIT_REACHED`,
 `REVOKED`, `RATE_LIMITED`, `INTERNAL`.
 
@@ -41,7 +41,7 @@ Representative codes: `UNAUTHENTICATED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`,
 | `GET /v1/health`       | liveness                                            | none      |
 | `GET /v1/ready`        | readiness (DB reachable)                            | none      |
 | `GET /v1/version`      | build/version info                                  | none      |
-| `/v1/account`          | provision/read own profile, consent, deletion requests | customer  |
+| `/v1/account`          | provision/read own profile, MFA status, deletion requests | customer  |
 | `/v1/products`         | public product catalog                              | optional  |
 | `/v1/plans`            | public plan catalog                                 | optional  |
 | `/v1/products/{product}/releases` | public published release/download lookup | none      |
@@ -98,6 +98,31 @@ Clients may submit only profile decoration:
 
 Customer type, status, commercial records, licenses, entitlements, and usage state are
 server-owned and cannot be set by this endpoint.
+
+## Two-factor authentication (AAL2 enforcement)
+
+Enrollment, sign-in challenge, and factor management for TOTP MFA are entirely a
+Supabase Auth + client-side concern (see the `bds_website` repo's
+`docs/plans/two-factor-authentication-plan.md`) — ForgeCustomer never stores a factor
+secret. It only records **whether** a customer has one enrolled, so it can require the
+corresponding assurance level on every request:
+
+`POST /v1/account/mfa-status` records that fact:
+
+```json
+{ "enabled": true }
+```
+
+This call itself requires the caller's *own* token to already be at `aal2` — Supabase
+only issues an `aal2` token after a real TOTP challenge succeeds, so a stolen password
+alone (`aal1`) can never be used to either turn this on falsely or, more importantly,
+turn it back off. Once `mfa_required` is recorded, every other customer route rejects an
+`aal1` token for that account with `403 MFA_REQUIRED` (`CustomerContext::require_active`).
+A missing `aal` claim is treated the same as `aal1` — fail closed, never assume assurance.
+
+Accounts that have never called this endpoint keep working exactly as before: the check
+is skipped entirely when `mfa_required` is false, which is the default for every existing
+row.
 
 ## Subscriptions and account deletion
 

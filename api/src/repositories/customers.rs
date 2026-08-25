@@ -9,6 +9,7 @@ use uuid::Uuid;
 pub struct CustomerRow {
     pub id: Uuid,
     pub status: String,
+    pub mfa_required: bool,
 }
 
 /// Full customer profile projection returned by account provisioning.
@@ -40,11 +41,29 @@ pub async fn find_by_auth_user_id(
     auth_user_id: Uuid,
 ) -> Result<Option<CustomerRow>, sqlx::Error> {
     sqlx::query_as::<_, CustomerRow>(
-        "select id, status from public.customer_profiles where auth_user_id = $1",
+        "select id, status, mfa_required from public.customer_profiles where auth_user_id = $1",
     )
     .bind(auth_user_id)
     .fetch_optional(pool)
     .await
+}
+
+/// Record whether the customer has a verified MFA factor enrolled. Callers must have
+/// already established the caller's own token is at aal2 (`CustomerContext::require_aal2`)
+/// before calling this — this function itself trusts its input completely.
+pub async fn set_mfa_required(
+    pool: &PgPool,
+    customer_id: Uuid,
+    required: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "update public.customer_profiles set mfa_required = $1, updated_at = now() where id = $2",
+    )
+    .bind(required)
+    .bind(customer_id)
+    .execute(pool)
+    .await?;
+    Ok(())
 }
 
 /// Create or return the ForgeCustomer business profile for a Supabase-authenticated user.

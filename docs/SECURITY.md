@@ -26,6 +26,14 @@
   paths. Role policy (fail closed): admin **reads** require any valid operator token;
   admin **mutations** require the `admin` role in the token's `roles` claim, plus a
   written reason recorded in commercial audit with the operator id as actor.
+- **Two-factor step-up (AAL2).** ForgeCustomer doesn't own MFA enrollment — Supabase
+  Auth does, entirely client-side. It only records whether a customer has a factor
+  enrolled (`customer_profiles.mfa_required`) and, once that's true, requires every
+  request's token carry `"aal": "aal2"` (`CustomerContext::require_active`) — a missing
+  or `aal1` claim is rejected as `403 MFA_REQUIRED`. The flag itself can only be set by
+  `POST /v1/account/mfa-status`, which itself requires the caller's *current* token
+  already be `aal2` — since Supabase only ever issues one after a real TOTP challenge
+  succeeds, a stolen password alone can never be used to disable someone else's 2FA.
 
 ## Customer access rules
 
