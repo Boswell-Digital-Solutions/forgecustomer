@@ -29,6 +29,12 @@ From the plan — ✅ covered today, 🔜 pending DB-backed flow wiring:
 - ✅ Account provisioning requires a valid customer JWT and rejects invalid profile input
 - ✅ Checkout request validation rejects malformed plan keys and redirect URLs
 - ✅ Invalid / expired / wrong-audience / wrong-issuer / bad-signature JWT rejected
+- ✅ `CustomerContext::require_active`/`require_aal2` reject an `aal1` or missing-`aal`
+  token when `mfa_required` is set, accept `aal2`, and leave `mfa_required=false`
+  accounts unaffected (unit-tested directly in `api/src/auth/mod.rs` — `CustomerContext`
+  resolves via a DB lookup this suite's unreachable test database can't satisfy, so the
+  aal2 gate itself can't be proven through the HTTP router the way most other checks
+  here are)
 - ✅ Webhook with invalid signature rejected; duplicate-by-timestamp replay rejected
 - ✅ Webhook receipt rejects missing/bad signatures and malformed signed event envelopes
 - ✅ Forged entitlement snapshot fails verification
@@ -40,6 +46,10 @@ From the plan — ✅ covered today, 🔜 pending DB-backed flow wiring:
 - 🔜 Revoked installation denied, and duplicate usage events processed once (both
   implemented and proven against a live local PostgreSQL; CI-runnable DB-backed
   integration tests pending)
+- 🔜 End-to-end aal2 enforcement through the real HTTP router against a seeded
+  `mfa_required=true` customer row (logic is unit-proven today per above; a DB-backed
+  proof of the full request path — extractor DB lookup included — is pending, same
+  category as the line above)
 
 ## 3. Deferred (require live or mocked Stripe / Supabase)
 

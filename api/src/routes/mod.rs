@@ -79,6 +79,7 @@ pub fn build_router(state: AppState) -> Router {
     let customer = Router::new()
         .route("/v1/account", get(account_get))
         .route("/v1/account/provision", post(account_provision))
+        .route("/v1/account/mfa-status", post(account_mfa_status))
         .route(
             "/v1/account/deletion-request",
             get(deletion_request_get).post(deletion_request_create),
@@ -257,6 +258,16 @@ struct AccountProvisionResponse {
     country_code: Option<String>,
     timezone: Option<String>,
     created: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct AccountMfaStatusRequest {
+    enabled: bool,
+}
+
+#[derive(Debug, Serialize)]
+struct AccountMfaStatusResponse {
+    mfa_required: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -629,6 +640,24 @@ async fn account_provision(
         country_code: profile.country_code,
         timezone: profile.timezone,
         created: provisioned.created,
+    }))
+}
+
+/// Record whether the customer has a verified TOTP factor enrolled. Trusts the request
+/// body completely for *what* to record, but not for *whether the caller may*: the
+/// caller's own token must already be at aal2, which Supabase only ever issues after a
+/// real MFA challenge succeeds. A stolen password alone can produce an aal1 token but
+/// never an aal2 one, so this can't be used to silently disable someone else's 2FA.
+async fn account_mfa_status(
+    ctx: CustomerContext,
+    State(state): State<AppState>,
+    Json(request): Json<AccountMfaStatusRequest>,
+) -> AppResult<Json<AccountMfaStatusResponse>> {
+    let id = ctx.require_active()?;
+    ctx.require_aal2()?;
+    customers::set_mfa_required(&state.pool, id, request.enabled).await?;
+    Ok(Json(AccountMfaStatusResponse {
+        mfa_required: request.enabled,
     }))
 }
 

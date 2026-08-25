@@ -24,6 +24,11 @@ pub struct Claims {
     pub email: Option<String>,
     #[serde(default)]
     pub role: Option<String>,
+    /// Authenticator Assurance Level Supabase issued this token at ("aal1" or "aal2").
+    /// Present once the project has MFA configured; absent on older Supabase projects
+    /// or token shapes. Never treat a missing value as "aal2" — see [`Claims::is_aal2`].
+    #[serde(default)]
+    pub aal: Option<String>,
     /// Operator roles/capabilities (admin tokens).
     #[serde(default)]
     pub roles: Vec<String>,
@@ -35,6 +40,14 @@ pub struct Claims {
 }
 
 impl Claims {
+    /// True only when Supabase issued this token after a completed MFA challenge this
+    /// session. A missing or any non-"aal2" value is treated as not stepped up — fail
+    /// closed, since the whole point is that a stolen password alone can never produce
+    /// an aal2 token (Supabase only issues one after `auth.mfa.verify` succeeds).
+    pub fn is_aal2(&self) -> bool {
+        self.aal.as_deref() == Some("aal2")
+    }
+
     /// Operator roles for admin authorization.
     ///
     /// Forge Command's Token Authority mints EdDSA operator tokens carrying a `scope`
@@ -145,11 +158,33 @@ pub struct CustomerContext {
     pub auth_user_id: String,
     pub customer_id: Option<Uuid>,
     pub status: Option<String>,
+    /// Authenticator Assurance Level the *current* token was issued at.
+    pub aal: Option<String>,
+    /// Whether this customer has a verified MFA factor enrolled (self-reported by the
+    /// customer while already at aal2 — see `set_mfa_required` / `require_aal2`).
+    pub mfa_required: bool,
 }
 
 impl CustomerContext {
     pub fn is_suspended(&self) -> bool {
         matches!(self.status.as_deref(), Some("suspended"))
+    }
+
+    fn is_aal2(&self) -> bool {
+        self.aal.as_deref() == Some("aal2")
+    }
+
+    /// Require the current token to already be stepped up to aal2. Use for actions that
+    /// must not be reachable on a stolen-password-only (aal1) session, including
+    /// recording that MFA is enabled/disabled in the first place.
+    pub fn require_aal2(&self) -> Result<(), AppError> {
+        if self.is_aal2() {
+            Ok(())
+        } else {
+            Err(AppError::mfa_required(
+                "This action requires a recent two-factor authentication challenge.",
+            ))
+        }
     }
 }
 
@@ -300,6 +335,7 @@ mod tests {
             sub: "op".into(),
             email: None,
             role: None,
+            aal: None,
             roles: roles.into_iter().map(String::from).collect(),
             scope: scope.map(String::from),
             exp: 0,
@@ -333,5 +369,103 @@ mod tests {
     fn eddsa_unconfigured_key_fails_closed() {
         let v = JwtValidator::eddsa("", "forge_command_local", "forgecustomer-admin");
         assert!(v.validate("any.token.here").is_err());
+    }
+
+    fn claims_with_aal(aal: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".into(),
+            email: None,
+            role: None,
+            aal: aal.map(String::from),
+            roles: Vec::new(),
+            scope: None,
+            exp: 0,
+        }
+    }
+
+    #[test]
+    fn is_aal2_true_only_for_exact_match() {
+        assert!(claims_with_aal(Some("aal2")).is_aal2());
+        assert!(!claims_with_aal(Some("aal1")).is_aal2());
+        assert!(!claims_with_aal(None).is_aal2());
+    }
+
+    fn customer_ctx(status: &str, mfa_required: bool, aal: Option<&str>) -> CustomerContext {
+        CustomerContext {
+            auth_user_id: "user-1".into(),
+            customer_id: Some(Uuid::nil()),
+            status: Some(status.to_string()),
+            aal: aal.map(String::from),
+            mfa_required,
+        }
+    }
+
+    #[test]
+    fn require_active_allows_aal1_when_mfa_not_required() {
+        // Regression guard: the overwhelming majority of accounts have no factor
+        // enrolled yet and must keep working exactly as before this change.
+        assert!(customer_ctx("active", false, Some("aal1"))
+            .require_active()
+            .is_ok());
+        assert!(customer_ctx("active", false, None).require_active().is_ok());
+    }
+
+    #[test]
+    fn require_active_rejects_aal1_when_mfa_required() {
+        let err = customer_ctx("active", true, Some("aal1"))
+            .require_active()
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::MfaRequired);
+    }
+
+    #[test]
+    fn require_active_rejects_missing_aal_claim_when_mfa_required() {
+        // Fail closed: an older/unexpected token shape must not be treated as aal2.
+        let err = customer_ctx("active", true, None)
+            .require_active()
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::MfaRequired);
+    }
+
+    #[test]
+    fn require_active_allows_aal2_when_mfa_required() {
+        assert!(customer_ctx("active", true, Some("aal2"))
+            .require_active()
+            .is_ok());
+    }
+
+    #[test]
+    fn require_active_suspension_takes_priority_over_mfa_check() {
+        let err = customer_ctx("suspended", true, Some("aal1"))
+            .require_active()
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::CustomerSuspended);
+    }
+
+    #[test]
+    fn require_aal2_rejects_aal1_and_missing() {
+        assert_eq!(
+            customer_ctx("active", false, Some("aal1"))
+                .require_aal2()
+                .unwrap_err()
+                .code,
+            ErrorCode::MfaRequired
+        );
+        assert_eq!(
+            customer_ctx("active", false, None)
+                .require_aal2()
+                .unwrap_err()
+                .code,
+            ErrorCode::MfaRequired
+        );
+    }
+
+    #[test]
+    fn require_aal2_accepts_aal2_even_when_mfa_not_yet_recorded() {
+        // The very first enrollment call: mfa_required is still false (old state) but
+        // the caller must already hold an aal2 token to be allowed to flip it on.
+        assert!(customer_ctx("active", false, Some("aal2"))
+            .require_aal2()
+            .is_ok());
     }
 }

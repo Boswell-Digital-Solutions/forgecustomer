@@ -11,6 +11,11 @@ Customer tokens:
 - Validated for HS256 signature, issuer, audience, and expiry.
 - `sub` must parse as a UUID.
 - Missing or unprovisioned customer profiles fail closed.
+- When the resolved profile has `mfa_required` set, the token's `aal` claim must equal
+  `"aal2"` or the request fails closed with `MFA_REQUIRED` — a missing claim or `"aal1"`
+  is never treated as sufficient. `mfa_required` is only ever set by the customer
+  themselves via `POST /v1/account/mfa-status`, which requires that same `aal2` check on
+  the setting call, so it can't be turned off by anyone holding only a stolen password.
 
 Admin tokens:
 

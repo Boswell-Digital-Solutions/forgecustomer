@@ -26,6 +26,7 @@ Current route surface:
 
 - `GET /v1/account`
 - `POST /v1/account/provision`
+- `POST /v1/account/mfa-status`
 - `GET|POST /v1/account/deletion-request`
 - `POST /v1/account/deletion-request/cancel`
 - `GET /v1/subscriptions`
@@ -54,6 +55,14 @@ idempotently, writes the initial status-history receipt, and queues the sanitize
 `customer_created` outbox event for newly-created profiles. `GET /v1/account` returns
 the resolved customer/auth identifiers; `GET /v1/subscriptions` returns the caller's
 subscription projections. Every customer handler is implemented.
+
+`POST /v1/account/mfa-status` records whether the customer has a verified TOTP factor
+enrolled (`customer_profiles.mfa_required`) — ForgeCustomer never touches the factor
+itself, that lives entirely in Supabase Auth. The call requires the caller's own token
+already be at `aal2`, so it can be used to turn the flag on *or* off but never by someone
+holding only a stolen password (which can produce `aal1` but not `aal2`). Once set, every
+other customer route requires `aal2` for that account (`CustomerContext::require_active`),
+failing closed to `403 MFA_REQUIRED` on `aal1` or a missing `aal` claim.
 
 The deletion surface is implemented: customers open, read, and cancel their deletion
 request (`/v1/account/deletion-request*`; cancel is clean until processing); operators
