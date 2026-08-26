@@ -135,6 +135,10 @@ pub fn build_router(state: AppState) -> Router {
         .route("/v1/admin/customers", get(admin_customers))
         .route("/v1/admin/customers/:id/suspend", post(admin_suspend))
         .route("/v1/admin/customers/:id/restore", post(admin_restore))
+        .route(
+            "/v1/admin/customers/:id/mfa-required",
+            post(admin_set_mfa_required),
+        )
         .route("/v1/admin/subscriptions/:id/resync", post(admin_resync))
         .route("/v1/admin/licenses", post(admin_issue_license))
         .route("/v1/admin/licenses/:id/revoke", post(admin_revoke_license))
@@ -2423,6 +2427,41 @@ async fn admin_restore(
         "customer_id": outcome.customer_id,
         "from_status": outcome.from_status,
         "status": outcome.status,
+        "changed": outcome.changed,
+    })))
+}
+
+#[derive(Debug, Deserialize)]
+struct AdminMfaRequirementRequest {
+    required: bool,
+    reason: String,
+}
+
+async fn admin_set_mfa_required(
+    operator: AdminContext,
+    State(state): State<AppState>,
+    correlation: Option<Extension<mw::CorrelationId>>,
+    Path(id): Path<String>,
+    Json(request): Json<AdminMfaRequirementRequest>,
+) -> AppResult<Json<Value>> {
+    operator.require_role("admin")?;
+    let customer_id = parse_path_id(&id)?;
+    let reason = clean_reason(&request.reason).map_err(admin_validation_error)?;
+
+    let outcome = admin::set_customer_mfa_requirement(
+        &state.pool,
+        &operator.operator_id,
+        customer_id,
+        request.required,
+        &reason,
+        correlation_id(&correlation),
+    )
+    .await
+    .map_err(admin_error)?;
+    Ok(Json(json!({
+        "customer_id": outcome.customer_id,
+        "from_required": outcome.from_required,
+        "mfa_required": outcome.mfa_required,
         "changed": outcome.changed,
     })))
 }

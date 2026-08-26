@@ -283,6 +283,117 @@ pub async fn restore_customer(
     .await
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct MfaRequirementOutcome {
+    pub customer_id: Uuid,
+    pub from_required: bool,
+    pub mfa_required: bool,
+    pub changed: bool,
+}
+
+/// Set (or clear) whether a customer's account requires aal2 for every ForgeCustomer
+/// route (`CustomerContext::require_active`), from the operator side. The self-service
+/// twin, `POST /v1/account/mfa-status`, trusts the caller's own report only because the
+/// caller must already hold an aal2 token; an operator holds no such proof about the
+/// *target* account, so this path is audited (`customer_mfa_history`, mirroring
+/// `customer_status_history`) the way suspend/restore already are. Idempotent: setting
+/// the flag to its current value changes nothing and writes no duplicate history/audit/
+/// outbox rows.
+pub async fn set_customer_mfa_requirement(
+    pool: &PgPool,
+    operator_id: &str,
+    customer_id: Uuid,
+    required: bool,
+    reason: &str,
+    correlation_id: Option<&str>,
+) -> Result<MfaRequirementOutcome, AdminError> {
+    let mut tx = pool.begin().await?;
+
+    let current = sqlx::query_scalar::<_, bool>(
+        "select mfa_required from public.customer_profiles where id = $1 for update",
+    )
+    .bind(customer_id)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(AdminError::CustomerNotFound)?;
+
+    if current == required {
+        tx.commit().await?;
+        return Ok(MfaRequirementOutcome {
+            customer_id,
+            from_required: current,
+            mfa_required: current,
+            changed: false,
+        });
+    }
+
+    sqlx::query(
+        "update public.customer_profiles set mfa_required = $2, updated_at = now() where id = $1",
+    )
+    .bind(customer_id)
+    .bind(required)
+    .execute(&mut *tx)
+    .await?;
+
+    let history_id = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        insert into public.customer_mfa_history
+            (customer_id, from_required, to_required, reason, actor_type, actor_id)
+        values
+            ($1, $2, $3, $4, 'operator', $5)
+        returning id
+        "#,
+    )
+    .bind(customer_id)
+    .bind(current)
+    .bind(required)
+    .bind(reason)
+    .bind(operator_id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    let event_type = if required {
+        "customer_mfa_required"
+    } else {
+        "customer_mfa_not_required"
+    };
+
+    write_operator_audit(
+        &mut tx,
+        OperatorAudit {
+            event_type,
+            operator_id,
+            customer_id: Some(customer_id),
+            target_type: "customer",
+            target_id: customer_id.to_string(),
+            reason,
+            before_state: Some(json!({ "mfa_required": current })),
+            after_state: Some(json!({ "mfa_required": required })),
+            correlation_id,
+        },
+    )
+    .await?;
+    write_outbox(
+        &mut tx,
+        event_type,
+        format!("{event_type}:{history_id}"),
+        json!({
+            "customer_id": customer_id,
+            "mfa_required": required,
+            "occurred_at": Utc::now(),
+        }),
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(MfaRequirementOutcome {
+        customer_id,
+        from_required: current,
+        mfa_required: required,
+        changed: true,
+    })
+}
+
 // --- Licenses ----------------------------------------------------------------
 
 #[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]

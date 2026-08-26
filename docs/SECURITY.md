@@ -30,10 +30,15 @@
   Auth does, entirely client-side. It only records whether a customer has a factor
   enrolled (`customer_profiles.mfa_required`) and, once that's true, requires every
   request's token carry `"aal": "aal2"` (`CustomerContext::require_active`) — a missing
-  or `aal1` claim is rejected as `403 MFA_REQUIRED`. The flag itself can only be set by
-  `POST /v1/account/mfa-status`, which itself requires the caller's *current* token
-  already be `aal2` — since Supabase only ever issues one after a real TOTP challenge
-  succeeds, a stolen password alone can never be used to disable someone else's 2FA.
+  or `aal1` claim is rejected as `403 MFA_REQUIRED`. The flag can be set two ways: by the
+  customer via `POST /v1/account/mfa-status`, which itself requires the caller's
+  *current* token already be `aal2` — since Supabase only ever issues one after a real
+  TOTP challenge succeeds, a stolen password alone can never be used to disable someone
+  else's 2FA — or by an operator via `POST /v1/admin/customers/{id}/mfa-required`
+  (`admin` role, written reason), Forge Command's incident-response action for a
+  suspected compromise. The operator holds no such aal2 proof about the *target*
+  account, so operator-driven changes are recorded in a dedicated `customer_mfa_history`
+  audit trail rather than relying on the self-service path's trust argument.
 
 ## Customer access rules
 

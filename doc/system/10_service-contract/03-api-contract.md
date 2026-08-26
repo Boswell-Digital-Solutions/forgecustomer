@@ -63,7 +63,9 @@ itself, that lives entirely in Supabase Auth. The call requires the caller's own
 already be at `aal2`, so it can be used to turn the flag on *or* off but never by someone
 holding only a stolen password (which can produce `aal1` but not `aal2`). Once set, every
 other customer route requires `aal2` for that account (`CustomerContext::require_active`),
-failing closed to `403 MFA_REQUIRED` on `aal1` or a missing `aal` claim.
+failing closed to `403 MFA_REQUIRED` on `aal1` or a missing `aal` claim. An operator can
+also set this flag on another account — see `POST /v1/admin/customers/{id}/mfa-required`
+below.
 
 The deletion surface is implemented: customers open, read, and cancel their deletion
 request (`/v1/account/deletion-request*`; cancel is clean until processing); operators
@@ -134,6 +136,7 @@ Current route surface:
 - `GET /v1/admin/customers`
 - `POST /v1/admin/customers/{id}/suspend`
 - `POST /v1/admin/customers/{id}/restore`
+- `POST /v1/admin/customers/{id}/mfa-required`
 - `POST /v1/admin/subscriptions/{id}/resync`
 - `POST /v1/admin/licenses`
 - `POST /v1/admin/licenses/{id}/revoke`
@@ -179,6 +182,19 @@ Subscription resync pulls current truth from the Stripe API,
 reprojects it, syncs the linked license, and advances the event watermark so stale
 out-of-order webhooks are subsequently skipped. Suspend/restore and revoke are
 idempotent and report `changed: false` on replay.
+
+`POST /v1/admin/customers/{id}/mfa-required` (`{ "required": bool, "reason": "..." }`) is
+Forge Command's "Require MFA" incident-response action — the operator side of the flag
+`POST /v1/account/mfa-status` sets from the customer side. It's idempotent the same way
+suspend/restore are (`changed: false` on replay) but audited separately: unlike the
+self-service call, the operator holds no aal2 proof about the *target* account, so every
+transition is additionally recorded in `customer_mfa_history` (mirroring
+`customer_status_history`) on top of the standard operator commercial-audit/outbox trail.
+Forcing the flag on an account with no enrolled TOTP factor is allowed and locks that
+account out of every customer route until it enrolls — this is intentional (incident
+response can't wait for the customer to already have a factor), but it means a client has
+to detect and recover from "required, zero factors" as its own case rather than treating
+`403 MFA_REQUIRED` as always meaning "prompt for a code."
 
 ### Error contract
 

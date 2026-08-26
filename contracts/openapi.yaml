@@ -737,6 +737,32 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { description: Customer not found }
+  /v1/admin/customers/{id}/mfa-required:
+    post:
+      tags: [admin]
+      summary: >
+        Set (or clear) a customer's MFA requirement (requires `admin` role; reason
+        required; idempotent) — Forge Command's "Require MFA" incident-response action.
+      description: >
+        The operator side of the flag `POST /v1/account/mfa-status` sets from the
+        customer side. Unlike that self-service call, the operator holds no aal2 proof
+        about the *target* account, so every transition is additionally recorded in
+        `customer_mfa_history` on top of the standard operator commercial-audit/outbox
+        trail. Forcing the flag on an account with zero enrolled TOTP factors is allowed
+        and locks that account out of every customer route until it enrolls.
+      security: [{ adminAuth: [] }]
+      parameters: [{ $ref: "#/components/parameters/PathId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminMfaRequirementRequest" }
+      responses:
+        "200": { description: "Outcome { customer_id, from_required, mfa_required, changed }" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Customer not found }
+        "422": { description: Reason validation failed }
   /v1/admin/subscriptions/{id}/resync:
     post:
       tags: [admin]
@@ -1673,6 +1699,19 @@ components:
       additionalProperties: false
       required: [reason]
       properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Written justification; recorded in the commercial audit trail.
+    AdminMfaRequirementRequest:
+      type: object
+      additionalProperties: false
+      required: [required, reason]
+      properties:
+        required:
+          type: boolean
+          description: Whether the account should require aal2 for every customer route.
         reason:
           type: string
           minLength: 3
