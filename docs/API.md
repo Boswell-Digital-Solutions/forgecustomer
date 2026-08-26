@@ -120,14 +120,22 @@ turn it back off. Once `mfa_required` is recorded, every other customer route re
 `aal1` token for that account with `403 MFA_REQUIRED` (`CustomerContext::require_active`).
 A missing `aal` claim is treated the same as `aal1` — fail closed, never assume assurance.
 
-Accounts that have never called this endpoint keep working exactly as before: the check
-is skipped entirely when `mfa_required` is false, which is the default for every existing
-row.
+TOTP MFA is mandatory for every account (`0014_mandatory_mfa_grace_period.sql`) —
+`mfa_required` defaults to `true` for new rows, not `false`, and every pre-existing
+account that hadn't already opted in was flipped to `true` at rollout. `mfa_required`
+alone being true does **not** mean `require_active()` fails closed immediately: an
+unenrolled account gets a 30-day `mfa_grace_period_ends_at` (set at signup for new
+accounts, at rollout for existing ones) during which `aal1` still works, so the entire
+customer base wasn't locked out the instant the migration ran. Self-service and
+operator-forced requirements never set a grace period and always enforce immediately —
+see below.
 
-`GET /v1/account` echoes the current `mfa_required` value back to the caller, so a client
-can compare it against its own view of whether a factor is actually enrolled (Supabase is
-the source of truth for that) and re-call `mfa-status` to self-heal if a previous report
-was lost — this endpoint never enforces anything itself, it's read-only.
+`GET /v1/account` echoes the current `mfa_required` and `mfa_grace_period_ends_at` values
+back to the caller, so a client can compare `mfa_required` against its own view of whether
+a factor is actually enrolled (Supabase is the source of truth for that), re-call
+`mfa-status` to self-heal if a previous report was lost, and show a "N days left to set up
+2FA" reminder from `mfa_grace_period_ends_at` while it's still in the future — this
+endpoint never enforces anything itself, it's read-only.
 
 An operator can also set this flag on *another* account, via
 `POST /v1/admin/customers/{id}/mfa-required` (`{ "required": true, "reason": "..." }`,

@@ -53,9 +53,9 @@ Current route surface:
 `POST /v1/account/provision` creates or returns the caller's business customer profile
 idempotently, writes the initial status-history receipt, and queues the sanitized
 `customer_created` outbox event for newly-created profiles. `GET /v1/account` returns
-the resolved customer/auth identifiers plus `mfa_required` (already resolved by the
-`CustomerContext` extractor, no extra query); `GET /v1/subscriptions` returns the
-caller's subscription projections. Every customer handler is implemented.
+the resolved customer/auth identifiers plus `mfa_required` and `mfa_grace_period_ends_at`
+(both already resolved by the `CustomerContext` extractor, no extra query); `GET /v1/subscriptions`
+returns the caller's subscription projections. Every customer handler is implemented.
 
 `POST /v1/account/mfa-status` records whether the customer has a verified TOTP factor
 enrolled (`customer_profiles.mfa_required`) — ForgeCustomer never touches the factor
@@ -63,9 +63,23 @@ itself, that lives entirely in Supabase Auth. The call requires the caller's own
 already be at `aal2`, so it can be used to turn the flag on *or* off but never by someone
 holding only a stolen password (which can produce `aal1` but not `aal2`). Once set, every
 other customer route requires `aal2` for that account (`CustomerContext::require_active`),
-failing closed to `403 MFA_REQUIRED` on `aal1` or a missing `aal` claim. An operator can
-also set this flag on another account — see `POST /v1/admin/customers/{id}/mfa-required`
-below.
+failing closed to `403 MFA_REQUIRED` on `aal1` or a missing `aal` claim — unless the
+account is within its mandatory-MFA grace period (below), in which case `aal1` is still
+accepted until the deadline. An operator can also set this flag on another account — see
+`POST /v1/admin/customers/{id}/mfa-required` below.
+
+TOTP MFA is mandatory for every customer account (migration `0014_mandatory_mfa_grace_period.sql`):
+`mfa_required` defaults to `true` for new accounts, and every account that predates the
+migration and hadn't already opted in was flipped to `mfa_required = true` at rollout.
+`mfa_grace_period_ends_at` gives an unenrolled account 30 days from whichever of those two
+moments applies before `require_active()` starts actually failing closed on `aal1` —
+without it, the entire pre-existing customer base would have been locked out the instant
+the migration ran. It is set **only** by that migration and by new-account provisioning;
+the self-service (`POST /v1/account/mfa-status`) and operator-forced
+(`POST /v1/admin/customers/{id}/mfa-required`) paths never touch it and always enforce
+immediately, by design — self-service can only ever be called by a caller who already
+holds `aal2` (meaning they already have a factor and nothing to wait out), and the
+operator path is deliberate incident response that must not wait.
 
 The deletion surface is implemented: customers open, read, and cancel their deletion
 request (`/v1/account/deletion-request*`; cancel is clean until processing); operators

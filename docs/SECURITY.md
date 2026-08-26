@@ -39,6 +39,16 @@
   suspected compromise. The operator holds no such aal2 proof about the *target*
   account, so operator-driven changes are recorded in a dedicated `customer_mfa_history`
   audit trail rather than relying on the self-service path's trust argument.
+- **MFA is mandatory, phased in with a grace period.** `mfa_required` defaults to `true`
+  for every account now (`0014_mandatory_mfa_grace_period.sql`), not opt-in. An
+  unenrolled account still isn't locked out immediately: `mfa_grace_period_ends_at`
+  (30 days from signup for new accounts, from rollout for pre-existing ones) lets
+  `require_active()` accept `aal1` until that deadline. Only that migration and
+  new-account provisioning ever set the grace column — the self-service and
+  operator-forced paths above never touch it and always enforce immediately, on
+  purpose: self-service can only be called by a caller already holding `aal2` (they
+  already have a factor and nothing to wait out), and the operator path is deliberate
+  incident response.
 
 ## Customer access rules
 

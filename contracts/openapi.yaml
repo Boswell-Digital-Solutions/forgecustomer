@@ -115,7 +115,9 @@ paths:
       description: >
         Full response assembly is pending; today returns identifiers plus mfa_required
         (whether this account is expected to present an aal2 token — see
-        POST /v1/account/mfa-status).
+        POST /v1/account/mfa-status) and mfa_grace_period_ends_at (null outside the
+        mandatory-MFA rollout grace window; while in the future, aal1 still passes
+        require_active() for this account).
       responses:
         "200": { description: Account summary }
         "401": { $ref: "#/components/responses/Unauthorized" }
