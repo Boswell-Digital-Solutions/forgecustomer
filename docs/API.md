@@ -124,6 +124,11 @@ Accounts that have never called this endpoint keep working exactly as before: th
 is skipped entirely when `mfa_required` is false, which is the default for every existing
 row.
 
+`GET /v1/account` echoes the current `mfa_required` value back to the caller, so a client
+can compare it against its own view of whether a factor is actually enrolled (Supabase is
+the source of truth for that) and re-call `mfa-status` to self-heal if a previous report
+was lost — this endpoint never enforces anything itself, it's read-only.
+
 ## Subscriptions and account deletion
 
 - `GET /v1/subscriptions` — the caller's subscription projections (product/plan keys,

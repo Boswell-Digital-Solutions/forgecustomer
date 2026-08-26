@@ -600,10 +600,14 @@ fn activation_error(error: ActivationError) -> AppError {
 
 async fn account_get(ctx: CustomerContext) -> AppResult<Json<Value>> {
     let id = ctx.require_active()?;
-    // Profile read is RLS-safe; full assembly pending.
-    Ok(Json(
-        json!({ "customer_id": id, "auth_user_id": ctx.auth_user_id }),
-    ))
+    // Profile read is RLS-safe; full assembly pending. mfa_required is already resolved
+    // by the CustomerContext extractor (no extra query) — exposed so bds_website can
+    // detect and self-heal drift against its own Supabase-side factor state.
+    Ok(Json(json!({
+        "customer_id": id,
+        "auth_user_id": ctx.auth_user_id,
+        "mfa_required": ctx.mfa_required,
+    })))
 }
 
 async fn account_provision(

@@ -53,8 +53,9 @@ Current route surface:
 `POST /v1/account/provision` creates or returns the caller's business customer profile
 idempotently, writes the initial status-history receipt, and queues the sanitized
 `customer_created` outbox event for newly-created profiles. `GET /v1/account` returns
-the resolved customer/auth identifiers; `GET /v1/subscriptions` returns the caller's
-subscription projections. Every customer handler is implemented.
+the resolved customer/auth identifiers plus `mfa_required` (already resolved by the
+`CustomerContext` extractor, no extra query); `GET /v1/subscriptions` returns the
+caller's subscription projections. Every customer handler is implemented.
 
 `POST /v1/account/mfa-status` records whether the customer has a verified TOTP factor
 enrolled (`customer_profiles.mfa_required`) — ForgeCustomer never touches the factor

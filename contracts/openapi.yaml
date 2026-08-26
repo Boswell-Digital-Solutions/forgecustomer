@@ -112,6 +112,10 @@ paths:
     get:
       tags: [account]
       summary: Get own account summary
+      description: >
+        Full response assembly is pending; today returns identifiers plus mfa_required
+        (whether this account is expected to present an aal2 token — see
+        POST /v1/account/mfa-status).
       responses:
         "200": { description: Account summary }
         "401": { $ref: "#/components/responses/Unauthorized" }
