@@ -10,6 +10,11 @@ pub struct CustomerRow {
     pub id: Uuid,
     pub status: String,
     pub mfa_required: bool,
+    /// Set only for the mandatory-MFA rollout grace period (migration 0014) and by
+    /// new-account provisioning going forward — never by the self-service or
+    /// operator-forced paths, which enforce immediately by design. Consulted only
+    /// while `mfa_required` is true; otherwise inert.
+    pub mfa_grace_period_ends_at: Option<DateTime<Utc>>,
 }
 
 /// Full customer profile projection returned by account provisioning.
@@ -41,7 +46,8 @@ pub async fn find_by_auth_user_id(
     auth_user_id: Uuid,
 ) -> Result<Option<CustomerRow>, sqlx::Error> {
     sqlx::query_as::<_, CustomerRow>(
-        "select id, status, mfa_required from public.customer_profiles where auth_user_id = $1",
+        "select id, status, mfa_required, mfa_grace_period_ends_at \
+         from public.customer_profiles where auth_user_id = $1",
     )
     .bind(auth_user_id)
     .fetch_optional(pool)

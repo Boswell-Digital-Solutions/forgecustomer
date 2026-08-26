@@ -4,6 +4,7 @@
 //! against the operator issuer/audience. The two are kept strictly separate so a customer
 //! token can never authorize an admin route.
 
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{decode, errors::ErrorKind, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -163,6 +164,11 @@ pub struct CustomerContext {
     /// Whether this customer has a verified MFA factor enrolled (self-reported by the
     /// customer while already at aal2 — see `set_mfa_required` / `require_aal2`).
     pub mfa_required: bool,
+    /// End of the mandatory-MFA rollout grace period (migration 0014), if this account
+    /// is in one. Only ever set by that migration and by new-account provisioning —
+    /// never by the self-service or operator-forced paths, both of which enforce
+    /// immediately by design. Consulted only while `mfa_required` is true.
+    pub mfa_grace_period_ends_at: Option<DateTime<Utc>>,
 }
 
 impl CustomerContext {
@@ -172,6 +178,15 @@ impl CustomerContext {
 
     fn is_aal2(&self) -> bool {
         self.aal.as_deref() == Some("aal2")
+    }
+
+    /// True while a mandatory-MFA grace period is still running for this account.
+    /// Unenrolled accounts inside their window keep working at aal1; once it lapses
+    /// (or for accounts that never had one — self-service and operator-forced
+    /// requirements are always immediate), normal aal2 enforcement applies.
+    fn mfa_grace_active(&self) -> bool {
+        self.mfa_grace_period_ends_at
+            .is_some_and(|deadline| deadline > Utc::now())
     }
 
     /// Require the current token to already be stepped up to aal2. Use for actions that
@@ -391,12 +406,22 @@ mod tests {
     }
 
     fn customer_ctx(status: &str, mfa_required: bool, aal: Option<&str>) -> CustomerContext {
+        customer_ctx_with_grace(status, mfa_required, aal, None)
+    }
+
+    fn customer_ctx_with_grace(
+        status: &str,
+        mfa_required: bool,
+        aal: Option<&str>,
+        mfa_grace_period_ends_at: Option<DateTime<Utc>>,
+    ) -> CustomerContext {
         CustomerContext {
             auth_user_id: "user-1".into(),
             customer_id: Some(Uuid::nil()),
             status: Some(status.to_string()),
             aal: aal.map(String::from),
             mfa_required,
+            mfa_grace_period_ends_at,
         }
     }
 
@@ -432,6 +457,50 @@ mod tests {
         assert!(customer_ctx("active", true, Some("aal2"))
             .require_active()
             .is_ok());
+    }
+
+    #[test]
+    fn require_active_allows_aal1_during_active_grace_period() {
+        let future = Utc::now() + chrono::Duration::days(10);
+        assert!(
+            customer_ctx_with_grace("active", true, Some("aal1"), Some(future))
+                .require_active()
+                .is_ok()
+        );
+        assert!(customer_ctx_with_grace("active", true, None, Some(future))
+            .require_active()
+            .is_ok());
+    }
+
+    #[test]
+    fn require_active_rejects_aal1_once_grace_period_has_elapsed() {
+        let past = Utc::now() - chrono::Duration::days(1);
+        let err = customer_ctx_with_grace("active", true, Some("aal1"), Some(past))
+            .require_active()
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::MfaRequired);
+    }
+
+    #[test]
+    fn require_active_still_enforces_immediately_when_no_grace_period_recorded() {
+        // Self-service and operator-forced requirements never set a grace period —
+        // this is the existing, unchanged behavior for both.
+        let err = customer_ctx_with_grace("active", true, Some("aal1"), None)
+            .require_active()
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::MfaRequired);
+    }
+
+    #[test]
+    fn require_active_grace_period_never_bypasses_aal2_enforcement_itself() {
+        // A grace period only ever excuses missing aal2 — it must never be read as
+        // "skip the check": an aal2 session still passes exactly as before.
+        let future = Utc::now() + chrono::Duration::days(10);
+        assert!(
+            customer_ctx_with_grace("active", true, Some("aal2"), Some(future))
+                .require_active()
+                .is_ok()
+        );
     }
 
     #[test]

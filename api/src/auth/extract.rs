@@ -52,9 +52,14 @@ impl FromRequestParts<AppState> for CustomerContext {
             .await
             .map_err(|e| attach(AppError::from(e)))?;
 
-        let (customer_id, status, mfa_required) = match row {
-            Some(r) => (Some(r.id), Some(r.status), r.mfa_required),
-            None => (None, None, false),
+        let (customer_id, status, mfa_required, mfa_grace_period_ends_at) = match row {
+            Some(r) => (
+                Some(r.id),
+                Some(r.status),
+                r.mfa_required,
+                r.mfa_grace_period_ends_at,
+            ),
+            None => (None, None, false, None),
         };
 
         Ok(CustomerContext {
@@ -63,6 +68,7 @@ impl FromRequestParts<AppState> for CustomerContext {
             status,
             aal: claims.aal,
             mfa_required,
+            mfa_grace_period_ends_at,
         })
     }
 }
@@ -86,7 +92,7 @@ impl CustomerContext {
                 "This customer account is closed.",
             ));
         }
-        if self.mfa_required {
+        if self.mfa_required && !self.mfa_grace_active() {
             self.require_aal2()?;
         }
         Ok(id)

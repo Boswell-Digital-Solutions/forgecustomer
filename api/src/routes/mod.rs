@@ -607,10 +607,14 @@ async fn account_get(ctx: CustomerContext) -> AppResult<Json<Value>> {
     // Profile read is RLS-safe; full assembly pending. mfa_required is already resolved
     // by the CustomerContext extractor (no extra query) — exposed so bds_website can
     // detect and self-heal drift against its own Supabase-side factor state.
+    // mfa_grace_period_ends_at is null outside the mandatory-MFA rollout grace window
+    // (migration 0014) — including for every self-service or operator-forced
+    // requirement, both of which enforce immediately and never set it.
     Ok(Json(json!({
         "customer_id": id,
         "auth_user_id": ctx.auth_user_id,
         "mfa_required": ctx.mfa_required,
+        "mfa_grace_period_ends_at": ctx.mfa_grace_period_ends_at,
     })))
 }
 
