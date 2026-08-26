@@ -172,6 +172,7 @@ async fn admin_mutations_require_admin_role() {
     for uri in [
         format!("/v1/admin/customers/{id}/suspend"),
         format!("/v1/admin/customers/{id}/restore"),
+        format!("/v1/admin/customers/{id}/mfa-required"),
         format!("/v1/admin/subscriptions/{id}/resync"),
         format!("/v1/admin/licenses/{id}/revoke"),
         format!("/v1/admin/fleets/{id}/policy"),
@@ -198,6 +199,7 @@ async fn admin_mutations_require_admin_role() {
         // unknown fields), so the role gate — not body validation — is what rejects.
         let body = json!({
             "reason": "support cleanup",
+            "required": true,
             "customer_id": "9f1c2d3e-4b5a-6789-0abc-def012345678",
             "meter_key": "cloud_tokens",
             "amount": -100,
@@ -614,6 +616,7 @@ async fn parameterized_admin_routes_match_and_require_auth() {
     for uri in [
         format!("/v1/admin/customers/{id}/suspend"),
         format!("/v1/admin/customers/{id}/restore"),
+        format!("/v1/admin/customers/{id}/mfa-required"),
         format!("/v1/admin/subscriptions/{id}/resync"),
         format!("/v1/admin/licenses/{id}/revoke"),
         format!("/v1/admin/fleets/{id}/policy"),

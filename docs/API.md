@@ -129,6 +129,19 @@ can compare it against its own view of whether a factor is actually enrolled (Su
 the source of truth for that) and re-call `mfa-status` to self-heal if a previous report
 was lost — this endpoint never enforces anything itself, it's read-only.
 
+An operator can also set this flag on *another* account, via
+`POST /v1/admin/customers/{id}/mfa-required` (`{ "required": true, "reason": "..." }`,
+`admin` role required) — Forge Command's "Require MFA" incident-response action. The
+operator holds no aal2 proof about the target account the way the self-service caller
+does, so every operator-driven change is recorded in a dedicated `customer_mfa_history`
+audit trail in addition to the commercial-audit/outbox record every admin mutation
+writes. It's idempotent the same way suspend/restore are — replaying the same `required`
+value reports `changed: false` rather than writing a duplicate history row. Forcing the
+flag on an account with zero enrolled factors is allowed by design (an operator responding
+to a suspected compromise can't wait for the customer to have one), which means that
+account is locked out of every customer route until it enrolls — a client can't assume
+`403 MFA_REQUIRED` always means "prompt for a code you already have a factor for."
+
 ## Subscriptions and account deletion
 
 - `GET /v1/subscriptions` — the caller's subscription projections (product/plan keys,

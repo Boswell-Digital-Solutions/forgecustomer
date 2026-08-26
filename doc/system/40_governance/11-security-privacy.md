@@ -13,9 +13,12 @@ Customer tokens:
 - Missing or unprovisioned customer profiles fail closed.
 - When the resolved profile has `mfa_required` set, the token's `aal` claim must equal
   `"aal2"` or the request fails closed with `MFA_REQUIRED` — a missing claim or `"aal1"`
-  is never treated as sufficient. `mfa_required` is only ever set by the customer
-  themselves via `POST /v1/account/mfa-status`, which requires that same `aal2` check on
-  the setting call, so it can't be turned off by anyone holding only a stolen password.
+  is never treated as sufficient. `mfa_required` is set by the customer themselves via
+  `POST /v1/account/mfa-status` (which requires that same `aal2` check on the setting
+  call, so it can't be turned off by anyone holding only a stolen password), or by an
+  operator via `POST /v1/admin/customers/{id}/mfa-required` (`admin` role, written
+  reason) — Forge Command's incident-response action, audited separately in
+  `customer_mfa_history` since the operator holds no aal2 proof about the target account.
 
 Admin tokens:
 
