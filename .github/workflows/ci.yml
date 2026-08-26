@@ -161,10 +161,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v5
+        with: { go-version: stable }
+      # gitleaks/gitleaks-action@v2 now requires a paid org license
+      # (GITLEAKS_LICENSE) for organization accounts. This runs the same
+      # open-source scanner directly instead — no license needed, same
+      # ruleset (see .gitleaks.toml for the two allowlisted test fixtures).
+      - name: Install gitleaks
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gitleaks detect --source . --redact -v
 
   audit:
     name: dependency audit
