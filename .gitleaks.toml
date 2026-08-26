@@ -1,0 +1,20 @@
+# gitleaks configuration. Allowlist entries below MUST carry a justification, mirroring
+# the convention in .cargo/audit.toml. Extends gitleaks' own default ruleset rather than
+# replacing it.
+
+title = "forgecustomer gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Known-fake test fixtures, not real secrets — verified by direct inspection"
+regexes = [
+  # A fake UUID-shaped install_key literal used only in domain::installation's
+  # #[cfg(test)] validation tests.
+  '''9f1c2d3e-4b5a-6789-0abc-def012345678''',
+  # ADMIN_ED_PRIVATE_PEM in api/tests/security.rs — a throwaway Ed25519 keypair
+  # generated for tests, documented in that file as standing in for Forge Command's
+  # Token Authority signing key. Never used outside the test suite.
+  '''MC4CAQAwBQYDK2VwBCIEIK0QNf3nxqiBF98HL/aSUWke0fE4CuryMonE9nhFvqnL''',
+]
