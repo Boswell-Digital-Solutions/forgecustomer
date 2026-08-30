@@ -38,6 +38,15 @@ write normalized projection rows, commercial audit, and sanitized `subscription_
 outbox events. Only verified Stripe webhooks may change subscription truth; browser
 redirects must only confirm that the customer returned from Stripe.
 
+The current Checkout surface is subscription-only. Stripe creates subscription invoices
+automatically, customer-facing line-item names come from the server-selected Stripe
+Product/Price, and receipt branding, invoice memo/footer, sending domain, and email
+toggles remain account-level Stripe Dashboard configuration. ForgeCustomer does not send
+a duplicate payment receipt. It also does not send one-time-only `invoice_creation` or
+`payment_intent_data` fields in subscription mode. One-time SKUs, multi-line carts, and
+downloadable-order invoices require a separate catalog and API contract; Stripe emails
+must never carry expiring download URLs or bypass account entitlement checks.
+
 Self-service subscription management is offered through the **Stripe Billing Customer
 Portal**, not bespoke endpoints. `POST /v1/billing-portal` resolves the caller's linked
 Stripe customer (via `stripe_customers` → `billing_accounts`) and mints a portal session;
