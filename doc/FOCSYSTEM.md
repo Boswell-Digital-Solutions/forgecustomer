@@ -618,6 +618,15 @@ write normalized projection rows, commercial audit, and sanitized `subscription_
 outbox events. Only verified Stripe webhooks may change subscription truth; browser
 redirects must only confirm that the customer returned from Stripe.
 
+The current Checkout surface is subscription-only. Stripe creates subscription invoices
+automatically, customer-facing line-item names come from the server-selected Stripe
+Product/Price, and receipt branding, invoice memo/footer, sending domain, and email
+toggles remain account-level Stripe Dashboard configuration. ForgeCustomer does not send
+a duplicate payment receipt. It also does not send one-time-only `invoice_creation` or
+`payment_intent_data` fields in subscription mode. One-time SKUs, multi-line carts, and
+downloadable-order invoices require a separate catalog and API contract; Stripe emails
+must never carry expiring download URLs or bypass account entitlement checks.
+
 Self-service subscription management is offered through the **Stripe Billing Customer
 Portal**, not bespoke endpoints. `POST /v1/billing-portal` resolves the caller's linked
 Stripe customer (via `stripe_customers` → `billing_accounts`) and mints a portal session;
@@ -799,6 +808,12 @@ Stripe integration rules:
 - `STRIPE_SECRET_KEY` is server-side only.
 - Checkout creation resolves Stripe price ids from the catalog; clients provide product
   and plan keys, never raw Stripe price ids.
+- The current Checkout form is subscription-only. Stripe Dashboard owns receipt branding,
+  invoice memo/footer, sending domain, and email toggles; Stripe Product/Price names own
+  customer-facing line items. ForgeCustomer sends no duplicate payment receipt.
+- One-time-only `invoice_creation` and `payment_intent_data` fields are forbidden in the
+  subscription form. One-time SKUs, carts, and downloadable-order invoices require a
+  separate catalog/API slice, and Stripe email must never expose expiring download URLs.
 - `STRIPE_WEBHOOK_SECRET` verifies webhook signatures.
 - Webhook verification uses HMAC-SHA256 and constant-time comparison.
 - Duplicate and replayed webhook events are expected and must be idempotent.
