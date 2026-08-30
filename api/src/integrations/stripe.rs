@@ -71,6 +71,13 @@ pub enum StripeEventError {
     MissingEventType,
 }
 
+/// Build the subscription-only Checkout form.
+///
+/// Stripe creates subscription invoices automatically. `invoice_creation` and
+/// `payment_intent_data` belong to one-time (`mode=payment`) Checkout and must not be
+/// added here. Receipt branding, the invoice memo/footer, and customer email toggles are
+/// account-level Stripe Dashboard configuration; customer-facing line-item names come
+/// from the Stripe Product/Price selected by the server-owned catalog id.
 pub fn build_checkout_session_form(request: &CheckoutSessionRequest) -> Vec<(String, String)> {
     vec![
         ("mode".into(), "subscription".into()),
@@ -655,6 +662,12 @@ mod tests {
             "subscription_data[metadata][plan_version_id]".into(),
             "plan_version_uuid".into()
         )));
+        assert!(form
+            .iter()
+            .all(|(key, _)| !key.starts_with("invoice_creation")));
+        assert!(form
+            .iter()
+            .all(|(key, _)| !key.starts_with("payment_intent_data")));
     }
 
     #[tokio::test]
