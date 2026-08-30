@@ -19,6 +19,12 @@ Stripe integration rules:
 - `STRIPE_SECRET_KEY` is server-side only.
 - Checkout creation resolves Stripe price ids from the catalog; clients provide product
   and plan keys, never raw Stripe price ids.
+- The current Checkout form is subscription-only. Stripe Dashboard owns receipt branding,
+  invoice memo/footer, sending domain, and email toggles; Stripe Product/Price names own
+  customer-facing line items. ForgeCustomer sends no duplicate payment receipt.
+- One-time-only `invoice_creation` and `payment_intent_data` fields are forbidden in the
+  subscription form. One-time SKUs, carts, and downloadable-order invoices require a
+  separate catalog/API slice, and Stripe email must never expose expiring download URLs.
 - `STRIPE_WEBHOOK_SECRET` verifies webhook signatures.
 - Webhook verification uses HMAC-SHA256 and constant-time comparison.
 - Duplicate and replayed webhook events are expected and must be idempotent.

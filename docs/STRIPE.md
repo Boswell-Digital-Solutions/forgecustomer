@@ -43,6 +43,19 @@ The browser redirect **does not** activate entitlements. Checkout requests resol
 active `plan_versions.stripe_price_id` server-side; customers cannot submit arbitrary
 Stripe price ids.
 
+This route is subscription-only (`mode=subscription`). Stripe creates the subscription
+invoice automatically, and the customer-facing line item comes from the Product/Price
+name configured in Stripe. Receipt branding, invoice memo/footer, sending domain, and
+customer-email toggles are account-level Stripe Dashboard configuration. ForgeCustomer
+must not send a second payment receipt.
+
+Do not add `invoice_creation` or `payment_intent_data` to this subscription form. Those
+fields belong to a future one-time Checkout (`mode=payment`) surface. One-time SKUs,
+multi-line carts, and downloadable-order invoices are not implemented by the current
+catalog or `/v1/checkout` contract. Any future surface must keep download delivery behind
+the BDS account/entitlement check; Stripe email must never contain an expiring download
+URL.
+
 ## Self-service management (Billing Portal)
 
 ```
