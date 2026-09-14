@@ -55,10 +55,23 @@ impl AppState {
             &config.admin_jwt_audience,
         );
 
+        // `DATABASE_URL` points at Supabase's pooled connection string (RUNBOOK.md), which
+        // may be the transaction-mode pooler (PgBouncer): connections are handed out per
+        // transaction, not held for a session, so a server-side prepared statement created
+        // on one backend can vanish before the next query that expects to reuse it lands on
+        // a different backend ("prepared statement \"...\" does not exist"). SQLx's default
+        // per-connection statement cache assumes a stable session and isn't safe under that
+        // pooling mode. Disabling it falls back to unnamed prepare-per-query (safe under
+        // both session and transaction pooling), at the cost of re-parsing each query text
+        // every time instead of reusing a cached plan.
+        let connect_options = config
+            .database_url
+            .parse::<sqlx::postgres::PgConnectOptions>()?
+            .statement_cache_capacity(0);
         let pool = PgPoolOptions::new()
             .max_connections(10)
             .acquire_timeout(config.database_acquire_timeout)
-            .connect_lazy(&config.database_url)?;
+            .connect_lazy_with(connect_options);
 
         let http = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(10))
