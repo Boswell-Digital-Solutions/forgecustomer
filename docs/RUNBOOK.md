@@ -16,7 +16,8 @@
   to `deploy/Dockerfile` (Docker build context stays `.`), or the build fails with
   `failed to read dockerfile: open Dockerfile: no such file or directory`.
 - The app binds `0.0.0.0:$PORT`; the Blueprint pins `PORT=8080` to match the image's
-  `EXPOSE`. Health check path is `/v1/ready` so rollouts gate on DB reachability.
+  `EXPOSE`, and the image sets the same value. Outside the image, `PORT` defaults to 8090,
+  the registered local port. Health check path is `/v1/ready` so rollouts gate on DB reachability.
 - Postgres is the Supabase project, not a Render database: point `DATABASE_URL` at
   Supabase's pooled connection string. Migrations still ship via `supabase db push`
   (step 2) — the API container never applies migrations.

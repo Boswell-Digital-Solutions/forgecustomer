@@ -107,7 +107,9 @@ fn parse_percent_list(key: &'static str, default: &[u8]) -> Result<Vec<u8>, Conf
 impl Config {
     /// Load configuration from the process environment.
     pub fn from_env() -> Result<Self, ConfigError> {
-        let port = optional("PORT", "8080")
+        // 8090 is the registered local port (forge PORT_REGISTRY.md), where Forge Command
+        // looks for ForgeCustomer. The Docker image and the Render Blueprint set 8080.
+        let port = optional("PORT", "8090")
             .parse::<u16>()
             .map_err(|e| ConfigError::Invalid("PORT", e.to_string()))?;
 

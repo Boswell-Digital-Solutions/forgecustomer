@@ -1226,7 +1226,7 @@ required variables fail startup. Empty token-verification secrets fail token val
 | --- | --- | --- | --- |
 | `APP_ENV` | no | `development` | Environment label returned by `/v1/version`. |
 | `HOST` | no | `0.0.0.0` | Bind host. |
-| `PORT` | no | `8080` | Bind port. |
+| `PORT` | no | `8090` | Bind port. 8090 is the registered local port (forge `PORT_REGISTRY.md`), where Forge Command looks for ForgeCustomer. The Docker image and the Render Blueprint set `8080`. |
 | `DATABASE_URL` | yes | none | Postgres/Supabase database URL. |
 | `DATABASE_ACQUIRE_TIMEOUT_SECS` | no | `30` | Connection-pool acquire timeout in seconds. |
 | `SUPABASE_JWT_ISSUER` | yes | none | Customer JWT issuer. |
