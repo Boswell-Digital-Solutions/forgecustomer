@@ -62,7 +62,7 @@ deploy/      deployment assets
 cp .env.example .env          # fill in real secrets (never commit .env)
 cd api && cargo build
 cargo test
-cargo run                     # serves on $HOST:$PORT (default 0.0.0.0:8080)
+cargo run                     # serves on $HOST:$PORT (default 0.0.0.0:8090)
 ```
 
 Apply migrations with the Supabase CLI:

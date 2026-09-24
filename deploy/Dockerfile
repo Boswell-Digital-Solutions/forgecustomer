@@ -13,6 +13,9 @@ WORKDIR /app
 COPY --from=build /app/target/release/forgecustomer-api /usr/local/bin/forgecustomer-api
 # Configuration is provided via environment variables (see .env.example). No secrets are
 # baked into the image.
+# The image binds the port that it exposes. Outside the image, the default is the
+# registered local port 8090.
+ENV PORT=8080
 EXPOSE 8080
 USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/forgecustomer-api"]
