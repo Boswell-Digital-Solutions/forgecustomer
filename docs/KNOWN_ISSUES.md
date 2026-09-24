@@ -33,7 +33,7 @@ its four allowed warnings do not change.
 ## KI-FOC-20260924-002 — `cargo audit` runs only on push and pull request
 
 **Date found:** 2026-09-24
-**Status:** open
+**Status:** closed (fixed 2026-09-24 in a later change)
 
 **What is wrong:** `.github/workflows/ci.yml` runs the `audit` job only on `push` and
 `pull_request`. A new advisory against a locked dependency fails no check until the next push.
@@ -44,7 +44,11 @@ found it. The repository has no Dependabot configuration.
 database at run time, so its result can change when the database changes, with no change to
 the code.
 
-**Fix:** None yet. A `schedule` trigger on the audit job, for example daily, finds a new
-advisory against `main` within one day.
+**Fix:** `.github/workflows/dependency-audit.yml` runs `cargo audit` on `main` every day at
+06:17 UTC. It also runs on manual dispatch and on a pull request that changes the workflow
+file, so an edit to the workflow is tested before it merges. GitHub sends the notice of a
+failed scheduled run to the user who last changed the cron schedule. The `audit` job in
+`ci.yml` does not change.
 
-**Scope:** open. The fix changes CI only. It needs an operator decision on the schedule.
+**Scope:** closed. The change adds one workflow file and updates `docs/SECURITY.md`,
+`docs/IMPLEMENTATION_STATUS.md`, and `doc/system` §13.

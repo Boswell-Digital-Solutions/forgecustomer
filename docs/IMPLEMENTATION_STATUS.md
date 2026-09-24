@@ -25,7 +25,7 @@ same change as implementation.
 | 12 | Privacy & deletion | ✅ | deletion workflow live end to end: customer request/cancel, operator advance/reject/execute, non-destructive cooling-off, anonymization transaction with receipt + customer_anonymized emit; anonymized accounts fail closed |
 | 13 | Fleet/update foundation | ✅ | default fleet/backfill/RLS, release/artifact/campaign/hold/outcome tables, release/artifact registration, public bootstrap lookup, admin control API, deterministic rollout, Tauri update lookup, bounded update-event receipts, CI DB-backed eligibility matrix, release package publication smoke proof, and HTTP update-campaign smoke proof live |
 | 18 | RLS | ✅ | enabled on all tables; read-own + public-catalog policies; CI asserts coverage and customer write denial |
-| 19 | Security hardening | ✅ | JWT issuer/audience/exp, constant-time webhook verify, key rotation, security headers, request timeout + body-size cap, per-client rate limiting, hardened correlation ids, cargo-audit in CI |
+| 19 | Security hardening | ✅ | JWT issuer/audience/exp, constant-time webhook verify, key rotation, security headers, request timeout + body-size cap, per-client rate limiting, hardened correlation ids, cargo-audit in CI and daily on `main` |
 | 21 | Testing | 🟡 | 104 unit + 30 security integration tests; CI DB-backed security/update smoke slices live; Stripe/Supabase/DataForge e2e suites deferred (see `tests/README.md`) |
 | 22 | Documentation | ✅ | all docs present; kept in-sync with code |
 | 23 | CI | ✅ | fmt, clippy -D warnings, test, migration determinism, RLS assert, OpenAPI lint, secret scan, audit |

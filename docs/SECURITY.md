@@ -109,9 +109,11 @@ dependency audit · database least privilege · separate dev/staging/prod secret
 
 ### Dependency-audit waivers
 
-`cargo audit` runs in CI and fails the build on any new advisory. Explicit waivers live
-in `.cargo/audit.toml`, each with a written justification, and are revisited whenever the
-flagged dependency or its parent is upgraded. Current waivers:
+`cargo audit` runs in CI and fails the build on any new advisory. A new advisory can also
+fail an unchanged lockfile, so `.github/workflows/dependency-audit.yml` audits `main` every
+day as well. Explicit waivers live in `.cargo/audit.toml`, each with a written
+justification, and are revisited whenever the flagged dependency or its parent is upgraded.
+Current waivers:
 
 - **RUSTSEC-2023-0071** (`rsa` 0.9.x, Marvin timing side-channel, no fixed 0.9 release):
   `rsa` appears in `Cargo.lock` only as a dependency of `sqlx-mysql`. This service is
