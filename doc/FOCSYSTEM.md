@@ -1332,6 +1332,11 @@ Migration and RLS validation require PostgreSQL or the CI migration job.
 | `secret-scan` | Gitleaks over repo history |
 | `audit` | `cargo audit` |
 
+`.github/workflows/dependency-audit.yml` runs the same `cargo audit` on `main` every day at
+06:17 UTC, on manual dispatch, and on pull requests that change that workflow. A new RustSec
+advisory can fail an unchanged lockfile, and push-triggered CI does not run when nothing is
+pushed.
+
 ### Tests covered today
 
 - JWT validator accepts valid tokens and rejects expired, wrong-audience, wrong-issuer,
