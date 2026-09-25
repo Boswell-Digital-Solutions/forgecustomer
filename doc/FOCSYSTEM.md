@@ -26,20 +26,20 @@ and designation doctrine.
 
 | Part | File | Contents |
 | --- | --- | --- |
-| §1 | `00_overview/01-overview.md` | Service identity, customer/commercial authority |
-| §2 | `00_overview/02-architecture-runtime.md` | Architecture & runtime (Rust/Axum + Supabase) |
-| §3 | `10_service-contract/03-api-contract.md` | API contract (incl. `/v1/admin/*`) |
-| §4 | `20_runtime/04-data-model.md` | Data model |
-| §5 | `20_runtime/05-domain-subsystems.md` | Domain subsystems (licensing, entitlements, usage, billing) |
-| §6 | `30_dependencies/06-integrations-events.md` | Integrations & events (Stripe, DataForge outbox) |
-| §7 | `40_governance/07-scope.md` | Service authority boundary, mutation discipline, truth classes |
-| §8 | `40_governance/08-governance.md` | Ownership, designation doctrine, authority hierarchy |
-| §9 | `40_governance/09-change-control.md` | Change control |
-| §10 | `40_governance/10-authority-boundaries.md` | Detailed authority/ownership boundaries |
-| §11 | `40_governance/11-security-privacy.md` | Security & privacy |
-| §12 | `50_operations/12-configuration-operations.md` | Configuration & operations |
-| §13 | `50_operations/13-verification-status.md` | Verification & status |
-| §14 | `99_appendices/14-appendices.md` | Glossary, cross-references, revision history |
+| §1 | `01-overview.md` | Service identity, customer/commercial authority |
+| §2 | `02-architecture-runtime.md` | Architecture & runtime (Rust/Axum + Supabase) |
+| §3 | `03-api-contract.md` | API contract (incl. `/v1/admin/*`) |
+| §4 | `04-data-model.md` | Data model |
+| §5 | `05-domain-subsystems.md` | Domain subsystems (licensing, entitlements, usage, billing) |
+| §6 | `06-integrations-events.md` | Integrations & events (Stripe, DataForge outbox) |
+| §7 | `07-scope.md` | Service authority boundary, mutation discipline, truth classes |
+| §8 | `08-governance.md` | Ownership, designation doctrine, authority hierarchy |
+| §9 | `09-change-control.md` | Change control |
+| §10 | `10-authority-boundaries.md` | Detailed authority/ownership boundaries |
+| §11 | `11-security-privacy.md` | Security & privacy |
+| §12 | `12-configuration-operations.md` | Configuration & operations |
+| §13 | `13-verification-status.md` | Verification & status |
+| §14 | `14-appendices.md` | Glossary, cross-references, revision history |
 
 ## Quick Assembly
 
