@@ -1,0 +1,52 @@
+# Documentation CI — runs for a change that touches documentation.
+#
+# Standing rule (2026-10-01): a documentation-only change runs this workflow and no code CI.
+# In `ci.yml` the code jobs skip, and the secret scan still runs on every change. A change that
+# touches both documentation and code runs both.
+#
+# This workflow checks that the assembled system reference (`doc/FOCSYSTEM.md`) is built from its
+# parts and that the measured snapshots are valid.
+#
+# This workflow is not a required check. A `paths` filter is safe here for that reason.
+
+name: Documentation CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'doc/**'
+      - '**/*.md'
+      - '.github/workflows/documentation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'doc/**'
+      - '**/*.md'
+      - '.github/workflows/documentation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  documentation:
+    name: Documentation (system build and snapshots)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the system reference
+        run: bash doc/system/BUILD.sh
+
+      - name: The assembled reference is current
+        run: |
+          if ! git diff --exit-code -- doc; then
+            echo "::error::doc/ differs after BUILD.sh. Run 'bash doc/system/BUILD.sh' and commit the result."
+            exit 1
+          fi
