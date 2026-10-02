@@ -1337,6 +1337,44 @@ Migration and RLS validation require PostgreSQL or the CI migration job.
 advisory can fail an unchanged lockfile, and push-triggered CI does not run when nothing is
 pushed.
 
+### Which CI runs for which change
+
+A change that touches only documentation runs the Documentation CI and no code CI.
+A change that touches any other file runs the code CI.
+A change that touches both runs both.
+No scheduled run is added for the code CI.
+When the scope is unknown, the code CI runs.
+
+Documentation means `docs/**`, `doc/**` and any `*.md` file.
+A change to `.github/workflows/**` is code.
+
+| Workflow or job | Class | Documentation-only change |
+| --- | --- | --- |
+| `documentation.yml` | Documentation CI | Runs. It builds `doc/system` and fails on a difference in `doc/`. |
+| `ci.yml` jobs `rust`, `migrations`, `release-pipeline-smoke`, `update-campaign-http-smoke`, `contracts`, `audit` | Code CI | Skip. |
+| `ci.yml` job `secret-scan` | Security scan | Runs on every change. |
+| `ci.yml` job `scope` | Scope decision | Runs on every change. |
+| `dependency-audit.yml` | Scheduled audit | No change. It runs daily, on dispatch, and on a change to that workflow. |
+
+`ci.yml` has a secret scan in the same workflow as the code jobs.
+A workflow-level `paths` filter would stop the secret scan, so `ci.yml` has no filter.
+The `scope` job runs `scripts/ci-change-scope.sh` on the list of changed files.
+The script prints `code=false` only when every changed file is documentation.
+Each code job has the condition `needs.scope.outputs.code != 'false'`.
+An empty list, a failed scope job and an unknown event all run the code jobs.
+The `scope` job first runs `scripts/ci-change-scope.test.sh`.
+
+A documentation path that code reads is code. Add it to `REINCLUDE` in `scripts/ci-change-scope.sh`.
+The list is empty today. The API, the tests, the smoke scripts and `deploy/Dockerfile` read no documentation.
+The Docker build copies only `Cargo.toml`, `Cargo.lock` and `api/`.
+
+A secret scan runs on every change. A documentation file can hold a leaked secret.
+The daily `dependency-audit.yml` audits `main`, so a documentation-only change does not delay a new advisory.
+
+Do not add a required check on a path-filtered workflow. The check stays pending, and the merge blocks.
+A skipped job reports as passing, so a required check on a `ci.yml` job is safe.
+Do not rename a job that a rule requires.
+
 ### Tests covered today
 
 - JWT validator accepts valid tokens and rejects expired, wrong-audience, wrong-issuer,

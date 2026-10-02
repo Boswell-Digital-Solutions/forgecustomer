@@ -6,6 +6,26 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261002-001 — A documentation-only push still redeploys on Render
+
+**Date found:** 2026-10-02
+**Status:** open
+
+**What is wrong:** The 2026-10-01 rule says a documentation-only change runs no code CI.
+`ci.yml` now skips its code jobs for such a change. `render.yaml` sets no `autoDeploy` or
+`buildFilter` key, so Render still builds and deploys on every push to the tracked branch.
+
+**Root cause:** Render deploy settings live in `render.yaml` and the Render dashboard, not in
+a workflow. The rule change touched only GitHub Actions.
+
+**Fix:** Not done. Add a `buildFilter` with `ignoredPaths` for `docs/**`, `doc/**` and
+`**/*.md` after the owner confirms the Render setting. The Docker build copies only
+`Cargo.toml`, `Cargo.lock` and `api/`, so documentation changes nothing in the image.
+
+**Scope:** open.
+
+---
+
 ## KI-FOC-20260924-001 — `cargo audit` fails on `main`: RUSTSEC-2026-0285 in `rustls` 0.23.40
 
 **Date found:** 2026-09-24

@@ -9,7 +9,43 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Standing rule (2026-10-01): a documentation-only change runs no code job.
+  # The secret scan (`secret-scan`) has no condition and runs on every change, because a
+  # documentation file can hold a leaked secret. A workflow-level `paths` filter would stop it,
+  # so this job decides the scope instead. Each code job is fail-closed: it runs unless this job
+  # says `code=false`. A failed scope job leaves the output empty, so the code jobs run.
+  # Do not test `== 'true'`. `scripts/ci-change-scope.test.sh` covers the script.
+  # The daily `dependency-audit.yml` still audits `main`, so a new advisory does not wait for a push.
+  scope:
+    name: detect change scope
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.scope.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Test the scope script
+        run: bash scripts/ci-change-scope.test.sh
+      - id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          files=""
+          if [ "$EVENT" = "pull_request" ]; then
+            files="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+          elif [ "$EVENT" = "push" ] && [ -n "$BEFORE" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            files="$(git diff --name-only "$BEFORE" "$SHA")"
+          fi
+          # An unknown scope (an empty list) runs the code jobs.
+          printf '%s\n' "$files" | bash scripts/ci-change-scope.sh | tee -a "$GITHUB_OUTPUT"
+
   rust:
+    needs: scope
+    if: ${{ !cancelled() && needs.scope.outputs.code != 'false' }}
     name: fmt + clippy + test
     runs-on: ubuntu-latest
     steps:
@@ -26,6 +62,8 @@ jobs:
         run: cargo test --all
 
   migrations:
+    needs: scope
+    if: ${{ !cancelled() && needs.scope.outputs.code != 'false' }}
     name: migration validation + RLS presence
     runs-on: ubuntu-latest
     services:
@@ -74,6 +112,8 @@ jobs:
           echo "append-only enforced"
 
   release-pipeline-smoke:
+    needs: scope
+    if: ${{ !cancelled() && needs.scope.outputs.code != 'false' }}
     name: release pipeline smoke
     runs-on: ubuntu-latest
     services:
@@ -107,6 +147,8 @@ jobs:
         run: bash scripts/release_pipeline_smoke.sh
 
   update-campaign-http-smoke:
+    needs: scope
+    if: ${{ !cancelled() && needs.scope.outputs.code != 'false' }}
     name: update campaign HTTP smoke
     runs-on: ubuntu-latest
     services:
@@ -141,6 +183,8 @@ jobs:
         run: bash scripts/update_campaign_http_smoke.sh
 
   contracts:
+    needs: scope
+    if: ${{ !cancelled() && needs.scope.outputs.code != 'false' }}
     name: OpenAPI + schema validation
     runs-on: ubuntu-latest
     steps:
@@ -175,6 +219,8 @@ jobs:
         run: gitleaks detect --source . --redact -v
 
   audit:
+    needs: scope
+    if: ${{ !cancelled() && needs.scope.outputs.code != 'false' }}
     name: dependency audit
     runs-on: ubuntu-latest
     steps:
