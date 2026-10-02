@@ -17,6 +17,15 @@ services:
     plan: starter
     dockerfilePath: ./deploy/Dockerfile
     dockerContext: .
+    # A documentation-only push must not build or deploy. The image copies only
+    # Cargo.toml, Cargo.lock and api/, so documentation cannot change it. This is
+    # ignoredPaths, not an allowlist: an unknown new path still builds (fail closed).
+    # See doc/system/13-verification-status.md "Which CI runs for which change".
+    buildFilter:
+      ignoredPaths:
+        - "*.md"
+        - "doc/**"
+        - "docs/**"
     # Gate rollout/traffic on DB reachability, not just process liveness
     # (docs/RUNBOOK.md: "Load balancers should gate on ready").
     healthCheckPath: /v1/ready

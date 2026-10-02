@@ -1367,6 +1367,7 @@ The `scope` job first runs `scripts/ci-change-scope.test.sh`.
 A documentation path that code reads is code. Add it to `REINCLUDE` in `scripts/ci-change-scope.sh`.
 The list is empty today. The API, the tests, the smoke scripts and `deploy/Dockerfile` read no documentation.
 The Docker build copies only `Cargo.toml`, `Cargo.lock` and `api/`.
+Render builds follow the same rule. `buildFilter.ignoredPaths` in `render.yaml` skips a build for a documentation-only push.
 
 A secret scan runs on every change. A documentation file can hold a leaked secret.
 The daily `dependency-audit.yml` audits `main`, so a documentation-only change does not delay a new advisory.

@@ -9,7 +9,7 @@ is reported as new, and written in the same session it is found.
 ## KI-FOC-20261002-001 — A documentation-only push still redeploys on Render
 
 **Date found:** 2026-10-02
-**Status:** open
+**Status:** mitigated in `render.yaml` (2026-10-02), not yet observed. The Render dashboard setting is unchecked.
 
 **What is wrong:** The 2026-10-01 rule says a documentation-only change runs no code CI.
 `ci.yml` now skips its code jobs for such a change. `render.yaml` sets no `autoDeploy` or
@@ -18,11 +18,14 @@ is reported as new, and written in the same session it is found.
 **Root cause:** Render deploy settings live in `render.yaml` and the Render dashboard, not in
 a workflow. The rule change touched only GitHub Actions.
 
-**Fix:** Not done. Add a `buildFilter` with `ignoredPaths` for `docs/**`, `doc/**` and
-`**/*.md` after the owner confirms the Render setting. The Docker build copies only
+**Fix:** Done before go-live. The `forgecustomer-api` service in `render.yaml` has a `buildFilter`
+with `ignoredPaths` for root `*.md`, `doc/**` and `docs/**`. The Docker build copies only
 `Cargo.toml`, `Cargo.lock` and `api/`, so documentation changes nothing in the image.
+The filter uses `ignoredPaths`, not `paths`, so an unknown new path still builds. A service that
+someone made by hand in the Render dashboard ignores `render.yaml`. Check that the Blueprint manages
+this service. Do not call the fix proven until a real documentation-only push skips the build.
 
-**Scope:** open.
+**Scope:** open until a documentation-only push is seen to skip the Render build and the dashboard setting is checked.
 
 ---
 
