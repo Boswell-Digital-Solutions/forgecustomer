@@ -18,6 +18,7 @@ pub struct AppState {
     pub key_ring: Arc<VerifyingKeyRing>,
     pub customer_validator: JwtValidator,
     pub admin_validator: JwtValidator,
+    pub posture_validator: JwtValidator,
     pub http: reqwest::Client,
     pub rate_limiter: Arc<RateLimiter>,
 }
@@ -55,6 +56,12 @@ impl AppState {
             &config.admin_jwt_audience,
         );
 
+        let posture_validator = JwtValidator::eddsa(
+            &config.admin_jwt_public_key,
+            &config.admin_jwt_issuer,
+            "forgecustomer-posture",
+        );
+
         // `DATABASE_URL` points at Supabase's pooled connection string (RUNBOOK.md), which
         // may be the transaction-mode pooler (PgBouncer): connections are handed out per
         // transaction, not held for a session, so a server-side prepared statement created
@@ -84,6 +91,7 @@ impl AppState {
             key_ring: Arc::new(key_ring),
             customer_validator,
             admin_validator,
+            posture_validator,
             http,
             rate_limiter: Arc::new(RateLimiter::default()),
         })
