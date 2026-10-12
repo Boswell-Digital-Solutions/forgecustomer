@@ -34,7 +34,7 @@ is reported as new, and written in the same session it is found.
 ## KI-FOC-20261002-001 — A documentation-only push still redeploys on Render
 
 **Date found:** 2026-10-02
-**Status:** mitigated in `render.yaml` (2026-10-02), not yet observed. The Render dashboard setting is unchecked.
+**Status: OBSERVED 2026-10-12: the mitigation in `render.yaml` did NOT prevent a deploy of the running service. Open. The fix is a Render dashboard action.**
 
 **What is wrong:** The 2026-10-01 rule says a documentation-only change runs no code CI.
 `ci.yml` now skips its code jobs for such a change. `render.yaml` sets no `autoDeploy` or
@@ -50,7 +50,15 @@ The filter uses `ignoredPaths`, not `paths`, so an unknown new path still builds
 someone made by hand in the Render dashboard ignores `render.yaml`. Check that the Blueprint manages
 this service. Do not call the fix proven until a real documentation-only push skips the build.
 
-**Scope:** open until a documentation-only push is seen to skip the Render build and the dashboard setting is checked.
+**Observed 2026-10-12.** Pull request #34 (merge commit `215619b2`) changed only `docs/KNOWN_ISSUES.md`. It was merged at 00:17:33Z. A Claude Chat session reading Render (read-only; this session did not read Render) reported that the running service "Forge Customer" started a deploy of commit `215619b` at 00:17:35Z, two seconds later, and that it went live at 00:20:15Z. The `buildFilter` in `render.yaml` ignores `docs/**`, so a correct filter would have skipped this build. It did not.
+
+**Likely cause (an inference, not verified):** the running service is not managed by the blueprint. The operator states that the current services were created in a Render Project ("Boswell Digital Solutions") and that the older services outside it are suspended. A service made outside the blueprint ignores `render.yaml`. This entry already warned about that case.
+
+**Effect:** Forge Customer was redeployed with unchanged application code. The Chat report says the API logged `starting` at 00:20:08Z with `env: development`. That value was not checked. Any documentation merge to `main` redeploys this service until the Render setting is fixed.
+
+**Fix needed (operator, in the Render dashboard):** set a build filter on the running service that ignores `*.md`, `doc/**` and `docs/**`, or turn off auto-deploy for it. Then re-test with a documentation-only merge and confirm that no deploy starts. The `render.yaml` change alone is not enough.
+
+**Scope:** open until a documentation-only merge is seen to skip the Render build on the running service. Merging a documentation change to `main` before then redeploys it.
 
 ---
 
