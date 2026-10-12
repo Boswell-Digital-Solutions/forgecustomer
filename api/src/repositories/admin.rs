@@ -119,7 +119,7 @@ pub async fn list_customers(
                or exists (select 1 from public.customer_emails e
                           where e.customer_id = c.id and e.email = $1))
           and ($2::text is null or c.status = $2)
-        order by c.created_at desc
+        order by c.created_at desc, c.id desc
         limit $3 offset $4
         "#,
     )

@@ -516,6 +516,33 @@ responses still carry the correlation and security headers.
 - Usage, installation, Stripe webhook, and outbox delivery paths must treat replay as
   expected behavior, not as an exceptional production incident.
 
+
+## Read-only customer posture projection (2026-10-12)
+
+`GET /v1/posture/customers?offset=0` accepts only an EdDSA operator credential with
+issuer `ADMIN_JWT_ISSUER`, the existing trusted `ADMIN_JWT_PUBLIC_KEY`, fixed audience
+`forgecustomer-posture`, and exact scope `posture:read`. A customer JWT or ordinary admin
+audience cannot satisfy this route; posture credentials cannot satisfy existing admin routes.
+This does not introduce a shared Supabase credential or new database role.
+
+The response contains `observed_at` (UTC query completion time), `customers` (at most 25),
+and nullable `next_offset`. Customer fields: `id`, `customer_type`, `display_name`, `status`,
+`country_code`, `primary_email`, `created_at`. It reuses the established customer projection
+and orders by creation time then id, descending. Offset is bounded to 100000; unknown query
+fields are rejected. Concurrent inserts can shift pages; this is an operator snapshot, not
+an export cursor or company-wide count. The next page uses the returned offset.
+
+Responses prohibit caching (`Cache-Control: no-store`). Database failures return a fixed
+503 message without database details. The route uses the existing service rate limit and
+request deadline. It performs no writes. Forge_Command loads records on explicit request
+and does not persist this customer projection. Licensing, usage, fleet and support operations
+continue to use their existing routes; this projection does not claim those domains are healthy.
+
+Deploy only after the Render build-filter hold is resolved and the service deployment is
+approved. No environment secret or migration is needed: the existing operator trust anchor
+verifies a distinct audience. Local security tests prove rejection boundaries, not production
+DB connectivity. The held PR #35, support activation and unrelated remediation remain held.
+
 ---
 
 # §4 — Data Model

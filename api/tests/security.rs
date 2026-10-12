@@ -893,3 +893,98 @@ async fn error_responses_use_the_error_contract() {
     assert_eq!(body["error"]["code"], "UNAUTHENTICATED");
     assert!(body["error"]["correlation_id"].is_string());
 }
+
+#[tokio::test]
+async fn posture_credentials_are_purpose_separated() {
+    for (aud, scope, path, expected) in [
+        (
+            "forgecustomer-admin",
+            "admin",
+            "/v1/posture/customers",
+            StatusCode::UNAUTHORIZED,
+        ),
+        (
+            "forgecustomer-posture",
+            "admin",
+            "/v1/posture/customers",
+            StatusCode::FORBIDDEN,
+        ),
+        (
+            "forgecustomer-posture",
+            "posture:read admin",
+            "/v1/posture/customers",
+            StatusCode::FORBIDDEN,
+        ),
+        (
+            "forgecustomer-posture",
+            "posture:read",
+            "/v1/admin/customers",
+            StatusCode::UNAUTHORIZED,
+        ),
+        (
+            "forgecustomer-posture",
+            "posture:read",
+            "/v1/posture/customers?offset=100001",
+            StatusCode::BAD_REQUEST,
+        ),
+        // A valid narrow token reaches the unavailable test DB, never an empty success.
+        (
+            "forgecustomer-posture",
+            "posture:read",
+            "/v1/posture/customers",
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
+    ] {
+        let token = admin_jwt(
+            json!({"sub":"operator", "iss":ADMIN_ISS,"aud":aud,"scope":scope,"exp":now()+60}),
+        );
+        let req = Request::builder()
+            .uri(path)
+            .header("authorization", format!("Bearer {token}"))
+            .body(Body::empty())
+            .unwrap();
+        assert_eq!(status_of(req).await, expected, "{aud} {scope} {path}");
+    }
+    assert_eq!(
+        status_of(
+            Request::builder()
+                .uri("/v1/posture/customers")
+                .body(Body::empty())
+                .unwrap()
+        )
+        .await,
+        StatusCode::UNAUTHORIZED
+    );
+}
+
+#[tokio::test]
+async fn posture_token_cannot_mutate_and_expiry_is_enforced() {
+    let claims = json!({"sub":"operator", "iss":ADMIN_ISS, "aud":"forgecustomer-posture", "scope":"posture:read", "exp":now()+60});
+    let token = admin_jwt(claims.clone());
+    let req = Request::builder()
+        .method("POST")
+        .uri("/v1/admin/customers/00000000-0000-0000-0000-000000000001/suspend")
+        .header("authorization", format!("Bearer {token}"))
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"reason":"test"}"#))
+        .unwrap();
+    assert_eq!(status_of(req).await, StatusCode::UNAUTHORIZED);
+    let mut expired = claims;
+    expired["exp"] = json!(now() - 1);
+    let req = Request::builder()
+        .uri("/v1/posture/customers")
+        .header("authorization", format!("Bearer {}", admin_jwt(expired)))
+        .body(Body::empty())
+        .unwrap();
+    assert_eq!(status_of(req).await, StatusCode::UNAUTHORIZED);
+    let customer_token = jwt(
+        json!({"sub":"customer", "iss":SUPA_ISS,"aud":SUPA_AUD,"exp":now()+60}),
+        SUPA_SECRET,
+    );
+    let req = Request::builder()
+        .uri("/v1/posture/customers")
+        .header("authorization", format!("Bearer {customer_token}"))
+        .body(Body::empty())
+        .unwrap();
+    assert_eq!(status_of(req).await, StatusCode::UNAUTHORIZED);
+}

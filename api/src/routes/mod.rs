@@ -8,6 +8,7 @@
 pub mod catalog;
 pub mod entitlements;
 pub mod health;
+pub mod posture;
 
 use axum::body::Bytes;
 use axum::extract::{DefaultBodyLimit, Path, Query, State};
@@ -132,6 +133,7 @@ pub fn build_router(state: AppState) -> Router {
     let webhooks = Router::new().route("/v1/webhooks/stripe", post(stripe_webhook));
 
     let admin = Router::new()
+        .route("/v1/posture/customers", get(posture::customers))
         .route("/v1/admin/customers", get(admin_customers))
         .route("/v1/admin/customers/:id/suspend", post(admin_suspend))
         .route("/v1/admin/customers/:id/restore", post(admin_restore))
