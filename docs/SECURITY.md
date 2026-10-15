@@ -15,6 +15,11 @@
 - Customer access tokens are Supabase JWTs: short-lived, validated for **issuer**,
   **audience**, signature, and **expiry**. Invalid/expired/wrong-audience tokens fail
   closed.
+- ES256 customer JWTs use the configured HTTPS issuer's public JWKS, with bounded
+  cached lookup, no redirects, and no token-supplied URLs. Missing/invalid/expired
+  verification keys fail closed. Legacy HS256 uses only its explicitly configured
+  secret; it never treats a public key as an HMAC secret. Admin/posture verification
+  remains separate. See `doc/system/11-security-privacy.md` for cache and fetch limits.
 - Refresh-token rotation is handled by Supabase Auth.
 - Admin/operator tokens use a **separate** trusted issuer and audience
   (`ADMIN_JWT_ISSUER` / `ADMIN_JWT_AUDIENCE`). A customer token can **never** authorize an

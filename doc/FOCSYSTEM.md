@@ -1153,7 +1153,14 @@ testable, and boring.
 Customer tokens:
 
 - Supabase-issued JWTs.
-- Validated for HS256 signature, issuer, audience, and expiry.
+- ES256 signatures use the public JWKS at the configured HTTPS issuer plus
+  `/.well-known/jwks.json`. Legacy HS256 tokens require an explicitly configured
+  `SUPABASE_JWT_SECRET`. Both paths validate issuer, audience, and expiry.
+- JWKS selection uses the token's bounded `kid` and an explicit ES256/P-256 signing-key
+  policy. Token-supplied key URLs are ignored; redirects are rejected. Requests have a
+  five-second timeout, 64 KiB response cap, and 32-key cap. Keys are cached for at most
+  ten minutes, with single-flight refresh and a one-minute cooldown on misses/failures.
+  Expired caches never authorize requests after a fetch failure (`503 SERVICE_UNAVAILABLE`).
 - `sub` must parse as a UUID.
 - Missing or unprovisioned customer profiles fail closed.
 - When the resolved profile has `mfa_required` set, the token's `aal` claim must equal
@@ -1183,8 +1190,9 @@ Admin tokens:
   admin secret.
 - A customer token cannot authorize an admin route.
 
-If a JWT secret is absent, the validator is marked unconfigured and rejects tokens. That
-prevents accidental local or production token acceptance.
+An absent legacy JWT secret rejects HS256 tokens; it does not disable ES256 verification.
+Unavailable or invalid JWKS data fails closed. No customer token, private key, or auth
+response body is logged. Admin and posture validators do not use the customer JWKS.
 
 ### Secrets
 
@@ -1245,7 +1253,8 @@ Forged snapshots must fail verification. Private signing keys must never be logg
 # §12 — Configuration & Operations
 
 Configuration is loaded from environment variables in `api/src/config.rs`. Missing
-required variables fail startup. Empty token-verification secrets fail token validation.
+required variables fail startup. Empty legacy verification secrets reject HS256 tokens;
+ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 
 ### Core environment variables
 
@@ -1256,9 +1265,9 @@ required variables fail startup. Empty token-verification secrets fail token val
 | `PORT` | no | `8090` | Bind port. 8090 is the registered local port (forge `PORT_REGISTRY.md`), where Forge Command looks for ForgeCustomer. The Docker image and the Render Blueprint set `8080`. |
 | `DATABASE_URL` | yes | none | Postgres/Supabase database URL. |
 | `DATABASE_ACQUIRE_TIMEOUT_SECS` | no | `30` | Connection-pool acquire timeout in seconds. |
-| `SUPABASE_JWT_ISSUER` | yes | none | Customer JWT issuer. |
+| `SUPABASE_JWT_ISSUER` | yes | none | Exact customer JWT issuer; HTTPS URL also determines the public JWKS location. |
 | `SUPABASE_JWT_AUDIENCE` | no | `authenticated` | Customer JWT audience. |
-| `SUPABASE_JWT_SECRET` | required to accept customer tokens | empty | Customer JWT HS256 verification secret. |
+| `SUPABASE_JWT_SECRET` | only for legacy HS256 tokens | empty | Optional legacy customer HS256 verification secret; ES256 needs no secret. |
 | `ADMIN_JWT_ISSUER` | yes | none | Operator token issuer (Forge Command Token Authority, e.g. `forge_command_local`). |
 | `ADMIN_JWT_AUDIENCE` | yes | none | Operator token audience (e.g. `forgecustomer-admin`). |
 | `ADMIN_JWT_PUBLIC_KEY` | required to accept admin tokens | empty | PEM-encoded Ed25519 (SPKI) **public** key that verifies operator JWTs minted by Forge Command. No shared secret. |

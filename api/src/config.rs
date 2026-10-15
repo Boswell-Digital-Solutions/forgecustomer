@@ -15,7 +15,7 @@ pub struct Config {
 
     pub supabase_jwt_issuer: String,
     pub supabase_jwt_audience: String,
-    /// HS256 secret used to verify Supabase JWTs (the project JWT secret).
+    /// Optional legacy HS256 secret. ES256 customer tokens use the issuer's public JWKS.
     pub supabase_jwt_secret: String,
 
     pub admin_jwt_issuer: String,

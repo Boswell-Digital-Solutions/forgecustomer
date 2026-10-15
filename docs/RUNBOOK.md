@@ -25,6 +25,27 @@
   they are never committed. Use an always-on plan: free instances idle out and stall
   the outbox publisher and reservation sweeper.
 
+## Supabase customer signing keys
+
+Set `SUPABASE_JWT_ISSUER` to the exact project issuer, for example
+`https://PROJECT.supabase.co/auth/v1`, and audience to `authenticated`. ES256 customer
+JWTs are verified using public keys from that issuer plus `/.well-known/jwks.json`.
+No new secret is required. `SUPABASE_JWT_SECRET` is only for legacy HS256 tokens.
+Never copy a public JWK into that secret setting or disable signature validation.
+
+On Supabase signing-key rotation, keep the old and new public keys published during
+the overlap. ForgeCustomer caches keys for ten minutes and refreshes an unknown key
+ID at most once per minute. A revoked key can remain accepted until that cache expires;
+allow for the public endpoint's cache as well. See [Supabase signing keys](https://supabase.com/docs/guides/auth/signing-keys).
+A fetch outage with an expired cache returns `503 SERVICE_UNAVAILABLE`, not `401`.
+
+If a magic link is accepted but the website returns to login, correlate the website
+`[forge] upstream error` reference with the account-provision request. `401 INVALID_TOKEN`
+after successful Supabase verification indicates API token verification failed; re-sending
+email or resetting the mailbox password will not fix that trust mismatch. Check issuer,
+audience, deployed validator version, and public signing-key availability without
+logging a user token or signing secret.
+
 ## Health & readiness
 
 - `health` = process up. `ready` = DB reachable. Load balancers should gate on `ready`.
