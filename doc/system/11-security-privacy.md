@@ -8,7 +8,14 @@ testable, and boring.
 Customer tokens:
 
 - Supabase-issued JWTs.
-- Validated for HS256 signature, issuer, audience, and expiry.
+- ES256 signatures use the public JWKS at the configured HTTPS issuer plus
+  `/.well-known/jwks.json`. Legacy HS256 tokens require an explicitly configured
+  `SUPABASE_JWT_SECRET`. Both paths validate issuer, audience, and expiry.
+- JWKS selection uses the token's bounded `kid` and an explicit ES256/P-256 signing-key
+  policy. Token-supplied key URLs are ignored; redirects are rejected. Requests have a
+  five-second timeout, 64 KiB response cap, and 32-key cap. Keys are cached for at most
+  ten minutes, with single-flight refresh and a one-minute cooldown on misses/failures.
+  Expired caches never authorize requests after a fetch failure (`503 SERVICE_UNAVAILABLE`).
 - `sub` must parse as a UUID.
 - Missing or unprovisioned customer profiles fail closed.
 - When the resolved profile has `mfa_required` set, the token's `aal` claim must equal
@@ -38,8 +45,9 @@ Admin tokens:
   admin secret.
 - A customer token cannot authorize an admin route.
 
-If a JWT secret is absent, the validator is marked unconfigured and rejects tokens. That
-prevents accidental local or production token acceptance.
+An absent legacy JWT secret rejects HS256 tokens; it does not disable ES256 verification.
+Unavailable or invalid JWKS data fails closed. No customer token, private key, or auth
+response body is logged. Admin and posture validators do not use the customer JWKS.
 
 ### Secrets
 

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
-use crate::auth::JwtValidator;
+use crate::auth::{customer::CustomerJwtValidator, JwtValidator};
 use crate::config::Config;
 use crate::middleware::rate_limit::RateLimiter;
 use crate::services::signing::{Signer25519, VerifyingKeyRing};
@@ -16,7 +16,7 @@ pub struct AppState {
     pub pool: PgPool,
     pub signer: Arc<Signer25519>,
     pub key_ring: Arc<VerifyingKeyRing>,
-    pub customer_validator: JwtValidator,
+    pub customer_validator: CustomerJwtValidator,
     pub admin_validator: JwtValidator,
     pub posture_validator: JwtValidator,
     pub http: reqwest::Client,
@@ -45,11 +45,11 @@ impl AppState {
         let mut key_ring = VerifyingKeyRing::new();
         key_ring.add_signer(&signer);
 
-        let customer_validator = JwtValidator::hs256(
+        let customer_validator = CustomerJwtValidator::new(
             &config.supabase_jwt_secret,
             &config.supabase_jwt_issuer,
             &config.supabase_jwt_audience,
-        );
+        )?;
         let admin_validator = JwtValidator::eddsa(
             &config.admin_jwt_public_key,
             &config.admin_jwt_issuer,

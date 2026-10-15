@@ -38,7 +38,11 @@ impl FromRequestParts<AppState> for CustomerContext {
         };
 
         let token = bearer_token(auth_header(parts)).map_err(attach)?;
-        let claims = state.customer_validator.validate(token).map_err(attach)?;
+        let claims = state
+            .customer_validator
+            .validate(token)
+            .await
+            .map_err(attach)?;
 
         let auth_user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
             attach(AppError::new(
@@ -111,7 +115,11 @@ impl FromRequestParts<AppState> for AuthUserContext {
         };
 
         let token = bearer_token(auth_header(parts)).map_err(attach)?;
-        let claims = state.customer_validator.validate(token).map_err(attach)?;
+        let claims = state
+            .customer_validator
+            .validate(token)
+            .await
+            .map_err(attach)?;
 
         let auth_user_id = Uuid::parse_str(&claims.sub).map_err(|_| {
             attach(AppError::new(

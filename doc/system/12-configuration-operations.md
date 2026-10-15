@@ -1,7 +1,8 @@
 # §12 — Configuration & Operations
 
 Configuration is loaded from environment variables in `api/src/config.rs`. Missing
-required variables fail startup. Empty token-verification secrets fail token validation.
+required variables fail startup. Empty legacy verification secrets reject HS256 tokens;
+ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 
 ### Core environment variables
 
@@ -12,9 +13,9 @@ required variables fail startup. Empty token-verification secrets fail token val
 | `PORT` | no | `8090` | Bind port. 8090 is the registered local port (forge `PORT_REGISTRY.md`), where Forge Command looks for ForgeCustomer. The Docker image and the Render Blueprint set `8080`. |
 | `DATABASE_URL` | yes | none | Postgres/Supabase database URL. |
 | `DATABASE_ACQUIRE_TIMEOUT_SECS` | no | `30` | Connection-pool acquire timeout in seconds. |
-| `SUPABASE_JWT_ISSUER` | yes | none | Customer JWT issuer. |
+| `SUPABASE_JWT_ISSUER` | yes | none | Exact customer JWT issuer; HTTPS URL also determines the public JWKS location. |
 | `SUPABASE_JWT_AUDIENCE` | no | `authenticated` | Customer JWT audience. |
-| `SUPABASE_JWT_SECRET` | required to accept customer tokens | empty | Customer JWT HS256 verification secret. |
+| `SUPABASE_JWT_SECRET` | only for legacy HS256 tokens | empty | Optional legacy customer HS256 verification secret; ES256 needs no secret. |
 | `ADMIN_JWT_ISSUER` | yes | none | Operator token issuer (Forge Command Token Authority, e.g. `forge_command_local`). |
 | `ADMIN_JWT_AUDIENCE` | yes | none | Operator token audience (e.g. `forgecustomer-admin`). |
 | `ADMIN_JWT_PUBLIC_KEY` | required to accept admin tokens | empty | PEM-encoded Ed25519 (SPKI) **public** key that verifies operator JWTs minted by Forge Command. No shared secret. |

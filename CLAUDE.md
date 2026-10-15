@@ -59,6 +59,7 @@ That is what CI runs. The SQL suites above run against a live Postgres in the sa
   `cargo test` runs with no live database.
 - Docker here requires sudo; for a real database use a throwaway Postgres from
   `/usr/lib/postgresql/16/bin` on port 5433 rather than the docker path.
-- Admin auth is an **HS256 JWT**, which does not match the EdDSA scheme used on the customer
-  storefront side — the two ends are not interchangeable.
+- Admin auth uses **EdDSA operator JWTs** with Forge Command's public key. Customer auth
+  accepts Supabase **ES256 JWTs** using the configured issuer's public JWKS, plus legacy
+  HS256 only when its separate secret is configured. These trust domains are not interchangeable.
 - Documentation ships in the same change as the implementation.

@@ -42,6 +42,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 async-trait = "0.1"
 
 [dev-dependencies]
+ring = "0.17"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"

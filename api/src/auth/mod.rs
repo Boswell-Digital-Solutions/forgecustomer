@@ -9,6 +9,7 @@ use jsonwebtoken::{decode, errors::ErrorKind, Algorithm, DecodingKey, Validation
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub mod customer;
 pub mod extract;
 
 use crate::error::{AppError, ErrorCode};

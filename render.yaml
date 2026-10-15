@@ -45,7 +45,7 @@ services:
       # e.g. https://<project>.supabase.co/auth/v1
       - key: SUPABASE_JWT_ISSUER
         sync: false
-      # Supabase project JWT secret (HS256). Empty = customer auth fails closed.
+      # Optional legacy HS256 secret. ES256 uses the issuer's public JWKS; no secret needed.
       - key: SUPABASE_JWT_SECRET
         sync: false
       # Forge Command Token Authority issuer (e.g. forge_command_local).
