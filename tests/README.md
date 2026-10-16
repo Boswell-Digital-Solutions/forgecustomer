@@ -66,7 +66,8 @@ Start a separate disposable Supabase stack, apply migrations and seed, and suppl
 normal API environment privately. The harness requires `APP_ENV=local-stripe-sandbox`,
 `HOST=127.0.0.1`, an explicit nonzero port, a `postgres[ql]://127.0.0.1:PORT/...` database
 URL (credentials allowed), and `SUPABASE_JWT_ISSUER=http://127.0.0.1:PORT/auth/v1`.
-Only empty or test-mode Stripe keys are allowed; the Stripe API base stays official.
+Only empty or test-mode Stripe keys (`sk_test_`, `rk_test_`, and temporary claimable
+sandbox `rkcs_test_` keys) are allowed; the Stripe API base stays official.
 Admin verification and DataForge must be unconfigured. The entitlement signing seed must
 be the public `[3u8; 32]` security-test fixture encoded in base64; it is unsuitable for
 production or distributing trusted artifacts.

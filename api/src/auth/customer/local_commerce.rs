@@ -24,7 +24,10 @@ fn local_jwks(issuer: &str) -> Option<reqwest::Url> {
 }
 
 fn sandbox_key(key: &str) -> bool {
-    key.is_empty() || key.starts_with("sk_test_") || key.starts_with("rk_test_")
+    key.is_empty()
+        || key.starts_with("sk_test_")
+        || key.starts_with("rk_test_")
+        || key.starts_with("rkcs_test_")
 }
 
 /// Run only against a separately initialized, disposable local Supabase stack.
@@ -93,8 +96,10 @@ fn harness_rejects_remote_issuers_and_live_stripe_keys() {
     assert!(sandbox_key(""));
     assert!(sandbox_key("sk_test_fixture"));
     assert!(sandbox_key("rk_test_fixture"));
+    assert!(sandbox_key("rkcs_test_fixture"));
     assert!(!sandbox_key("sk_live_fixture"));
     assert!(!sandbox_key("rk_live_fixture"));
+    assert!(!sandbox_key("rkcs_live_fixture"));
     assert!(loopback_url("postgres://user@db.example.test:5432/test", "postgres").is_none());
     assert!(loopback_url("postgresql://user@127.0.0.1:55322/test", "postgresql").is_some());
 }
