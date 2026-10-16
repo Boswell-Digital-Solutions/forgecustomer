@@ -821,8 +821,9 @@ integration is constrained by the authority boundaries in this document.
 
 ### Supabase
 
-Supabase supplies Auth and PostgreSQL. ForgeCustomer validates Supabase JWTs locally using
-the configured HS256 secret, issuer, and audience. PostgreSQL migrations live in this repo
+Supabase supplies Auth and PostgreSQL. ForgeCustomer validates customer JWT signatures,
+issuer and audience using the explicit legacy HS256 secret or the configured issuer's
+public ES256 JWKS. PostgreSQL migrations live in this repo
 and are applied to the selected Supabase project.
 
 The Supabase service-role key is server-side only. Customer products and browser code
@@ -846,13 +847,18 @@ Stripe integration rules:
 - Duplicate and replayed webhook events are expected and must be idempotent.
 - The webhook route stores verified event envelopes once in `stripe_webhook_events` and
   applies supported checkout/subscription/invoice events transactionally.
+- Invoice subscription links accept legacy `subscription` and current
+  `parent.subscription_details.subscription` references, with the parent discriminator
+  checked and expanded IDs supported. Subscription periods accept legacy top-level
+  fields or current item-level fields from the same first item used for the single-plan
+  price mapping. Webhook processing and admin resync share this normalization.
 - Raw card data is never stored.
 - Raw webhook payload retention must be minimal and access-restricted.
 
 Checkout creation, signature verification, event parsing, idempotent receipt, subscription
 projection, invoice references, audit writes, sanitized subscription outbox emission, and
-subscription-linked license sync exist. Entitlement snapshot assembly from those projected
-rows remains a later phase.
+subscription-linked license sync exist. Signed entitlement snapshots evaluate the
+projected subscription and license state; the browser redirect never grants access.
 
 ### DataForge outbox
 

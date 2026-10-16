@@ -312,8 +312,12 @@ fn unix_seconds(value: Option<i64>) -> Option<DateTime<Utc>> {
     Utc.timestamp_opt(value?, 0).single()
 }
 
+fn first_subscription_item(value: &Value) -> Option<&Value> {
+    value.get("items")?.get("data")?.as_array()?.first()
+}
+
 fn subscription_price_id(value: &Value) -> Option<String> {
-    let first_item = value.get("items")?.get("data")?.as_array()?.first()?;
+    let first_item = first_subscription_item(value)?;
     first_item
         .get("price")
         .and_then(|price| string_field(price, "id"))
@@ -322,6 +326,30 @@ fn subscription_price_id(value: &Value) -> Option<String> {
                 .get("plan")
                 .and_then(|plan| string_field(plan, "id"))
         })
+}
+
+fn subscription_period(value: &Value, field: &str) -> Option<DateTime<Utc>> {
+    // Pre-Basil API versions expose shared periods at the top level. Current Stripe
+    // versions put them on items; use the same item as our single-plan price mapping.
+    unix_seconds(
+        integer_field(value, field)
+            .or_else(|| first_subscription_item(value).and_then(|item| integer_field(item, field))),
+    )
+}
+
+fn invoice_subscription_id(value: &Value) -> Option<String> {
+    let reference = value.get("subscription").filter(|value| !value.is_null());
+    let reference = reference.or_else(|| {
+        let parent = value.get("parent")?;
+        (parent.get("type")?.as_str()? == "subscription_details")
+            .then(|| parent.get("subscription_details")?.get("subscription"))?
+    })?;
+    // Stripe references may be IDs or expanded objects.
+    reference
+        .as_str()
+        .filter(|id| !id.is_empty())
+        .map(str::to_string)
+        .or_else(|| string_field(reference, "id"))
 }
 
 /// Extract a normalized subscription change from a Stripe subscription object — the same
@@ -339,8 +367,8 @@ fn subscription_change_from_object(
         plan_version_id: metadata_uuid(object, "plan_version_id"),
         stripe_price_id: subscription_price_id(object),
         status: normalize_stripe_status(&raw_status),
-        current_period_start: unix_seconds(integer_field(object, "current_period_start")),
-        current_period_end: unix_seconds(integer_field(object, "current_period_end")),
+        current_period_start: subscription_period(object, "current_period_start"),
+        current_period_end: subscription_period(object, "current_period_end"),
         cancel_at_period_end: bool_field(object, "cancel_at_period_end").unwrap_or(false),
     })
 }
@@ -488,7 +516,7 @@ impl ParsedStripeEvent {
         }
         Some(StripeInvoiceChange {
             stripe_invoice_id: string_field(&self.object, "id")?,
-            stripe_subscription_id: string_field(&self.object, "subscription")?,
+            stripe_subscription_id: invoice_subscription_id(&self.object)?,
             status: if self.event_type == "invoice.paid" {
                 SubscriptionStatus::Active
             } else {
@@ -771,6 +799,48 @@ mod tests {
         assert_eq!(change.stripe_price_id.as_deref(), Some("price_123"));
         assert_eq!(change.status, SubscriptionStatus::Active);
         assert!(change.current_period_end.is_some());
+    }
+
+    #[test]
+    fn modern_subscription_item_periods_are_preserved() {
+        let object = json!({
+            "id": "sub_modern", "status": "active",
+            "items": {"data": [{"price": {"id": "price_pro"},
+                "current_period_start": 1792111557, "current_period_end": 1794789957}]}
+        });
+        let change = subscription_change_from_object(&object, "incomplete").unwrap();
+        assert_eq!(change.stripe_price_id.as_deref(), Some("price_pro"));
+        assert_eq!(change.current_period_start.unwrap().timestamp(), 1792111557);
+        assert_eq!(change.current_period_end.unwrap().timestamp(), 1794789957);
+    }
+
+    #[test]
+    fn modern_invoice_parent_supports_paid_failed_and_expanded_references() {
+        for (event_type, expected) in [
+            ("invoice.paid", SubscriptionStatus::Active),
+            ("invoice.payment_failed", SubscriptionStatus::PastDue),
+        ] {
+            for reference in [json!("sub_modern"), json!({"id": "sub_modern"})] {
+                let payload = json!({"id": "evt_modern", "type": event_type,
+                    "data": {"object": {"id": "in_modern", "amount_due": 1900,
+                        "currency": "usd", "parent": {"type": "subscription_details",
+                            "subscription_details": {"subscription": reference}}}}});
+                let parsed = parse_event(&serde_json::to_vec(&payload).unwrap()).unwrap();
+                let invoice = parsed.invoice_change().expect("modern invoice link");
+                assert_eq!(invoice.stripe_subscription_id, "sub_modern");
+                assert_eq!(invoice.status, expected);
+                assert_eq!(invoice.amount_due_cents, Some(1900));
+            }
+        }
+    }
+
+    #[test]
+    fn invoice_parent_discriminator_must_match() {
+        let payload = json!({"id": "evt_unrelated", "type": "invoice.paid",
+            "data": {"object": {"id": "in_unrelated", "parent": {"type": "quote_details",
+                "subscription_details": {"subscription": "sub_unrelated"}}}}});
+        let parsed = parse_event(&serde_json::to_vec(&payload).unwrap()).unwrap();
+        assert!(parsed.invoice_change().is_none());
     }
 
     #[test]
