@@ -22,6 +22,9 @@ const MAX_JWKS_BYTES: usize = 64 * 1024;
 const MAX_KEYS: usize = 32;
 const MAX_TOKEN_BYTES: usize = 16 * 1024;
 
+#[cfg(test)]
+mod local_commerce;
+
 #[derive(Clone)]
 struct VerificationKey {
     kid: String,
