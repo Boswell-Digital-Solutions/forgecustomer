@@ -54,6 +54,34 @@ From the plan — ✅ covered today, 🔜 pending DB-backed flow wiring:
 
 ## 3. Deferred (require live or mocked Stripe / Supabase)
 
+### Manual local Supabase commerce server
+
+Local Supabase can issue ES256 tokens with an HTTP loopback JWKS endpoint. The shipping
+API deliberately requires HTTPS. For manual integration work, the test-only
+`auth::customer::local_commerce::serve_isolated_local_commerce` server uses the real router,
+database repositories and signature validator with a pinned loopback JWKS transport.
+It is excluded from the shipping binary and ignored by ordinary `cargo test` runs.
+
+Start a separate disposable Supabase stack, apply migrations and seed, and supply the
+normal API environment privately. The harness requires `APP_ENV=local-stripe-sandbox`,
+`HOST=127.0.0.1`, an explicit nonzero port, a `postgres[ql]://127.0.0.1:PORT/...` database
+URL (credentials allowed), and `SUPABASE_JWT_ISSUER=http://127.0.0.1:PORT/auth/v1`.
+Only empty or test-mode Stripe keys are allowed; the Stripe API base stays official.
+Admin verification and DataForge must be unconfigured. The entitlement signing seed must
+be the public `[3u8; 32]` security-test fixture encoded in base64; it is unsuitable for
+production or distributing trusted artifacts.
+
+```bash
+cargo test -p forgecustomer-api --lib \
+  auth::customer::local_commerce::serve_isolated_local_commerce -- --exact --ignored --nocapture
+```
+
+The command runs a server until interrupted; it is not evidence that a checkout or
+subscription flow passed. No background workers run. Use disposable local data, keep
+secrets out of shell history and output, and record actual Auth, Stripe webhook,
+subscription and entitlement results separately. No production configuration override
+permits HTTP JWKS.
+
 The `tests/integration`, `tests/stripe`, `tests/licensing`, and `tests/entitlement`
 directories are reserved for end-to-end suites that drive real flows (Checkout → webhook →
 subscription → entitlement; installation registration → activation; usage reserve/commit;

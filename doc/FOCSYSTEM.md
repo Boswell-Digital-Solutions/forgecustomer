@@ -1358,6 +1358,13 @@ bash doc/system/BUILD.sh
 The API uses SQLx runtime query APIs, so Rust build/test does not require a live database.
 Migration and RLS validation require PostgreSQL or the CI migration job.
 
+For manual commerce testing with local Supabase ES256 signing keys, a test-only ignored
+server accepts a strictly pinned HTTP loopback JWKS endpoint while retaining signature,
+issuer, audience and expiry checks. It uses the actual API router and local database,
+requires isolated configuration and test-mode Stripe keys, and runs no workers. See
+`tests/README.md` for invocation and constraints. It is absent from the shipping API;
+ordinary CI skips the server and does not prove an end-to-end Stripe payment flow.
+
 ### CI gates
 
 | Job | Checks |
