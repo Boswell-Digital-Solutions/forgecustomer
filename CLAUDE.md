@@ -13,6 +13,10 @@ Contracts: [contracts/](contracts/) — `openapi.yaml`, `entitlement-v1.schema.j
 
 ---
 
+## Repo Identity
+
+- Default branch: main
+
 ## Hard rules (violating one is a defect)
 
 1. **Authority boundaries are sacred.** Supabase Auth owns login identity. Stripe owns payment
