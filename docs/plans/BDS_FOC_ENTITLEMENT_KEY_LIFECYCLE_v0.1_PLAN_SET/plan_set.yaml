@@ -4,10 +4,10 @@ version: "0.1"
 lifecycle: proposed
 authority: Documentation creation only. No work package is authorized.
 decision_owner: Charles (Charlie) Boswell
-prepared: "2026-11-06"
+prepared: "2026-11-05"
 timezone: America/New_York
 parent:
-  operator_direction: "2026-11-06: build the plan ensuring current business code that works is considered instead of reinvented; build it in Drive /Forge using the protocols"
+  operator_direction: "2026-11-05: build the plan ensuring current business code that works is considered instead of reinvented; build it in Drive /Forge using the protocols"
   findings: [KI-FOC-20261105-001]
   consumer_plans: [BDS-FCO-FLEET-MANAGER-v0.1, BDS-AF-RELACC-v0.1]
 proposed_canonical_owner: "Boswell-Digital-Solutions/forgecustomer (registry and routes); forge-command (operator flow); Author-Forge (release trust set)"

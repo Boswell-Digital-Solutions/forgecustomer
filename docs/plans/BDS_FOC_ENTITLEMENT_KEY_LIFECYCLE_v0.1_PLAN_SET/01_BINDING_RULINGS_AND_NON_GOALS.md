@@ -4,7 +4,7 @@ This component lists the rulings that bind the plan once it is authorized, and t
 
 ## Rulings
 
-**R01 Reuse first.** A work package may write new code only for a capability that the 03 reuse matrix marks "no existing code". Every other capability is built by wiring, porting or calling the code named in the matrix. A deviation needs a recorded reason and the operator's approval (operator direction 2026-11-06).
+**R01 Reuse first.** A work package may write new code only for a capability that the 03 reuse matrix marks "no existing code". Every other capability is built by wiring, porting or calling the code named in the matrix. A deviation needs a recorded reason and the operator's approval (operator direction 2026-11-05).
 
 **R02 ForgeCustomer holds every entitlement key.** Private keys live only in ForgeCustomer's deployment secrets. No agent creates, reads or sets them. This copies DataForge's rule (§19 "Receipt signing key"). forge-command and Author-Forge hold public keys only.
 

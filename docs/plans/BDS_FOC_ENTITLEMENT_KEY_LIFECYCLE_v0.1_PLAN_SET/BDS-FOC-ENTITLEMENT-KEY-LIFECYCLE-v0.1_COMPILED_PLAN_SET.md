@@ -1,6 +1,6 @@
 # BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 — COMPILED PLAN SET
 
-Plan ID: BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 · Lifecycle: proposed · Authority: documentation creation only · Decision owner: Charles (Charlie) Boswell · Prepared 2026-11-06 America/New_York
+Plan ID: BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 · Lifecycle: proposed · Authority: documentation creation only · Decision owner: Charles (Charlie) Boswell · Prepared 2026-11-05 America/New_York
 
 Compilation: hand-maintained concatenation of components 00–09 under BDS-PSS-001 §3.3. No build script exists. An edit to a component must be mirrored here in the same change.
 
@@ -16,13 +16,13 @@ This component gives the plan identity, the purpose, the source state and the re
 | Plan ID | BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 |
 | Title | ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code |
 | Lifecycle | proposed |
-| Authority | Documentation creation only (operator direction 2026-11-06, below). No code, configuration, key operation, deployment or release is authorized. |
+| Authority | Documentation creation only (operator direction 2026-11-05, below). No code, configuration, key operation, deployment or release is authorized. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
-| Prepared | 2026-11-06 America/New_York |
-| Parent / extension target | Operator direction 2026-11-06: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
+| Prepared | 2026-11-05 America/New_York |
+| Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
 | Proposed canonical owner | Boswell-Digital-Solutions/forgecustomer for the key registry and routes. forge-command for the operator workflow. Author-Forge for the release-time trust set. Each work package pins its repository SHA. |
 | Primary candidate consumer | forgecustomer `api/src/state.rs`, `api/src/config.rs`, `api/src/services/signing.rs`, `api/src/routes/entitlements.rs`, `supabase/migrations/`; forge-command Business / Releases and fleet; Author-Forge `.github/workflows/build-bundle.yml`, `src-tauri/entitlement_trust_set.json`. |
-| Canonical Drive destination | /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET — **pending**: the Drive connector was unavailable on 2026-11-06. Held in forgecustomer `docs/plans/` by operator direction. |
+| Canonical Drive destination | /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET — **pending**: the Drive connector was unavailable on 2026-11-05. Held in forgecustomer `docs/plans/` by operator direction. |
 | Compilation | Components 00–09, concatenated by hand into BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md. No build script. |
 
 ## Purpose
@@ -64,7 +64,7 @@ This component lists the rulings that bind the plan once it is authorized, and t
 
 ## Rulings
 
-**R01 Reuse first.** A work package may write new code only for a capability that the 03 reuse matrix marks "no existing code". Every other capability is built by wiring, porting or calling the code named in the matrix. A deviation needs a recorded reason and the operator's approval (operator direction 2026-11-06).
+**R01 Reuse first.** A work package may write new code only for a capability that the 03 reuse matrix marks "no existing code". Every other capability is built by wiring, porting or calling the code named in the matrix. A deviation needs a recorded reason and the operator's approval (operator direction 2026-11-05).
 
 **R02 ForgeCustomer holds every entitlement key.** Private keys live only in ForgeCustomer's deployment secrets. No agent creates, reads or sets them. This copies DataForge's rule (§19 "Receipt signing key"). forge-command and Author-Forge hold public keys only.
 
@@ -442,7 +442,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 
 ## Existing authority
 
-On 2026-11-06 the operator directed: "well build the plan ensuring current business code that works is considered instead of reinvented. - we build the plan in Drive /Forge using the protocols." That authorizes creating this plan set in BDS-PSS-001 form. The Drive connector was unavailable, and the operator then directed: "just hold it in repo - docs/plans then". So this copy in forgecustomer `docs/plans/` is the held copy, and the Drive destination stays pending until the connector works. Lifecycle: `proposed`.
+On 2026-11-05 the operator directed: "well build the plan ensuring current business code that works is considered instead of reinvented. - we build the plan in Drive /Forge using the protocols." That authorizes creating this plan set in BDS-PSS-001 form. The Drive connector was unavailable, and the operator then directed: "just hold it in repo - docs/plans then". So this copy in forgecustomer `docs/plans/` is the held copy, and the Drive destination stays pending until the connector works. Lifecycle: `proposed`.
 
 ## Status
 

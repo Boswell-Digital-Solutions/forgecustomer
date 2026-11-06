@@ -1,8 +1,8 @@
 {
-  "manifest_id": "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1-manifest-2026-11-06",
+  "manifest_id": "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1-manifest-2026-11-05",
   "plan_id": "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1",
   "version": "0.1",
-  "prepared_at": "2026-11-06T00:00:00-05:00",
+  "prepared_at": "2026-11-05T00:00:00-05:00",
   "files": [
     "00_PLAN_SET_INDEX.md",
     "01_BINDING_RULINGS_AND_NON_GOALS.md",

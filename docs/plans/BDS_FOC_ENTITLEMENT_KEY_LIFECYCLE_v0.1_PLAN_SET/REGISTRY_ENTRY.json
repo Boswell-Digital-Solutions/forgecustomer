@@ -11,7 +11,7 @@
   "next_action": "Operator rules on DEC-1 (authorize WP-00 source lock and WP-01 overlap wiring: ENTITLEMENT_VERIFY_PUBLIC_KEYS loaded into the existing VerifyingKeyRing), DEC-2 to DEC-5.",
   "blocker": "Operator decisions DEC-1 to DEC-5",
   "doc_system_paths": ["doc/system/11-security-privacy.md", "doc/system/12-configuration-operations.md"],
-  "last_verified": { "commit": "53d255a", "date": "2026-11-06" },
+  "last_verified": { "commit": "53d255a", "date": "2026-11-05" },
   "archive": null,
   "superseded_by": null,
   "closeout_reason": null
