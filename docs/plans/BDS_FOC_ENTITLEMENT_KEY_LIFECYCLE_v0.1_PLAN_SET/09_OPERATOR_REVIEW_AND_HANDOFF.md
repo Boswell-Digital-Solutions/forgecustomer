@@ -2,7 +2,7 @@
 
 ## Existing authority
 
-On 2026-11-05 the operator directed: "well build the plan ensuring current business code that works is considered instead of reinvented. - we build the plan in Drive /Forge using the protocols." That authorizes creating this plan set in BDS-PSS-001 form. The Drive connector was unavailable, and the operator then directed: "just hold it in repo - docs/plans then". So this copy in forgecustomer `docs/plans/` is the held copy, and the Drive destination stays pending until the connector works. Lifecycle: `proposed`.
+On 2026-11-05 the operator directed: "well build the plan ensuring current business code that works is considered instead of reinvented. - we build the plan in Drive /Forge using the protocols." That authorizes creating this plan set in BDS-PSS-001 form. The Drive connector was unavailable, and the operator then directed: "just hold it in repo - docs/plans then". So this copy in forgecustomer `docs/plans/` is the held copy. It was uploaded to the Drive destination on 2026-11-05, once the connector worked again. Lifecycle: `proposed`.
 
 ## Status
 

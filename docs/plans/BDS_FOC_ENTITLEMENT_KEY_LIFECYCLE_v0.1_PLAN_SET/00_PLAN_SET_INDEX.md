@@ -13,7 +13,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
 | Proposed canonical owner | Boswell-Digital-Solutions/forgecustomer for the key registry and routes. forge-command for the operator workflow. Author-Forge for the release-time trust set. Each work package pins its repository SHA. |
 | Primary candidate consumer | forgecustomer `api/src/state.rs`, `api/src/config.rs`, `api/src/services/signing.rs`, `api/src/routes/entitlements.rs`, `supabase/migrations/`; forge-command Business / Releases and fleet; Author-Forge `.github/workflows/build-bundle.yml`, `src-tauri/entitlement_trust_set.json`. |
-| Canonical Drive destination | /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET — **pending**: the Drive connector was unavailable on 2026-11-05. Held in forgecustomer `docs/plans/` by operator direction. |
+| Canonical Drive destination | /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET (Drive folder `1FyK4JLWIDzwdyeY_Mz2seNIbWjkfhC_z`, uploaded 2026-11-05). The repository copy in forgecustomer `docs/plans/` is the byte-exact one. |
 | Compilation | Components 00–09, concatenated by hand into BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md. No build script. |
 
 ## Purpose
