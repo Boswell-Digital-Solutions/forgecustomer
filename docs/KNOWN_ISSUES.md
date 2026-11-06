@@ -6,6 +6,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261106-001 — the deployed service runs on Render's Free instance type, so the first call after idle waits for a cold start
+
+**Date found:** 2026-11-06
+**Status:** open. Not fixed. Found by Author-Forge plan `BDS-AF-PROTIER-v0.1` WP-00 (evidence/AC-11). This is an operator configuration item; no code is wrong.
+
+**What is wrong:** a read-only Render `list_services` on 2026-11-06 shows the `Forge Customer` web service (`forge-customer`, region oregon) on instance type **free** (build plan starter). Every other deployed BDS service in the workspace is on starter. The first unauthenticated `GET /v1/version` took 11.39 s, and the next call took 0.29 s.
+
+**Effect:** the Free instance type spins down when idle (inference: consistent with Render's documented Free behavior and the timing above). Every AuthorForge Pro desktop gets its entitlement snapshot from this service, and the Pro tier plan adds a short-lived caller token from it. So the first Pro call after an idle period waits for the service to start. A client with a short timeout can report ForgeCustomer as unreachable.
+
+**Root cause:** the instance type is a Render setting. It is not in this repository; `render.yaml` does not pin it.
+
+**Fix:** none made. Changing the instance type is the operator's act, and it changes cost. Alternatives: move to an instance type that does not spin down, or make every client treat a cold start as a named waiting state with a long enough timeout. Author-Forge pre-release checklist item O-04 tracks it.
+
+**Scope:** open until the operator rules on the instance type or the clients are proven to handle a cold start.
+
+---
+
 ## KI-FOC-20261105-001 — the entitlement key ring holds only the active key, so the documented rotation overlap does not exist
 
 **Date found:** 2026-11-05
