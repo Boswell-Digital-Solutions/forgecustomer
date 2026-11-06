@@ -60,10 +60,18 @@ logging a user token or signing secret.
 
 ## Entitlement signing key rotation
 
-1. Generate a new Ed25519 key; add it to the published keys endpoint as `entitlement-key-N`.
-2. Keep the previous key published (overlap window) so existing snapshots still verify.
-3. Switch `ENTITLEMENT_SIGNING_KEY_ID` / `ENTITLEMENT_SIGNING_PRIVATE_KEY` to the new key.
-4. After max snapshot/lease lifetime + grace, retire the old key from the endpoint.
+The operator does each step; no agent creates a key or sets a variable.
+
+1. Generate the new Ed25519 key outside the service. Add its **public** half to
+   `ENTITLEMENT_VERIFY_PUBLIC_KEYS` as `entitlement-key-N` and redeploy. The keys endpoint now
+   publishes it as a standby key. It verifies, and it does not sign.
+2. Ship clients whose compiled key list holds both keys.
+3. Switch `ENTITLEMENT_SIGNING_KEY_ID` / `ENTITLEMENT_SIGNING_PRIVATE_KEY` to the new key. In the
+   same change, move the previous **public** key into `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, so
+   snapshots and leases it already signed still verify.
+4. After the longest signed lifetime plus clock skew (the offline lease: `OFFLINE_GRACE_DAYS`,
+   14 days by default, plus 5 minutes), remove the previous key from
+   `ENTITLEMENT_VERIFY_PUBLIC_KEYS`.
 
 ## AuthorForge updates
 

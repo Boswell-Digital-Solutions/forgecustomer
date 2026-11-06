@@ -24,6 +24,7 @@ ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 | `STRIPE_API_BASE` | no | `https://api.stripe.com` | Stripe REST API base URL; override to target a mock or test gateway. |
 | `ENTITLEMENT_SIGNING_PRIVATE_KEY` | yes | none | Base64 Ed25519 seed for snapshot signing. |
 | `ENTITLEMENT_SIGNING_KEY_ID` | no | `entitlement-key-1` | Published signing key ID. |
+| `ENTITLEMENT_VERIFY_PUBLIC_KEYS` | no | empty | JSON object `{"<key_id>": "<base64 32-byte Ed25519 public key>"}` of retained and standby verification keys. They verify and are published on `GET /v1/entitlements/keys`; only the active key signs. A malformed value, a repeated `key_id`, or the active `key_id` with a different key fails start-up. Public keys only, so not a secret. |
 | `DATAFORGE_API_URL` | no | empty | Enables outbox worker when set. |
 | `DATAFORGE_SERVICE_TOKEN` | no | empty | DataForge service bearer token. |
 | `UPDATE_ROLLOUT_SECRET` | required for update lookup | empty | Server-side HMAC secret for deterministic campaign rollout buckets. Empty returns `503` from the update endpoint. |
