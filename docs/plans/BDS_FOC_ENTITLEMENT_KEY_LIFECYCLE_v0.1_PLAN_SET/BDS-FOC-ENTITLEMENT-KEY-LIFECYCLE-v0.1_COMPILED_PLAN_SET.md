@@ -1,6 +1,6 @@
 # BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 — COMPILED PLAN SET
 
-Plan ID: BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 · Lifecycle: proposed · Authority: documentation creation only · Decision owner: Charles (Charlie) Boswell · Prepared 2026-11-05 America/New_York
+Plan ID: BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 · Lifecycle: authorized · Authority: operator ruling 2026-11-06 (WP-00, WP-01; DEC-1 to DEC-5 ruled) · Decision owner: Charles (Charlie) Boswell · Prepared 2026-11-05 America/New_York
 
 Compilation: hand-maintained concatenation of components 00–09 under BDS-PSS-001 §3.3. No build script exists. An edit to a component must be mirrored here in the same change.
 
@@ -15,8 +15,8 @@ This component gives the plan identity, the purpose, the source state and the re
 |---|---|
 | Plan ID | BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 |
 | Title | ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code |
-| Lifecycle | proposed |
-| Authority | Documentation creation only (operator direction 2026-11-05, below). No code, configuration, key operation, deployment or release is authorized. |
+| Lifecycle | authorized |
+| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates. No key operation, configuration change, deployment, merge or release is authorized. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-05 America/New_York |
 | Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
@@ -45,11 +45,12 @@ It writes new code only where nothing exists: the configuration wiring, a `pendi
 | dataforge-Local | `ccffbc5` (`master`) | `doc/system/17` §5.2 (`XA_RUN_TOKEN_PUBLIC_KEYS` = `{kid: {key, issuer}}`), `doc/system/09` (fleet, releases and entitlements belong to ForgeCustomer) |
 | Forge_Command (predecessor, reference) | `8f780036` | `src-tauri/src/commands/operator_signing.rs` (`receipt_keys_discover`, `receipt_keys_confirm`, `receipt_keys_register_current`), `src-tauri/src/operator_signing/{client,keystore,mod}.rs` (`fingerprint`, `set_fingerprint_confirmed`), `commands/forgecustomer_admin.rs` |
 | forge-command | `e414f4d` | `crates/fc-intent` and `crates/fc-topology` (`serde_jcs`, RFC 8785, passes 25 SMITH vectors); `doc/system/14`, `15`, `16.7`; plan `BDS-FCO-FLEET-MANAGER-v0.1` (#49) |
+| Drive `/Forge/Plans/AuthorForge_Fleet_Client_Update_Plan_Set_2026-06-11` (folder `1nsPFJVAGb_pWj6_s-yJPZOOl5suuL2T4`), architecture approved 2026-06-11 | — | 11 (key separation; staged rotation "Release N signed by key A embeds trust for key B"), 18 (D-14 to D-16); read 2026-11-06 |
 | Author-Forge | `9f3a5d1a5` | `src-tauri/src/infrastructure/forgecustomer_entitlement.rs` (multi-key `TrustSet`, byte-compatibility fixture), `src-tauri/entitlement_trust_set.json` (empty), `.github/workflows/build-bundle.yml` |
 
 ## Status
 
-Proposal. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
+Authorized 2026-11-06 for WP-00 and WP-01. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
 
 ## Read order and components
 
@@ -442,11 +443,11 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 
 ## Existing authority
 
-On 2026-11-05 the operator directed: "well build the plan ensuring current business code that works is considered instead of reinvented. - we build the plan in Drive /Forge using the protocols." That authorizes creating this plan set in BDS-PSS-001 form. The Drive connector was unavailable, and the operator then directed: "just hold it in repo - docs/plans then". So this copy in forgecustomer `docs/plans/` is the held copy. It was uploaded to the Drive destination on 2026-11-05, once the connector worked again. Lifecycle: `proposed`.
+On 2026-11-05 the operator directed: "well build the plan ensuring current business code that works is considered instead of reinvented. - we build the plan in Drive /Forge using the protocols." That authorizes creating this plan set in BDS-PSS-001 form. The Drive connector was unavailable, and the operator then directed: "just hold it in repo - docs/plans then". So this copy in forgecustomer `docs/plans/` is the held copy. It was uploaded to the Drive destination on 2026-11-05, once the connector worked again. On 2026-11-06 the operator ruled DEC-1 to DEC-5 ("Proceed - in order authorized"). Lifecycle: `authorized`.
 
 ## Status
 
-Planning v0.1 drafted. No execution authorization, implementation or verification.
+Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. No implementation or verification yet.
 
 ---
 
@@ -458,21 +459,29 @@ Planning v0.1 drafted. No execution authorization, implementation or verificatio
 
 **Note:** merging the WP-01 PR redeploys ForgeCustomer on Render (KI-FOC-20261002-001). Setting the new variable is your act.
 
+**Ruling (2026-11-06): approved.** WP-00 includes the one unauthenticated read of the public key list. WP-01 ends in a PR; its merge needs your word.
+
 ## Decision 2 — Who creates a new signing key?
 
 **Recommendation:** you, outside any agent, set as a deployment secret. That is DataForge's rule, and it is ForgeCustomer's practice today.
 
 **Alternative:** a ForgeCustomer admin route that generates the key. This adds private-key handling to the API, and the plan does not recommend it.
 
+**Ruling (2026-11-06): approved, with one addition.** You create two keys, an active key and a standby key, outside any agent. Both public halves are published and compiled into every Author-Forge trust set; only the active key signs. A compromise then becomes a signer switch, not a rebuild (TUF and APK Signature Scheme v3 pre-trust the next key; the 2026-06-11 plan's staged rotation). WP-01's verify-key variable carries the standby public key.
+
 ## Decision 3 — Extend the public key list with status fields?
 
 **Recommendation: yes, additively.** Add `status`, `valid_from` and `retired_at` (04 §B). Author-Forge's parser does not deny unknown fields (inspected at `9f3a5d1a5`), so built desktops are unaffected.
+
+**Ruling (2026-11-06): approved.**
 
 ## Decision 4 — Keep the v1 wire format?
 
 **Recommendation: keep `forge.entitlements.v1` with the struct-order byte rule now (R06).** It works and is verified across repositories. RFC 8785 (`serde_jcs`, already proven in forge-command) can be a `v2` later, behind its own plan.
 
 **Alternative:** move to RFC 8785 now. That changes the bytes both sides sign and verify, and it needs a coordinated release.
+
+**Ruling (2026-11-06): approved.** v1 keeps the struct-order rule. RFC 8785 becomes the v2 rule, triggered when a non-Rust verifier is first needed. RFC 8785 is an informational Independent Submission, so its use rests on the ecosystem precedent (forge-command's SMITH vectors), not on standard status.
 
 ## Decision 5 — Interim confirmation source for WP-04
 
@@ -481,6 +490,8 @@ Planning v0.1 drafted. No execution authorization, implementation or verificatio
 **Recommendation:** the release step accepts a key only if its fingerprint is listed in a committed file `src-tauri/entitlement_key_confirmations.json`, edited only by you. The forge-command receipts replace it when WP-03 lands.
 
 **Alternative:** trust every `active` key ForgeCustomer publishes. This is simpler, but a compromised deployment could add a key.
+
+**Ruling (2026-11-06): approved.** The committed, operator-edited file is the interim. Retire an old key no earlier than the longest-lived signed document plus clock skew: the 14-day lease plus 5 minutes.
 
 ---
 
@@ -492,6 +503,6 @@ Planning v0.1 drafted. No execution authorization, implementation or verificatio
 
 ## Handoff
 
-**Next action:** Decisions 1–5.
+**Next action:** WP-00 (authorized), then WP-01 (authorized; ends in a PR).
 
 Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC NOT_RUN, and AUTHORITY_GAP-01 to -06.

@@ -5,7 +5,7 @@
   "prepared": "2026-11-05",
   "timezone": "America/New_York",
   "decision_owner": "Charles (Charlie) Boswell",
-  "lifecycle": "proposed",
+  "lifecycle": "authorized",
   "canonical_drive_destination": "/Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET",
   "component_count": 10,
   "compilation": "00-09 concatenated by hand into BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md; no build script",

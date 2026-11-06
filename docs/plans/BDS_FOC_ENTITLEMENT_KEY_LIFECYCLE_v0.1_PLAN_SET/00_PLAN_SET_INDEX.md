@@ -6,8 +6,8 @@ This component gives the plan identity, the purpose, the source state and the re
 |---|---|
 | Plan ID | BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 |
 | Title | ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code |
-| Lifecycle | proposed |
-| Authority | Documentation creation only (operator direction 2026-11-05, below). No code, configuration, key operation, deployment or release is authorized. |
+| Lifecycle | authorized |
+| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates. No key operation, configuration change, deployment, merge or release is authorized. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-05 America/New_York |
 | Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
@@ -36,11 +36,12 @@ It writes new code only where nothing exists: the configuration wiring, a `pendi
 | dataforge-Local | `ccffbc5` (`master`) | `doc/system/17` §5.2 (`XA_RUN_TOKEN_PUBLIC_KEYS` = `{kid: {key, issuer}}`), `doc/system/09` (fleet, releases and entitlements belong to ForgeCustomer) |
 | Forge_Command (predecessor, reference) | `8f780036` | `src-tauri/src/commands/operator_signing.rs` (`receipt_keys_discover`, `receipt_keys_confirm`, `receipt_keys_register_current`), `src-tauri/src/operator_signing/{client,keystore,mod}.rs` (`fingerprint`, `set_fingerprint_confirmed`), `commands/forgecustomer_admin.rs` |
 | forge-command | `e414f4d` | `crates/fc-intent` and `crates/fc-topology` (`serde_jcs`, RFC 8785, passes 25 SMITH vectors); `doc/system/14`, `15`, `16.7`; plan `BDS-FCO-FLEET-MANAGER-v0.1` (#49) |
+| Drive `/Forge/Plans/AuthorForge_Fleet_Client_Update_Plan_Set_2026-06-11` (folder `1nsPFJVAGb_pWj6_s-yJPZOOl5suuL2T4`), architecture approved 2026-06-11 | — | 11 (key separation; staged rotation "Release N signed by key A embeds trust for key B"), 18 (D-14 to D-16); read 2026-11-06 |
 | Author-Forge | `9f3a5d1a5` | `src-tauri/src/infrastructure/forgecustomer_entitlement.rs` (multi-key `TrustSet`, byte-compatibility fixture), `src-tauri/entitlement_trust_set.json` (empty), `.github/workflows/build-bundle.yml` |
 
 ## Status
 
-Proposal. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
+Authorized 2026-11-06 for WP-00 and WP-01. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
 
 ## Read order and components
 
