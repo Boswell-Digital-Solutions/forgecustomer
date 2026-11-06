@@ -32,14 +32,15 @@ gaps:
   - { id: AUTHORITY_GAP-06, topic: KI-FOC-20261105-002 adjacent, blocks: [] }
 requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08]
 work_packages:
-  - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: authorized }
+  - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: complete }
   - { id: WP-01, title: Overlap wiring, owner: forgecustomer, acceptance: [AC-01, AC-02], status: authorized }
   - { id: WP-02, title: Registry and statuses, owner: forgecustomer, acceptance: [AC-03, AC-04], status: proposed }
   - { id: WP-03, title: Operator confirmation, owner: forge-command, acceptance: [AC-05], status: proposed }
   - { id: WP-04, title: Release-time trust set, owner: Author-Forge, acceptance: [AC-06], status: proposed }
   - { id: WP-05, title: Rotation rehearsal, owner: cross-repository, acceptance: [AC-07], status: proposed }
-acceptance_criteria: { AC-00: NOT_RUN, AC-01: NOT_RUN, AC-02: NOT_RUN, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }
+acceptance_criteria: { AC-00: PASS, AC-01: NOT_RUN, AC-02: NOT_RUN, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }
 gates: [G0, G1, G2, G3, G4, G5]
+gate_dispositions: { G0: PASS_2026-11-06 }
 gate_order: "G0 -> G1 -> {G2, G4} -> G3 -> G5"
 decisions_requested:
   - { id: DEC-1, topic: authorize WP-00 and WP-01, recommendation: yes, status: approved_2026-11-06 }

@@ -17,6 +17,8 @@
     "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md",
     "FOLDER_METADATA.json",
     "REGISTRY_ENTRY.json",
+    "evidence/AC-00/RESULT.md",
+    "evidence/AC-00/SOURCE_LOCK.md",
     "plan_set.yaml",
     "plan_set_manifest.json"
   ]

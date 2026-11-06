@@ -12,7 +12,7 @@ Tests use local ForgeCustomer and test keys generated in the suite, never the de
 
 **Evidence destination:** this plan set's `evidence/<AC-ID>/`, with the repository records referenced.
 
-**AC-00 Structure.** 15 files. The manifest equals the folder. The lifecycle matches in four places. The IDs agree.
+**AC-00 Structure.** 15 plan files. The manifest equals the folder, evidence files included. The lifecycle matches in four places. The IDs agree.
 
 **AC-01 Overlap wired.**
 - With `ENTITLEMENT_VERIFY_PUBLIC_KEYS` holding a second test key, `GET /v1/entitlements/keys` lists both.

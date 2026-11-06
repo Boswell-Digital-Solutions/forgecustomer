@@ -258,7 +258,7 @@ A version 1.x or later with an empty set fails the build. A 0.x build may stay e
 3. A release built under §D carries both keys and ships through the fleet manager.
 4. The fleet manager shows the share of installations whose build trusts the pending key, from the release statements and ForgeCustomer installation `build_id`.
 5. The operator decides the switch. The owner sets the new private key and id, the old public key moves into `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, ForgeCustomer redeploys, and the status changes to `pending → active` and `active → retired`.
-6. After 14 days, the lease lifetime, the operator removes the retired key from configuration.
+6. After 14 days, the lease lifetime, plus 5 minutes of clock skew (DEC-5), the operator removes the retired key from configuration.
 
 No desktop is refused at any step, because every installed build verifies with whichever key signs.
 
@@ -312,7 +312,7 @@ Tests use local ForgeCustomer and test keys generated in the suite, never the de
 
 **Evidence destination:** this plan set's `evidence/<AC-ID>/`, with the repository records referenced.
 
-**AC-00 Structure.** 15 files. The manifest equals the folder. The lifecycle matches in four places. The IDs agree.
+**AC-00 Structure.** 15 plan files. The manifest equals the folder, evidence files included. The lifecycle matches in four places. The IDs agree.
 
 **AC-01 Overlap wired.**
 - With `ENTITLEMENT_VERIFY_PUBLIC_KEYS` holding a second test key, `GET /v1/entitlements/keys` lists both.
@@ -447,7 +447,7 @@ On 2026-11-05 the operator directed: "well build the plan ensuring current busin
 
 ## Status
 
-Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. No implementation or verification yet.
+Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`.
 
 ---
 
@@ -503,6 +503,6 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Handoff
 
-**Next action:** WP-00 (authorized), then WP-01 (authorized; ends in a PR).
+**Next action:** WP-01 (authorized; ends in a PR). Then your acts: create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5).
 
 Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC NOT_RUN, and AUTHORITY_GAP-01 to -06.
