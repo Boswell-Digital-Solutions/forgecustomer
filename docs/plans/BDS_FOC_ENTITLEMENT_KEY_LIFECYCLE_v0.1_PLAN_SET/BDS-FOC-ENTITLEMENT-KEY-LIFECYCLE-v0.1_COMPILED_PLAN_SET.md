@@ -27,7 +27,7 @@ This component gives the plan identity, the purpose, the source state and the re
 
 ## Purpose
 
-ForgeCustomer signs every AuthorForge entitlement snapshot and offline lease with one Ed25519 key. Its deployed key ring holds only that key (KI-FOC-20261105-001). A key change therefore invalidates every desktop at once, because desktops compile the trusted keys in (DIR-1).
+ForgeCustomer signs every AuthorForge entitlement snapshot and offline lease with one Ed25519 key. Its deployed key ring holds only that key (KI-FOC-20261105-001). Desktops compile the trusted keys in (DIR-1). After a key change, ForgeCustomer signs every new snapshot with the new key. A build that trusts only the old key refuses each new snapshot (`unknown_key_id`), so it loses cloud mode at its next refresh. Snapshots already signed with the old key stay valid wherever that key is still trusted; ForgeCustomer verifies none of its own documents at run time.
 
 This plan adds a safe rotation. It does so by connecting code that already works in three places:
 - ForgeCustomer's multi-key ring and its passing overlap test;
@@ -257,10 +257,10 @@ A version 1.x or later with an empty set fails the build. A 0.x build may stay e
 2. The operator confirms its fingerprint in forge-command.
 3. A release built under §D carries both keys and ships through the fleet manager.
 4. The fleet manager shows the share of installations whose build trusts the pending key, from the release statements and ForgeCustomer installation `build_id`.
-5. The operator decides the switch. The owner sets the new private key and id, the old public key moves into `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, ForgeCustomer redeploys, and the status changes to `pending → active` and `active → retired`.
+5. The operator decides the switch, and only when the fleet manager shows every active installation on a build that trusts the new key (ruling B, 09). The owner sets the new private key and id, the old public key moves into `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, ForgeCustomer redeploys, and the status changes to `pending → active` and `active → retired`.
 6. After 14 days, the lease lifetime, plus 5 minutes of clock skew (DEC-5), the operator removes the retired key from configuration.
 
-No desktop is refused at any step, because every installed build verifies with whichever key signs.
+No desktop is refused at any step **only if** every installed build trusts the new key before the switch. With the standby key compiled into the first shipped build (DEC-2), every build trusts it from day one. An installed build that lacks the new key refuses new snapshots after the switch and loses cloud mode until it updates. Local writing is unaffected (ruling B).
 
 
 ===== 06_DECISION_SEMANTICS.md =====
@@ -494,6 +494,12 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 **Ruling (2026-11-06): approved.** The committed, operator-edited file is the interim. Retire an old key no earlier than the longest-lived signed document plus clock skew: the 14-day lease plus 5 minutes.
 
 ---
+
+## Ruling B — An installed build without the new key (2026-11-06)
+
+**Question (review of #42, M1).** 05 §E promised that no desktop is refused, but AC-07 expects an old build to refuse after the switch.
+
+**Ruling (2026-11-06, operator "yes do it", as recommended).** A build that lacks the new key loses cloud mode after a signer switch, until it updates; local writing is unaffected. The switch waits until the fleet manager shows every active installation on a build that trusts the new key. 05 §E now states the condition, and AC-07 keeps the old-build refusal as the expected result.
 
 ## Dependencies
 

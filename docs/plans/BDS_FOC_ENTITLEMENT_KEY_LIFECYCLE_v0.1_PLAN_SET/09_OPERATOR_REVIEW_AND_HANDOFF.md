@@ -54,6 +54,12 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ---
 
+## Ruling B — An installed build without the new key (2026-11-06)
+
+**Question (review of #42, M1).** 05 §E promised that no desktop is refused, but AC-07 expects an old build to refuse after the switch.
+
+**Ruling (2026-11-06, operator "yes do it", as recommended).** A build that lacks the new key loses cloud mode after a signer switch, until it updates; local writing is unaffected. The switch waits until the fleet manager shows every active installation on a build that trusts the new key. 05 §E now states the condition, and AC-07 keeps the old-build refusal as the expected result.
+
 ## Dependencies
 
 - forge-command P3 (ForgeCustomer admin credential).

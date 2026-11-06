@@ -18,7 +18,7 @@ This component gives the plan identity, the purpose, the source state and the re
 
 ## Purpose
 
-ForgeCustomer signs every AuthorForge entitlement snapshot and offline lease with one Ed25519 key. Its deployed key ring holds only that key (KI-FOC-20261105-001). A key change therefore invalidates every desktop at once, because desktops compile the trusted keys in (DIR-1).
+ForgeCustomer signs every AuthorForge entitlement snapshot and offline lease with one Ed25519 key. Its deployed key ring holds only that key (KI-FOC-20261105-001). Desktops compile the trusted keys in (DIR-1). After a key change, ForgeCustomer signs every new snapshot with the new key. A build that trusts only the old key refuses each new snapshot (`unknown_key_id`), so it loses cloud mode at its next refresh. Snapshots already signed with the old key stay valid wherever that key is still trusted; ForgeCustomer verifies none of its own documents at run time.
 
 This plan adds a safe rotation. It does so by connecting code that already works in three places:
 - ForgeCustomer's multi-key ring and its passing overlap test;

@@ -39,7 +39,7 @@ A version 1.x or later with an empty set fails the build. A 0.x build may stay e
 2. The operator confirms its fingerprint in forge-command.
 3. A release built under §D carries both keys and ships through the fleet manager.
 4. The fleet manager shows the share of installations whose build trusts the pending key, from the release statements and ForgeCustomer installation `build_id`.
-5. The operator decides the switch. The owner sets the new private key and id, the old public key moves into `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, ForgeCustomer redeploys, and the status changes to `pending → active` and `active → retired`.
+5. The operator decides the switch, and only when the fleet manager shows every active installation on a build that trusts the new key (ruling B, 09). The owner sets the new private key and id, the old public key moves into `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, ForgeCustomer redeploys, and the status changes to `pending → active` and `active → retired`.
 6. After 14 days, the lease lifetime, plus 5 minutes of clock skew (DEC-5), the operator removes the retired key from configuration.
 
-No desktop is refused at any step, because every installed build verifies with whichever key signs.
+No desktop is refused at any step **only if** every installed build trusts the new key before the switch. With the standby key compiled into the first shipped build (DEC-2), every build trusts it from day one. An installed build that lacks the new key refuses new snapshots after the switch and loses cloud mode until it updates. Local writing is unaffected (ruling B).
