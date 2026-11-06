@@ -18,7 +18,12 @@ is reported as new, and written in the same session it is found.
 
 So `GET /v1/entitlements/keys` publishes exactly one key.
 
-**Effect:** after `ENTITLEMENT_SIGNING_PRIVATE_KEY` changes, every unexpired snapshot and offline lease stops verifying at once. A client that pins keys at build time, which is the Author-Forge plan for its desktop shell, refuses cloud until it gets a new build. A 14-day offline lease issued before the change also fails verification for the rest of its life.
+**Effect** (corrected 2026-11-06 after review; the first wording overstated it): after `ENTITLEMENT_SIGNING_PRIVATE_KEY` changes, ForgeCustomer signs new snapshots and leases with the new key and publishes only that key. The effect depends on each verifier's trust store:
+- a client that trusts only the old key refuses every newly signed document. A client that pins keys at build time, which is the Author-Forge plan for its desktop shell, loses cloud mode at its next refresh until it gets a build with the new key;
+- a verifier that refetches the published list drops the old key, so it refuses documents the old key signed, including unexpired 14-day offline leases;
+- a document already signed stays valid wherever the old key is still trusted. ForgeCustomer verifies none of its own documents at run time.
+
+So a key change does not invalidate every document at once. It breaks compatibility in both directions for any verifier that holds only one of the two keys.
 
 **Root cause:** the ring type supports several keys, but no configuration path loads a retained key into the deployed ring.
 
