@@ -1,0 +1,18 @@
+{
+  "plan_id": "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1",
+  "title": "ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code",
+  "version": "0.1",
+  "owner_repository": "Boswell-Digital-Solutions/forgecustomer",
+  "scope": "cross_repository",
+  "lifecycle_status": "approved",
+  "plan_path": "docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/00_PLAN_SET_INDEX.md",
+  "tracking_issue": null,
+  "implementation": { "completed_slices": 1, "total_slices": 6, "evidence_status": "partial" },
+  "next_action": "Authorized 2026-11-06 ('Proceed - in order authorized'). WP-00 complete (AC-00 PASS, G0 PASS; live key list holds one key, forgecustomer-entitlement-prod-1). WP-01 built as forgecustomer PR #43 (c2b30f5): AC-01 and AC-02 PASS on the candidate. Next: the operator's word to merge #43 (redeploys Render; no behavior change with the variable unset), recheck on main, then the operator creates the standby key (DEC-2) and confirms the live fingerprint (DEC-5).",
+  "blocker": null,
+  "doc_system_paths": ["doc/system/11-security-privacy.md", "doc/system/12-configuration-operations.md"],
+  "last_verified": { "commit": "53d255a", "date": "2026-11-06" },
+  "archive": null,
+  "superseded_by": null,
+  "closeout_reason": null
+}

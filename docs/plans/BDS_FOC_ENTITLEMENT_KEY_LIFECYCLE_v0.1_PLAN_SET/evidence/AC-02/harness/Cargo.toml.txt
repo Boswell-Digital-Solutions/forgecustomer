@@ -1,0 +1,17 @@
+[package]
+name = "ac02-harness"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+forgecustomer-api = { path = "<forgecustomer checkout at c2b30f5>/api" }
+base64 = "0.22"
+ed25519-dalek = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde", "clock"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+axum = "0.7"
