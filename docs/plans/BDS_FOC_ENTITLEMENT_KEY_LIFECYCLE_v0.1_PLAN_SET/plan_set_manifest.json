@@ -19,6 +19,11 @@
     "REGISTRY_ENTRY.json",
     "evidence/AC-00/RESULT.md",
     "evidence/AC-00/SOURCE_LOCK.md",
+    "evidence/AC-01/RESULT.md",
+    "evidence/AC-02/RESULT.md",
+    "evidence/AC-02/harness/Cargo.toml.txt",
+    "evidence/AC-02/harness/src/lib.rs",
+    "evidence/AC-02/harness/tests/ac02.rs",
     "plan_set.yaml",
     "plan_set_manifest.json"
   ]

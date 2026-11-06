@@ -6,7 +6,7 @@ On 2026-11-05 the operator directed: "well build the plan ensuring current busin
 
 ## Status
 
-Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`.
+Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02).
 
 ---
 
@@ -62,6 +62,6 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Handoff
 
-**Next action:** WP-01 (authorized; ends in a PR). Then your acts: create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5).
+**Next action:** your word to merge #43. The merge redeploys Render, and with the variable unset the deployed behavior does not change. Then recheck AC-01 and AC-02 on `main`. Then your acts: create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5).
 
 Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC NOT_RUN, and AUTHORITY_GAP-01 to -06.
