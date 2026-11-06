@@ -6,6 +6,69 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261106-001 — the deployed service runs on Render's Free instance type, so the first call after idle waits for a cold start
+
+**Date found:** 2026-11-06
+**Status:** open. Not fixed. Found by Author-Forge plan `BDS-AF-PROTIER-v0.1` WP-00 (evidence/AC-11). This is an operator configuration item; no code is wrong.
+
+**What is wrong:** a read-only Render `list_services` on 2026-11-06 shows the `Forge Customer` web service (`forge-customer`, region oregon) on instance type **free** (build plan starter). Every other deployed BDS service in the workspace is on starter. The first unauthenticated `GET /v1/version` took 11.39 s, and the next call took 0.29 s.
+
+**Effect:** the Free instance type spins down when idle (inference: consistent with Render's documented Free behavior and the timing above). Every AuthorForge Pro desktop gets its entitlement snapshot from this service, and the Pro tier plan adds a short-lived caller token from it. So the first Pro call after an idle period waits for the service to start. A client with a short timeout can report ForgeCustomer as unreachable.
+
+**Root cause:** the instance type is a Render setting. It is not in this repository; `render.yaml` does not pin it.
+
+**Fix:** none made. Changing the instance type is the operator's act, and it changes cost. Alternatives: move to an instance type that does not spin down, or make every client treat a cold start as a named waiting state with a long enough timeout. Author-Forge pre-release checklist item O-04 tracks it.
+
+**Operator ruling (2026-11-06):** the service stays on the Free instance type until the inaugural release, to save money ("it is free to save money until we are ready for inaugrial release"). At that release it moves to an instance type that does not spin down.
+
+**Scope:** open. Before the release, clients must handle a cold start (Author-Forge checklist O-04a). The entry closes when the instance type changes at the inaugural release (checklist O-04b).
+
+---
+
+## KI-FOC-20261105-001 — the entitlement key ring holds only the active key, so the documented rotation overlap does not exist
+
+**Date found:** 2026-11-05
+**Status:** open. Not fixed. Found by a read-only source lock for Author-Forge plan `BDS-AF-RELACC-v0.1` (WP-00).
+
+**What is wrong:** `doc/system/11` says that "Key rotation requires an overlap window where old and new public keys both verify existing snapshots". `docs/ENTITLEMENTS.md` and the doc comment on `routes/entitlements.rs::keys` say the same. The code builds no overlap:
+- `AppState` creates the ring with `VerifyingKeyRing::new()` and then `add_signer(&signer)` only (`api/src/state.rs:45-46`).
+- `VerifyingKeyRing::add_base64`, the only way to add a retained key, has no caller anywhere in `api/` (`grep -rn add_base64 api` finds only its definition, `signing.rs:90`).
+- No configuration variable names a previous or retired verification key (`api/src/config.rs`, `doc/system/12`).
+
+So `GET /v1/entitlements/keys` publishes exactly one key.
+
+**Effect** (corrected 2026-11-06 after review; the first wording overstated it): after `ENTITLEMENT_SIGNING_PRIVATE_KEY` changes, ForgeCustomer signs new snapshots and leases with the new key and publishes only that key. The effect depends on each verifier's trust store:
+- a client that trusts only the old key refuses every newly signed document. A client that pins keys at build time, which is the Author-Forge plan for its desktop shell, loses cloud mode at its next refresh until it gets a build with the new key;
+- a verifier that refetches the published list drops the old key, so it refuses documents the old key signed, including unexpired 14-day offline leases;
+- a document already signed stays valid wherever the old key is still trusted. ForgeCustomer verifies none of its own documents at run time.
+
+So a key change does not invalidate every document at once. It breaks compatibility in both directions for any verifier that holds only one of the two keys.
+
+**Root cause:** the ring type supports several keys, but no configuration path loads a retained key into the deployed ring.
+
+**Fix:** none made. A candidate is an optional configuration value that lists retained `key_id` to public-key pairs, loaded with `add_base64` and published by `keys`, plus a test that a snapshot signed by the retired key still verifies. Changing deployed configuration is the operator's act.
+
+**Scope:** open.
+
+---
+
+## KI-FOC-20261105-002 — a deactivated installation still receives an installation-bound entitlement snapshot
+
+**Date found:** 2026-11-05
+**Status:** open. Not fixed. Same source lock as KI-FOC-20261105-001.
+
+**What is wrong:** `GET /v1/entitlements/current?installation_id=` binds the snapshot through `repositories::entitlements::find_owned_installation` (`api/src/repositories/entitlements.rs:499-513`). That query selects by installation id and customer only. It does not check `installations.status`. `docs/LICENSING.md` treats a deactivated installation as one that must register again before activation, and offline-lease issuance refuses it (`LeaseError::InstallationDeactivated`). Snapshot issuance does not.
+
+**Effect:** a client of a deactivated installation can still obtain a signed snapshot that names that installation. Cloud features still follow the customer's subscription. The installation binding therefore does not reflect the deactivation.
+
+**Root cause:** the snapshot path and the lease path check installation state differently.
+
+**Fix:** none made. A candidate is to refuse a non-`active` installation in `find_owned_installation` for the snapshot route, matching the lease path, with a route test.
+
+**Scope:** open. Severity is low: the customer is still authenticated, and the entitlements are the customer's own.
+
+---
+
 ## KI-FOC-20261011-001 — Supabase advisors report RLS plan and search-path warnings on the forgecustomer project
 
 **Date found:** 2026-10-11
