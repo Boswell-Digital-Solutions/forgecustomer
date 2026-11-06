@@ -19,7 +19,9 @@ is reported as new, and written in the same session it is found.
 
 **Fix:** none made. Changing the instance type is the operator's act, and it changes cost. Alternatives: move to an instance type that does not spin down, or make every client treat a cold start as a named waiting state with a long enough timeout. Author-Forge pre-release checklist item O-04 tracks it.
 
-**Scope:** open until the operator rules on the instance type or the clients are proven to handle a cold start.
+**Operator ruling (2026-11-06):** the service stays on the Free instance type until the inaugural release, to save money ("it is free to save money until we are ready for inaugrial release"). At that release it moves to an instance type that does not spin down.
+
+**Scope:** open. Before the release, clients must handle a cold start (Author-Forge checklist O-04a). The entry closes when the instance type changes at the inaugural release (checklist O-04b).
 
 ---
 
