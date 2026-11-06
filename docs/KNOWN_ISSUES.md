@@ -6,6 +6,45 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261105-001 — the entitlement key ring holds only the active key, so the documented rotation overlap does not exist
+
+**Date found:** 2026-11-05
+**Status:** open. Not fixed. Found by a read-only source lock for Author-Forge plan `BDS-AF-RELACC-v0.1` (WP-00).
+
+**What is wrong:** `doc/system/11` says that "Key rotation requires an overlap window where old and new public keys both verify existing snapshots". `docs/ENTITLEMENTS.md` and the doc comment on `routes/entitlements.rs::keys` say the same. The code builds no overlap:
+- `AppState` creates the ring with `VerifyingKeyRing::new()` and then `add_signer(&signer)` only (`api/src/state.rs:45-46`).
+- `VerifyingKeyRing::add_base64`, the only way to add a retained key, has no caller anywhere in `api/` (`grep -rn add_base64 api` finds only its definition, `signing.rs:90`).
+- No configuration variable names a previous or retired verification key (`api/src/config.rs`, `doc/system/12`).
+
+So `GET /v1/entitlements/keys` publishes exactly one key.
+
+**Effect:** after `ENTITLEMENT_SIGNING_PRIVATE_KEY` changes, every unexpired snapshot and offline lease stops verifying at once. A client that pins keys at build time, which is the Author-Forge plan for its desktop shell, refuses cloud until it gets a new build. A 14-day offline lease issued before the change also fails verification for the rest of its life.
+
+**Root cause:** the ring type supports several keys, but no configuration path loads a retained key into the deployed ring.
+
+**Fix:** none made. A candidate is an optional configuration value that lists retained `key_id` to public-key pairs, loaded with `add_base64` and published by `keys`, plus a test that a snapshot signed by the retired key still verifies. Changing deployed configuration is the operator's act.
+
+**Scope:** open.
+
+---
+
+## KI-FOC-20261105-002 — a deactivated installation still receives an installation-bound entitlement snapshot
+
+**Date found:** 2026-11-05
+**Status:** open. Not fixed. Same source lock as KI-FOC-20261105-001.
+
+**What is wrong:** `GET /v1/entitlements/current?installation_id=` binds the snapshot through `repositories::entitlements::find_owned_installation` (`api/src/repositories/entitlements.rs:499-513`). That query selects by installation id and customer only. It does not check `installations.status`. `docs/LICENSING.md` treats a deactivated installation as one that must register again before activation, and offline-lease issuance refuses it (`LeaseError::InstallationDeactivated`). Snapshot issuance does not.
+
+**Effect:** a client of a deactivated installation can still obtain a signed snapshot that names that installation. Cloud features still follow the customer's subscription. The installation binding therefore does not reflect the deactivation.
+
+**Root cause:** the snapshot path and the lease path check installation state differently.
+
+**Fix:** none made. A candidate is to refuse a non-`active` installation in `find_owned_installation` for the snapshot route, matching the lease path, with a route test.
+
+**Scope:** open. Severity is low: the customer is still authenticated, and the entitlements are the customer's own.
+
+---
+
 ## KI-FOC-20261011-001 — Supabase advisors report RLS plan and search-path warnings on the forgecustomer project
 
 **Date found:** 2026-10-11
