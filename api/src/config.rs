@@ -31,6 +31,10 @@ pub struct Config {
 
     pub entitlement_signing_private_key: String,
     pub entitlement_signing_key_id: String,
+    /// Retained and pending entitlement verification keys, `(key_id, base64 public key)`, from
+    /// `ENTITLEMENT_VERIFY_PUBLIC_KEYS`. They verify and are published; they never sign. The
+    /// active key comes from the signing key above and is not repeated here. Empty = none.
+    pub entitlement_verify_public_keys: Vec<(String, String)>,
 
     pub dataforge_api_url: String,
     pub dataforge_service_token: String,
@@ -104,6 +108,68 @@ fn parse_percent_list(key: &'static str, default: &[u8]) -> Result<Vec<u8>, Conf
     Ok(out)
 }
 
+/// The variable that carries retained and pending entitlement verification keys.
+pub const VERIFY_PUBLIC_KEYS_VAR: &str = "ENTITLEMENT_VERIFY_PUBLIC_KEYS";
+
+/// Parse `ENTITLEMENT_VERIFY_PUBLIC_KEYS`: a JSON object
+/// `{"<key_id>": "<base64 32-byte Ed25519 public key>"}`, the shape DataForge Local uses for
+/// `XA_RUN_TOKEN_PUBLIC_KEYS` without its issuer field. Unset or blank means no extra keys.
+///
+/// A malformed value fails start-up. It never falls back to the active key alone, because a
+/// silent fallback would refuse every snapshot signed by a retained key. A repeated `key_id`
+/// also fails: a plain JSON map would keep the last value and hide the conflict. The key bytes
+/// themselves are checked where they are loaded (`AppState::build`).
+pub fn parse_verify_public_keys(raw: Option<&str>) -> Result<Vec<(String, String)>, ConfigError> {
+    let Some(raw) = raw.map(str::trim).filter(|raw| !raw.is_empty()) else {
+        return Ok(Vec::new());
+    };
+    let entries: VerifyKeyEntries = serde_json::from_str(raw).map_err(|e| {
+        ConfigError::Invalid(
+            VERIFY_PUBLIC_KEYS_VAR,
+            format!("must be a JSON object of key_id to base64 public key: {e}"),
+        )
+    })?;
+    Ok(entries.0)
+}
+
+/// Object entries in document order, refusing an empty or repeated `key_id`.
+struct VerifyKeyEntries(Vec<(String, String)>);
+
+impl<'de> serde::Deserialize<'de> for VerifyKeyEntries {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct EntriesVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for EntriesVisitor {
+            type Value = VerifyKeyEntries;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a JSON object of key_id to base64 public key")
+            }
+
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> Result<Self::Value, A::Error> {
+                let mut entries: Vec<(String, String)> = Vec::new();
+                while let Some((key_id, public_key)) = map.next_entry::<String, String>()? {
+                    if key_id.trim().is_empty() {
+                        return Err(serde::de::Error::custom("empty key_id"));
+                    }
+                    if entries.iter().any(|(seen, _)| seen == &key_id) {
+                        return Err(serde::de::Error::custom(format!(
+                            "duplicate key_id {key_id}"
+                        )));
+                    }
+                    entries.push((key_id, public_key));
+                }
+                Ok(VerifyKeyEntries(entries))
+            }
+        }
+
+        deserializer.deserialize_map(EntriesVisitor)
+    }
+}
+
 impl Config {
     /// Load configuration from the process environment.
     pub fn from_env() -> Result<Self, ConfigError> {
@@ -136,6 +202,9 @@ impl Config {
             stripe_api_base: optional("STRIPE_API_BASE", "https://api.stripe.com"),
             entitlement_signing_private_key: require("ENTITLEMENT_SIGNING_PRIVATE_KEY")?,
             entitlement_signing_key_id: optional("ENTITLEMENT_SIGNING_KEY_ID", "entitlement-key-1"),
+            entitlement_verify_public_keys: parse_verify_public_keys(
+                std::env::var(VERIFY_PUBLIC_KEYS_VAR).ok().as_deref(),
+            )?,
             dataforge_api_url: optional("DATAFORGE_API_URL", ""),
             dataforge_service_token: optional("DATAFORGE_SERVICE_TOKEN", ""),
             update_rollout_secret: optional("UPDATE_ROLLOUT_SECRET", ""),
@@ -157,5 +226,70 @@ impl Config {
                     ConfigError::Invalid("RATE_LIMIT_PER_MINUTE", "value too large".to_string())
                 })?,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_keys_unset_or_blank_means_none() {
+        assert!(parse_verify_public_keys(None).unwrap().is_empty());
+        assert!(parse_verify_public_keys(Some("")).unwrap().is_empty());
+        assert!(parse_verify_public_keys(Some("  \n")).unwrap().is_empty());
+        assert!(parse_verify_public_keys(Some("{}")).unwrap().is_empty());
+    }
+
+    #[test]
+    fn verify_keys_parse_in_document_order() {
+        let keys = parse_verify_public_keys(Some(r#"{"key-b":"BBBB","key-a":"AAAA"}"#)).unwrap();
+        assert_eq!(
+            keys,
+            vec![
+                ("key-b".to_string(), "BBBB".to_string()),
+                ("key-a".to_string(), "AAAA".to_string())
+            ]
+        );
+    }
+
+    fn invalid_reason(raw: &str) -> String {
+        match parse_verify_public_keys(Some(raw)) {
+            Err(ConfigError::Invalid(var, reason)) => {
+                assert_eq!(var, VERIFY_PUBLIC_KEYS_VAR);
+                reason
+            }
+            other => panic!("expected Invalid for {raw:?}, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn verify_keys_malformed_value_fails_with_the_variable_named() {
+        for raw in [
+            "not json",
+            r#"["key-a","AAAA"]"#,
+            r#""AAAA""#,
+            r#"{"key-a":1}"#,
+            r#"{"key-a":{"key":"AAAA"}}"#,
+        ] {
+            invalid_reason(raw);
+        }
+        let error = parse_verify_public_keys(Some("not json")).unwrap_err();
+        assert!(
+            error.to_string().contains(VERIFY_PUBLIC_KEYS_VAR),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn verify_keys_repeated_key_id_fails() {
+        let reason = invalid_reason(r#"{"key-a":"AAAA","key-a":"BBBB"}"#);
+        assert!(reason.contains("duplicate key_id key-a"), "{reason}");
+    }
+
+    #[test]
+    fn verify_keys_empty_key_id_fails() {
+        let reason = invalid_reason(r#"{"":"AAAA"}"#);
+        assert!(reason.contains("empty key_id"), "{reason}");
     }
 }

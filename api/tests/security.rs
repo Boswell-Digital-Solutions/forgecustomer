@@ -988,3 +988,66 @@ async fn posture_token_cannot_mutate_and_expiry_is_enforced() {
         .unwrap();
     assert_eq!(status_of(req).await, StatusCode::UNAUTHORIZED);
 }
+
+/// KI-FOC-20261105-001 (overlap half): a key in `ENTITLEMENT_VERIFY_PUBLIC_KEYS` is published on
+/// the public key route next to the active key. The parsed config is set directly, because
+/// environment variables are shared by every test in this process.
+#[tokio::test]
+async fn entitlement_keys_publish_a_retained_key_beside_the_active_key() {
+    use base64::Engine;
+    let retained = forgecustomer_api::services::signing::Signer25519::from_base64_seed(
+        "entitlement-key-0",
+        &base64::engine::general_purpose::STANDARD.encode([5u8; 32]),
+    )
+    .unwrap();
+    let mut config = test_config();
+    config.entitlement_verify_public_keys = vec![(
+        "entitlement-key-0".to_string(),
+        retained.public_key_base64(),
+    )];
+    let app = build_router(AppState::build(config).expect("state"));
+
+    let req = Request::builder()
+        .uri("/v1/entitlements/keys")
+        .body(Body::empty())
+        .unwrap();
+    let res = app.oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let body: Value = serde_json::from_slice(&bytes).unwrap();
+    let mut published: Vec<(String, String)> = body["keys"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|k| {
+            (
+                k["key_id"].as_str().unwrap().to_string(),
+                k["public_key"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect();
+    published.sort();
+    assert_eq!(published.len(), 2, "{body}");
+    assert_eq!(
+        published[0],
+        (
+            "entitlement-key-0".to_string(),
+            retained.public_key_base64()
+        )
+    );
+    assert_eq!(published[1].0, "entitlement-key-1");
+}
+
+#[tokio::test]
+async fn a_malformed_verify_key_fails_state_build() {
+    let mut config = test_config();
+    config.entitlement_verify_public_keys =
+        vec![("entitlement-key-0".to_string(), "AAAA".to_string())];
+    let error = AppState::build(config).err().expect("must fail");
+    assert!(
+        error
+            .to_string()
+            .starts_with("ENTITLEMENT_VERIFY_PUBLIC_KEYS: "),
+        "{error}"
+    );
+}

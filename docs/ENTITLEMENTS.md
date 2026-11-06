@@ -78,6 +78,9 @@ GET  /v1/entitlements/keys          published verification keys (versioned, publ
 
 - Signature is **Ed25519** over the canonical JSON of the payload **excluding** the
   `signature` field. `key_id` selects the verification key.
+- `GET /v1/entitlements/keys` lists the active key and every key in
+  `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (retained or standby). A client that compiles the list in
+  can therefore trust the next key before ForgeCustomer signs with it.
 - Schema: `contracts/entitlement-v1.schema.json`.
 - The wire JSON field order matches the canonical signing order (struct field order with
   sorted feature/quota maps), so clients verify by re-serializing the received document

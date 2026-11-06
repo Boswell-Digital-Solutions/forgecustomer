@@ -78,6 +78,10 @@ Every response receives:
 Entitlement snapshots use Ed25519. The signing private key is loaded from
 `ENTITLEMENT_SIGNING_PRIVATE_KEY`, and published keys are exposed by key ID. Key rotation
 requires an overlap window where old and new public keys both verify existing snapshots.
+`ENTITLEMENT_VERIFY_PUBLIC_KEYS` provides that window: each public key in it joins the
+verifying ring next to the active key, is published, and verifies, but never signs. Before
+this variable existed, the ring held only the active key, so a key change refused every
+unexpired snapshot at once. The operator sets the variable; no agent sets it.
 
 Forged snapshots must fail verification. Private signing keys must never be logged.
 
