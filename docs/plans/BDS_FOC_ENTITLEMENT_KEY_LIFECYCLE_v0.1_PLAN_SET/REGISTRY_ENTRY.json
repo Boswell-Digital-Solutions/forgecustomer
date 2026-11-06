@@ -1,0 +1,18 @@
+{
+  "plan_id": "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1",
+  "title": "ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code",
+  "version": "0.1",
+  "owner_repository": "Boswell-Digital-Solutions/forgecustomer",
+  "scope": "cross_repository",
+  "lifecycle_status": "proposed",
+  "plan_path": "docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/00_PLAN_SET_INDEX.md",
+  "tracking_issue": null,
+  "implementation": { "completed_slices": 0, "total_slices": 6, "evidence_status": "not_started" },
+  "next_action": "Operator rules on DEC-1 (authorize WP-00 source lock and WP-01 overlap wiring: ENTITLEMENT_VERIFY_PUBLIC_KEYS loaded into the existing VerifyingKeyRing), DEC-2 to DEC-5.",
+  "blocker": "Operator decisions DEC-1 to DEC-5",
+  "doc_system_paths": ["doc/system/11-security-privacy.md", "doc/system/12-configuration-operations.md"],
+  "last_verified": { "commit": "53d255a", "date": "2026-11-06" },
+  "archive": null,
+  "superseded_by": null,
+  "closeout_reason": null
+}

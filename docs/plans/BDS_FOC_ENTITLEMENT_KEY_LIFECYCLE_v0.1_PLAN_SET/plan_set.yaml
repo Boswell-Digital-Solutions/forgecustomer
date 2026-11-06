@@ -1,0 +1,50 @@
+plan_id: BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1
+title: ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code
+version: "0.1"
+lifecycle: proposed
+authority: Documentation creation only. No work package is authorized.
+decision_owner: Charles (Charlie) Boswell
+prepared: "2026-11-06"
+timezone: America/New_York
+parent:
+  operator_direction: "2026-11-06: build the plan ensuring current business code that works is considered instead of reinvented; build it in Drive /Forge using the protocols"
+  findings: [KI-FOC-20261105-001]
+  consumer_plans: [BDS-FCO-FLEET-MANAGER-v0.1, BDS-AF-RELACC-v0.1]
+proposed_canonical_owner: "Boswell-Digital-Solutions/forgecustomer (registry and routes); forge-command (operator flow); Author-Forge (release trust set)"
+source_lock:
+  - { repository: Boswell-Digital-Solutions/forgecustomer, commit: 53d255a }
+  - { repository: Boswell-Digital-Solutions/DataForge, commit: 6f56f3b1, branch: master }
+  - { repository: Boswell-Digital-Solutions/dataforge-Local, commit: ccffbc5, branch: master }
+  - { repository: Boswell-Digital-Solutions/Forge_Command, commit: 8f780036, use: reference only }
+  - { repository: Boswell-Digital-Solutions/forge-command, commit: e414f4d }
+  - { repository: Boswell-Digital-Solutions/Author-Forge, commit: 9f3a5d1a5 }
+canonical_drive_destination: /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET
+compilation: "00-09 concatenated by hand into BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md"
+rulings: [R01, R02, R03, R04, R05, R06, R07, R08]
+rulings_status: proposed
+reuse_matrix_ref: "03 §Reuse matrix"
+gaps:
+  - { id: AUTHORITY_GAP-01, topic: no forgecustomer-admin credential from forge-command, blocks: ["WP-03 register step"] }
+  - { id: AUTHORITY_GAP-02, topic: no key registry table in ForgeCustomer, blocks: [WP-02] }
+  - { id: AUTHORITY_GAP-03, topic: no trust-set statement on a release record, blocks: ["WP-04 guard input"] }
+  - { id: AUTHORITY_GAP-04, topic: fleet pipeline not built, blocks: ["AC-07 delivered-fleet evidence"] }
+  - { id: AUTHORITY_GAP-05, topic: live key_id unread, blocks: [] }
+  - { id: AUTHORITY_GAP-06, topic: KI-FOC-20261105-002 adjacent, blocks: [] }
+requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08]
+work_packages:
+  - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: proposed }
+  - { id: WP-01, title: Overlap wiring, owner: forgecustomer, acceptance: [AC-01, AC-02], status: proposed }
+  - { id: WP-02, title: Registry and statuses, owner: forgecustomer, acceptance: [AC-03, AC-04], status: proposed }
+  - { id: WP-03, title: Operator confirmation, owner: forge-command, acceptance: [AC-05], status: proposed }
+  - { id: WP-04, title: Release-time trust set, owner: Author-Forge, acceptance: [AC-06], status: proposed }
+  - { id: WP-05, title: Rotation rehearsal, owner: cross-repository, acceptance: [AC-07], status: proposed }
+acceptance_criteria: { AC-00: NOT_RUN, AC-01: NOT_RUN, AC-02: NOT_RUN, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }
+gates: [G0, G1, G2, G3, G4, G5]
+gate_order: "G0 -> G1 -> {G2, G4} -> G3 -> G5"
+decisions_requested:
+  - { id: DEC-1, topic: authorize WP-00 and WP-01, recommendation: yes }
+  - { id: DEC-2, topic: who creates a signing key, recommendation: "operator, outside any agent, as a deployment secret" }
+  - { id: DEC-3, topic: status fields on the public key list, recommendation: "yes, additive" }
+  - { id: DEC-4, topic: wire format, recommendation: "keep v1 now; RFC 8785 v2 later" }
+  - { id: DEC-5, topic: interim confirmation source for WP-04, recommendation: "operator-edited committed fingerprint file" }
+house_form_conformance: BDS-PSS-001
