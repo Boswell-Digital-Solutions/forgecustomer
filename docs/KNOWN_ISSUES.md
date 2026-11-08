@@ -6,6 +6,25 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261107-001 — the Supabase organization is on the Free plan, so the forgecustomer database has no automatic backups
+
+**Date found:** 2026-11-07
+**Status:** open. Not fixed. Found by BDS Client Intake plan `BDS-CLIENT-INTAKE-v0.3` WP-00 (evidence D4). This is an operator plan item; no code is wrong.
+
+**What is wrong:** a read-only Supabase `get_organization` on 2026-11-07 shows organization `qlikqkbebkhmaufcvnde` on the **Free** plan. It holds two active projects: `forgecustomer` (`sffgcltrwewnjzvrzjak`) and `DataForgedb` (`embvfponjxejbtrkryzs`). Both active-project slots are used. The Free plan includes no automatic backups.
+
+**Effect:** customer, licensing, entitlement and installation records have no recovery copy. A bad migration, an accidental delete or a project loss cannot be undone from Supabase. The same applies to `DataForgedb`.
+
+**Root cause:** the plan is a Supabase organization setting. It is not in this repository.
+
+**Fix:** none made. Changing the plan is the operator's act, and it changes cost. The Pro plan adds daily backups. A free alternative is a scheduled `supabase db dump` to private storage; the operator did not choose it.
+
+**Operator ruling (2026-11-07):** the organization moves to Pro in the week of the release ("We need to just plan on pro for week of release checklist"). It stays on Free until then.
+
+**Scope:** open. It must be added to the pre-release checklist next to O-04. The entry closes when the organization is on Pro and a first backup of both projects is visible in the Supabase dashboard.
+
+---
+
 ## KI-FOC-20261106-001 — the deployed service runs on Render's Free instance type, so the first call after idle waits for a cold start
 
 **Date found:** 2026-11-06
