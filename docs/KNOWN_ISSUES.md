@@ -19,6 +19,8 @@ is reported as new, and written in the same session it is found.
 
 **Fix:** none applied. Two options, both need the operator: (a) a waiver in `.cargo/audit.toml` with this justification, by the precedent of the RUSTSEC-2023-0071 `rsa` waiver; (b) an upgrade of sqlx to a release that allows `libsqlite3-sys >=0.39.0`.
 
+**Re-check 2026-11-09, option (b):** the operator chose the upgrade. It is blocked upstream. The newest sqlx release is 0.9.0 (2026-05-21). Its `sqlx-sqlite` 0.9.0 requires `libsqlite3-sys >=0.30.1, <0.38.0` (crates.io dependency data). The advisory is fixed only in `>=0.39.0`. An upgrade to sqlx 0.9 leaves a vulnerable `libsqlite3-sys` in `Cargo.lock`, and a `[patch]` cannot replace a version outside that range. Fix: none applied. Option (b) becomes possible when a sqlx release allows `libsqlite3-sys >=0.39.0`.
+
 **Scope:** open. The entry closes when the dependency audit passes on `main`.
 
 ---
