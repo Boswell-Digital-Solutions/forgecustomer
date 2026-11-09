@@ -6,6 +6,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261109-003 — `cargo audit` fails on RUSTSEC-2026-0459 for `libsqlite3-sys`, a lockfile-only crate
+
+**Date found:** 2026-11-09
+**Status:** OPEN. Found when the dependency audit failed on documentation PR #47.
+
+**What is wrong:** `cargo audit` reports RUSTSEC-2026-0459, `libsqlite3-sys` via C SQLite CVE-2026-119375, fixed in `>=0.39.0`. `Cargo.lock` records `libsqlite3-sys` 0.30.1. The scheduled dependency audit on `main` fails at `d8a97cf` with the same advisory, so the failure is not caused by any pull request.
+
+**Effect:** none on the service, measured. `api/Cargo.toml:26` enables sqlx with `default-features = false` and the `postgres` feature, not `sqlite`. `cargo tree -i libsqlite3-sys --manifest-path api/Cargo.toml -e normal` prints nothing: no build compiles the crate. The lockfile records it because a lockfile covers every feature combination. Every pull request's dependency audit fails until this closes, so no pull request passes an all-green merge gate.
+
+**Root cause:** sqlx 0.8 pins `libsqlite3-sys` below 0.39 for its optional `sqlite` feature.
+
+**Fix:** none applied. Two options, both need the operator: (a) a waiver in `.cargo/audit.toml` with this justification, by the precedent of the RUSTSEC-2023-0071 `rsa` waiver; (b) an upgrade of sqlx to a release that allows `libsqlite3-sys >=0.39.0`.
+
+**Scope:** open. The entry closes when the dependency audit passes on `main`.
+
+---
+
 ## KI-FOC-20261109-002 — an operator token's `roles` claim overrides its `scope`, so a scope cannot narrow an operator token
 
 **Date found:** 2026-11-09
