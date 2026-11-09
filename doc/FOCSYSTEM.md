@@ -1117,8 +1117,9 @@ ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 
 - `auth.users.id` is an identity subject, not the business customer identifier.
   ForgeCustomer maps it to its own `customer_profiles.id`.
-- Customer JWTs are valid only for customer routes. Admin routes use a separate issuer,
-  audience, and secret.
+- Customer JWTs are valid only for customer routes. Admin routes use a separate issuer
+  and audience. Admin tokens are EdDSA and are verified against an Ed25519 public key
+  (`ADMIN_JWT_PUBLIC_KEY`). There is no shared admin secret.
 - Customer clients may read their own commercial state but may not directly write
   subscriptions, Stripe mappings, licenses, entitlement grants, usage totals, audit
   records, or outbox events.
