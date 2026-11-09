@@ -6,6 +6,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261109-004 — doc/system §10 says admin routes use a shared secret; the code verifies EdDSA tokens with a public key
+
+**Date found:** 2026-11-09
+**Status:** CLOSED in the same change as this entry. Found by the Rake credential-authority research (forge `docs/architecture/rake_credential_authority_review.md` follow-up). Source read at `origin/main` `4bbe968`.
+
+**What is wrong:** `doc/system/10-authority-boundaries.md` said "Admin routes use a separate issuer, audience, and secret." `api/src/state.rs:94-98` builds the admin validator with `JwtValidator::eddsa` from `ADMIN_JWT_PUBLIC_KEY`, `ADMIN_JWT_ISSUER` and `ADMIN_JWT_AUDIENCE` (`api/src/config.rs:197-199`). No admin secret exists. `doc/system/03-api-contract.md:141-145` already states this correctly.
+
+**Effect:** documentation only. A reader of §10 could conclude that admin authentication uses a shared secret, and could plan a secret rotation that does not apply.
+
+**Root cause:** not established. §10 was not updated when §3 was.
+
+**Fix:** §10 now states the EdDSA public-key verification. `bash doc/system/BUILD.sh` rebuilt `doc/FOCSYSTEM.md`.
+
+**Scope:** closed when the change that adds this entry merges.
+
+---
+
 ## KI-FOC-20261109-003 — `cargo audit` fails on RUSTSEC-2026-0459 for `libsqlite3-sys`, a lockfile-only crate
 
 **Date found:** 2026-11-09
