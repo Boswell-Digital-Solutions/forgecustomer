@@ -139,8 +139,9 @@ Current waivers:
     `libsqlite3-sys >=0.30.1, <0.38.0`. No sqlx release can take the fix.
   - Remove the waiver when any of these holds: a sqlx release allows
     `libsqlite3-sys >=0.39.0` (upgrade first); `libsqlite3-sys` leaves `Cargo.lock`; or the
-    `cargo tree` command above prints anything. In the third case the crate is compiled, the
-    justification is false, and the advisory applies at once.
+    `cargo tree` command above prints anything. In the third case the crate is reachable through the
+    resolved dependency graph. The exclusion evidence is then invalid, and the waiver comes out
+    at once, pending a security reassessment.
 
 ## Customer deletion (summary)
 

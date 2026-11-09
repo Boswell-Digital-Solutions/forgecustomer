@@ -19,7 +19,8 @@ ignore = [
     # Remove this waiver when ANY of these holds:
     #   1. a sqlx release allows `libsqlite3-sys >=0.39.0`: upgrade, then remove it;
     #   2. `libsqlite3-sys` leaves Cargo.lock;
-    #   3. the `cargo tree -i libsqlite3-sys` command above prints anything, because
-    #      the crate is then compiled and this justification no longer holds.
+    #   3. the `cargo tree -i libsqlite3-sys` command above prints anything. The crate is
+    #      then reachable through the resolved dependency graph, the exclusion evidence
+    #      above is invalid, and the waiver comes out pending a security reassessment.
     "RUSTSEC-2026-0459",
 ]

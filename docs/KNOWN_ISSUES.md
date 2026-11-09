@@ -23,7 +23,7 @@ is reported as new, and written in the same session it is found.
 
 **Waiver 2026-11-09, option (a):** the operator authorized a reviewed PR that adds RUSTSEC-2026-0459 to the ignore list of `.cargo/audit.toml`, and nothing else ("APPROVED: Prepare a narrowly scoped dependency-audit waiver for RUSTSEC-2026-0459 in ForgeCustomer"). The authorization does not include a merge. The waiver records the path, the evidence, the upstream block and three removal conditions; `docs/SECURITY.md` lists it as accepted residual risk. The RUSTSEC-2023-0071 waiver is unchanged. The waiver is accepted residual risk from the operator's merge; it does not fix the vulnerability.
 
-**Scope:** open. The waiver does not close this entry. It closes when `libsqlite3-sys` leaves `Cargo.lock` or `Cargo.lock` holds `libsqlite3-sys >=0.39.0`, and the waiver is then removed. If `cargo tree -i libsqlite3-sys --workspace --all-features --target all -e all` prints anything first, the waiver must be removed at once.
+**Scope:** open. The waiver does not close this entry. It closes when `libsqlite3-sys` leaves `Cargo.lock` or `Cargo.lock` holds `libsqlite3-sys >=0.39.0`, and the waiver is then removed. If `cargo tree -i libsqlite3-sys --workspace --all-features --target all -e all` prints anything first, the crate is reachable through the resolved dependency graph, the exclusion evidence is invalid, and the waiver must be removed at once, pending a security reassessment.
 
 ---
 
