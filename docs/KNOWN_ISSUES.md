@@ -6,6 +6,42 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261109-003 — `cargo audit` fails on RUSTSEC-2026-0459 for `libsqlite3-sys`, a lockfile-only crate
+
+**Date found:** 2026-11-09
+**Status:** OPEN. Found when the dependency audit failed on documentation PR #47.
+
+**What is wrong:** `cargo audit` reports RUSTSEC-2026-0459, `libsqlite3-sys` via C SQLite CVE-2026-119375, fixed in `>=0.39.0`. `Cargo.lock` records `libsqlite3-sys` 0.30.1. The scheduled dependency audit on `main` fails at `d8a97cf` with the same advisory, so the failure is not caused by any pull request.
+
+**Effect:** none on the service, measured. `api/Cargo.toml:26` enables sqlx with `default-features = false` and the `postgres` feature, not `sqlite`. `cargo tree -i libsqlite3-sys --manifest-path api/Cargo.toml -e normal` prints nothing: no build compiles the crate. The lockfile records it because a lockfile covers every feature combination. Every pull request's dependency audit fails until this closes, so no pull request passes an all-green merge gate.
+
+**Root cause:** sqlx 0.8 pins `libsqlite3-sys` below 0.39 for its optional `sqlite` feature.
+
+**Fix:** none applied. Two options, both need the operator: (a) a waiver in `.cargo/audit.toml` with this justification, by the precedent of the RUSTSEC-2023-0071 `rsa` waiver; (b) an upgrade of sqlx to a release that allows `libsqlite3-sys >=0.39.0`.
+
+**Scope:** open. The entry closes when the dependency audit passes on `main`.
+
+---
+
+## KI-FOC-20261109-002 — an operator token's `roles` claim overrides its `scope`, so a scope cannot narrow an operator token
+
+**Date found:** 2026-11-09
+**Status:** OPEN. Found while the forge-command G5 authorization request was amended (`BDS-FCO-P3-TOKEN-ISSUER-001`, `07_G5_AUTHORIZATION_REQUEST.md`).
+
+**What is wrong:** `Claims::operator_roles()` returns the token's `roles` claim when it is not empty, and reads `scope` only when `roles` is empty (`api/src/auth/mod.rs:59-62`, verified at `d8a97cf`). `roles` is read from the token with `#[serde(default)]` (`api/src/auth/mod.rs:35-36`). A token signed by a trusted operator key that carries `"roles": ["admin"]` therefore gets the `admin` role, whatever its `scope` says. Each other scope token becomes a role of the same name (`api/src/auth/mod.rs:63-67`), so a scope such as `customers:suspend` does not pass `require_role("admin")`.
+
+**Effect today:** none observed. The only trusted operator key belongs to the predecessor Forge Command, and it sends `scope` and no `roles`. A token with `roles` needs that key to sign it.
+
+**Effect on G5:** an action-bound scope (SC-1 of the forge-command plan) is not a limit while `roles` can override it. A token can carry a narrow `scope` and a wide `roles` claim together.
+
+**Root cause:** the `roles` path exists for a token form that no current operator issuer sends. `scope` was added beside it as a bridge and does not replace it.
+
+**Fix:** none applied. The G5 request proposes that an operator token carrying `roles` is refused for a key that SC-1 binds, and that each route checks its own action scope rather than the `admin` role alone.
+
+**Scope:** open. The entry closes when an operator token cannot get a wider role than its `scope` proves, on both the admin and the posture validator.
+
+---
+
 ## KI-FOC-20261109-001 — two admin commercial-policy route handlers call `expect()` in a production path
 
 **Date found:** 2026-11-09
