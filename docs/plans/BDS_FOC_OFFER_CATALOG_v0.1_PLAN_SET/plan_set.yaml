@@ -1,0 +1,64 @@
+plan_id: BDS-FOC-OFFER-CATALOG-v0.1
+title: AuthorForge offer catalog and licensing model — Standard, updates, Pro, add-ons and the founders program
+version: "0.1"
+lifecycle: proposed
+authority: "Planning only (operator, 2026-11-08). No implementation, migration, Stripe object, price, legal text, deployment or merge. No exception to the CP0 STOP."
+decision_owner: Charles (Charlie) Boswell
+prepared: "2026-11-08"
+timezone: America/New_York
+parent:
+  extends: forgecustomer BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1 (CP0/WP00, 2026-08-31)
+  rulings_from: forge BDS-AF-ENTITLEMENT-LADDER-001 (R-2, R-4, R-5, R-6)
+  consumer_plans: [BDS-AF-PROTIER-v0.1, BDS-AF-RELACC-v0.1, BDS-AF-CANEBRAKE-001, BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1]
+  tier_rulings: ["TIER-02 (2026-11-08, Author-Forge #1011)"]
+proposed_canonical_owner: "Boswell-Digital-Solutions/forgecustomer (catalog, orders, licenses, entitlements); Author-Forge consumes signed decisions; bds_website renders offers"
+source_lock:
+  - { repository: Boswell-Digital-Solutions/forgecustomer, commit: 414f7e38c }
+  - { repository: Boswell-Digital-Solutions/Author-Forge, commit: a5c1040d5 }
+  - { repository: Boswell-Digital-Solutions/forge, commit: 50a208f25 }
+  - { drive: "/Forge", read: "2026-11-08", inventory: evidence/AC-00/SOURCE_LOCK.md }
+canonical_drive_destination: /Forge/Plans/BDS_FOC_OFFER_CATALOG_v0.1_PLAN_SET
+compilation: "00-09 concatenated by hand into BDS-FOC-OFFER-CATALOG-v0.1_COMPILED_PLAN_SET.md"
+rulings_in_force: [R01, R02, R03, R04, R05, R06, R07, R08, R09, R10]
+design_rules: [D01, D02, D03, D04, D05, D06]
+design_rules_status: proposed (bind on admission)
+offer_kinds: [one_time_major_version, update_plan, subscription, addon_subscription, one_time_addon, credit_pack]
+gaps:
+  - { id: AUTHORITY_GAP-01, topic: CP0 STOP active (Managed Payments eligibility, fees, tax codes), blocks: [WP-02, WP-03, WP-04, WP-05, WP-06, WP-08] }
+  - { id: AUTHORITY_GAP-02, topic: no one-time purchase lane (checkout mode=subscription only), blocks: [WP-02] }
+  - { id: AUTHORITY_GAP-03, topic: no add-on feature key or prerequisite rule, blocks: [WP-05] }
+  - { id: AUTHORITY_GAP-04, topic: no update entitlement on licenses, blocks: [WP-04] }
+  - { id: AUTHORITY_GAP-05, topic: no founder seat counter, blocks: [WP-03] }
+  - { id: AUTHORITY_GAP-06, topic: no legal text for any offer, blocks: [sale of any offer] }
+  - { id: AUTHORITY_GAP-07, topic: included cloud allowance (2026-06-11) conflicts with Standard = local (R05), blocks: [WP-02 seed] }
+  - { id: AUTHORITY_GAP-08, topic: Standard offline rule unsettled (14-day lease), blocks: [WP-04] }
+requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08, REQ-09, REQ-10]
+decisions:
+  - { id: DEC-0, topic: Standard has no cloud allowance, recommendation: accept, outcome: open }
+  - { id: DEC-1, topic: "Pro requires Standard (TIER-04)", recommendation: "A - Pro requires Standard", outcome: open }
+  - { id: DEC-2, topic: Standard update model, recommendation: "E - paid major upgrades for the first release; revisit A+ after a year", outcome: open }
+  - { id: DEC-3, topic: founders program, recommendation: "100 numbered seats; founder Standard price, free first major upgrade, Pro rate locked while continuous; no lifetime Pro", outcome: open }
+  - { id: DEC-4, topic: Press_Forge prerequisite, recommendation: Standard only, outcome: open }
+  - { id: DEC-5, topic: World Engine commercial form, recommendation: "defer; principle one_time_addon", outcome: open }
+  - { id: DEC-6, topic: Pro shape, recommendation: "one tier + credit packs; annual after retention evidence", outcome: open }
+  - { id: DEC-7, topic: Standard installations, recommendation: 3, outcome: open }
+  - { id: DEC-8, topic: Standard offline rule, recommendation: "local never checks in; activation once; snapshot only for hosted grants and updates", outcome: open }
+  - { id: DEC-9, topic: prices, recommendation: "defer until CP0 fee and tax evidence", outcome: open }
+gates:
+  - { id: OC-G0, passes_when: AC-00 PASS, status: passed_2026-11-08 }
+  - { id: OC-G1, passes_when: AC-01 PASS, status: open }
+  - { id: OC-G2, passes_when: "CP0 entry evidence attached and operator authorizes WP-02 onward", status: open }
+  - { id: OC-G3, passes_when: AC-02 to AC-06 PASS, status: open }
+  - { id: OC-G4, passes_when: "AC-07 and AC-08 PASS; launch needs a separate authorization", status: open }
+work_packages:
+  - { id: WP-00, title: Source lock and evidence inventory, owner: plan (read-only), acceptance: [AC-00], status: complete }
+  - { id: WP-01, title: Operator decision packet, owner: operator, acceptance: [AC-01], status: proposed }
+  - { id: WP-02, title: Offer kinds, rights reducer and catalog seed, owner: forgecustomer, acceptance: [AC-02], status: proposed }
+  - { id: WP-03, title: Founders program, owner: forgecustomer, acceptance: [AC-03], status: proposed }
+  - { id: WP-04, title: Update right on the license and the desktop, owner: "forgecustomer, Author-Forge", acceptance: [AC-04], status: proposed }
+  - { id: WP-05, title: Add-on grants, owner: "forgecustomer, Author-Forge", acceptance: [AC-05], status: proposed }
+  - { id: WP-06, title: Pro credits and annual price, owner: "forgecustomer, Author-Forge", acceptance: [AC-06], status: proposed }
+  - { id: WP-07, title: Legal text, fact sheets and tax memo, owner: operator and counsel, acceptance: [AC-07], status: proposed }
+  - { id: WP-08, title: Test-mode rehearsal, owner: cross-repository, acceptance: [AC-08], status: proposed }
+acceptance_criteria: [AC-00, AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08]
+house_form_conformance: BDS-PSS-001
