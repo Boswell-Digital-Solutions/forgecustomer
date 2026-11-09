@@ -1,0 +1,26 @@
+{
+  "manifest_id": "BDS-FOC-OFFER-CATALOG-v0.1-manifest-2026-11-08",
+  "plan_id": "BDS-FOC-OFFER-CATALOG-v0.1",
+  "version": "0.1",
+  "prepared_at": "2026-11-08T00:00:00-05:00",
+  "files": [
+    "00_PLAN_SET_INDEX.md",
+    "01_BINDING_RULINGS_AND_NON_GOALS.md",
+    "02_AUTHORITY_BOUNDARIES_AND_GAPS.md",
+    "03_PROTOCOL_BINDINGS_AND_COVERAGE.md",
+    "04_CONTRACTS_AND_PROVENANCE.md",
+    "05_CORE_MECHANISM_SPECIFICATION.md",
+    "06_DECISION_SEMANTICS.md",
+    "07_ACCEPTANCE_AND_EVIDENCE.md",
+    "08_WORK_PACKAGES_AND_GATES.md",
+    "09_OPERATOR_REVIEW_AND_HANDOFF.md",
+    "BDS-FOC-OFFER-CATALOG-v0.1_COMPILED_PLAN_SET.md",
+    "FOLDER_METADATA.json",
+    "REGISTRY_ENTRY.json",
+    "evidence/AC-00/RESULT.md",
+    "evidence/AC-00/SOURCE_LOCK.md",
+    "evidence/AC-01/RESULT.md",
+    "plan_set.yaml",
+    "plan_set_manifest.json"
+  ]
+}

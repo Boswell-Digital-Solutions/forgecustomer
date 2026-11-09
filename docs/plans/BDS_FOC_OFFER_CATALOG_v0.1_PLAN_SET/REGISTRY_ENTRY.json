@@ -1,0 +1,35 @@
+{
+  "plan_id": "BDS-FOC-OFFER-CATALOG-v0.1",
+  "title": "AuthorForge offer catalog and licensing model — Standard, updates, Pro, add-ons and the founders program",
+  "version": "0.1",
+  "class": "plan_set",
+  "scope": "cross_repository",
+  "owner_repository": "Boswell-Digital-Solutions/forgecustomer",
+  "lifecycle": "authorized",
+  "lifecycle_status": "approved",
+  "status": "authorized",
+  "authority": "DEC-0 to DEC-9 ruled by the operator on 2026-11-08 (\"OK I concur with recommendations - proceed\", confirmed as all ten). WP-00 and WP-01 are complete. It authorizes no implementation, migration, Stripe object, price, legal text, deployment or merge. WP-02 onward need the CP0 entry evidence and a separate authorization.",
+  "decision_owner": "Charles (Charlie) Boswell",
+  "prepared": "2026-11-08",
+  "plan_path": "docs/plans/BDS_FOC_OFFER_CATALOG_v0.1_PLAN_SET/00_PLAN_SET_INDEX.md",
+  "tracking_issue": null,
+  "implementation": {
+    "completed_slices": 2,
+    "total_slices": 9,
+    "evidence_status": "partial"
+  },
+  "next_action": "DEC-0 to DEC-9 ruled 2026-11-08 (all accepted as recommended; DEC-5 as revised; DEC-9 prices deferred). WP-00 and WP-01 complete (OC-G0, OC-G1 PASS). Next: the CP0 entry evidence of the commerce launch policy (Managed Payments eligibility, fees, tax codes), then an operator authorization for WP-02 onward. WP-07 (legal text, fact sheets, tax memo) can start with the operator and counsel.",
+  "blocker": "AUTHORITY_GAP-01: CP0 STOP (Managed Payments eligibility, fees, tax codes)",
+  "doc_system_paths": [
+    "doc/system/04-data-model.md",
+    "doc/system/05-domain-subsystems.md",
+    "doc/system/07-scope.md"
+  ],
+  "last_verified": {
+    "commit": "414f7e38cced5452601bad595a2c967bfb90e058",
+    "date": "2026-11-08"
+  },
+  "archive": null,
+  "superseded_by": null,
+  "closeout_reason": null
+}
