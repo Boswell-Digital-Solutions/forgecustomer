@@ -226,6 +226,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      # A waiver in .cargo/audit.toml holds only while its crate is unreachable
+      # (KI-FOC-20261109-003). This step fails closed when that stops being true.
+      - name: waived crates stay unreachable
+        run: |
+          bash scripts/check-waived-crates.test.sh
+          bash scripts/check-waived-crates.sh
       - name: cargo-audit
         run: |
           cargo install cargo-audit --locked
