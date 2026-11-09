@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Plan ID | BDS-FOC-OFFER-CATALOG-v0.1 |
-| Lifecycle | proposed |
+| Lifecycle | authorized (rulings only; the central registry reads `approved`) |
 | Compilation | Components 00–09, concatenated by hand. No build script. An edit to a component is mirrored here in the same change. |
 
 # 00 — Plan identity, index and read order
@@ -14,8 +14,8 @@ This component gives the plan identity, the purpose, the source state and the re
 |---|---|
 | Plan ID | BDS-FOC-OFFER-CATALOG-v0.1 |
 | Title | AuthorForge offer catalog and licensing model — Standard, updates, Pro, add-ons and the founders program |
-| Lifecycle | proposed |
-| Authority | Planning only. The operator asked for this plan on 2026-11-08 ("yes … so we have all the evidence documented on our next steps"). It authorizes no implementation, migration, Stripe object, price, legal text, deployment or merge. It holds no exception to the CP0 STOP of the commerce launch policy. |
+| Lifecycle | authorized (rulings only; the central registry reads `approved`) |
+| Authority | DEC-0 to DEC-9 ruled by the operator on 2026-11-08 ("OK I concur with recommendations - proceed", confirmed as all ten). WP-00 and WP-01 are complete. It authorizes no implementation, migration, Stripe object, price, legal text, deployment or merge. WP-02 onward need the CP0 entry evidence and a separate authorization. It holds no exception to the CP0 STOP of the commerce launch policy. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-08 America/New_York |
 | Parent / extension target | Extends ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1` (CP0/WP00, 2026-08-31), its target model and its CP1 work packages. Takes the commercial rulings of forge `BDS-AF-ENTITLEMENT-LADDER-001` (R-2, R-5, 2026-10-21). Consumer plans: Author-Forge `BDS-AF-PROTIER-v0.1`, `BDS-AF-RELACC-v0.1`, `BDS-AF-CANEBRAKE-001` (D4); ForgeCustomer `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`. Tier ruling TIER-02 (2026-11-08, Author-Forge #1011). |
@@ -131,8 +131,8 @@ This component states who owns each decision and which gaps block the work.
 | AUTHORITY_GAP-04 | No update entitlement. `licenses` has `expires_at` and `device_limit` but no `updates_until` or major-version field (`supabase/migrations/0004_licensing.sql`). | WP-04, DEC-2 | New fields, after DEC-2. |
 | AUTHORITY_GAP-05 | No founder seat counter or numbered founder record. Promotion codes are on (`stripe.rs:105`) but a coupon limit is not an atomic cap. | WP-03 | New mechanism (05 §D). |
 | AUTHORITY_GAP-06 | No legal text exists for any offer. | Selling any offer | Operator and counsel (WP-07). |
-| AUTHORITY_GAP-07 | Two catalog records disagree on whether the base product has cloud. The 2026-06-11 catalog alignment (Drive `1sXazu4S2iKMERXT-rM-uZNDc2E_3xI3T`) gives every customer "an included cloud allowance". RELACC opens cloud only for an `active` or `trialing` subscription, and R05 says Standard is local. | WP-02 seed data | R05 is newer and binds. The `authorforge_included` plan carries no cloud allowance. Recorded for confirmation as DEC-0 in 09. |
-| AUTHORITY_GAP-08 | Standard offline use is not settled. An offline lease lasts 14 days by default. For an owned license that is a check-in every 14 days, which conflicts with D02. The recovery certificate (launch policy §9) covers opening and exporting work, not normal use. | WP-04 | DEC-8 in 09. |
+| AUTHORITY_GAP-07 | Two catalog records disagree on whether the base product has cloud. The 2026-06-11 catalog alignment (Drive `1sXazu4S2iKMERXT-rM-uZNDc2E_3xI3T`) gives every customer "an included cloud allowance". RELACC opens cloud only for an `active` or `trialing` subscription, and R05 says Standard is local. | WP-02 seed data | **Resolved 2026-11-08 by DEC-0:** the `authorforge_included` plan carries no cloud allowance. |
+| AUTHORITY_GAP-08 | Standard offline use is not settled. An offline lease lasts 14 days by default. For an owned license that is a check-in every 14 days, which conflicts with D02. The recovery certificate (launch policy §9) covers opening and exporting work, not normal use. | WP-04 | **Resolved 2026-11-08 by DEC-8:** local features never check in; the snapshot and lease serve hosted grants and updates only. |
 
 ## Boundary rules
 
@@ -242,16 +242,18 @@ This component specifies the catalog, the update window, the add-on grants, the 
 | Offer | Kind | Requires | Lane | Source for the offer itself |
 |---|---|---|---|---|
 | AuthorForge Standard | `one_time_major_version` | — | local | R01, R07 |
-| Standard Updates and Support | `update_plan` | Standard | none (delivery only) | proposed here; DEC-2 |
-| AuthorForge Pro | `subscription` | Standard if DEC-1 = A | hosted | R01, R05 |
+| Standard Updates and Support | `update_plan` | Standard | none (delivery only) | **not offered at the first release** (DEC-2 = E) |
+| AuthorForge Pro | `subscription` | Standard (DEC-1) | hosted | R01, R05 |
 | Pro credit pack | `credit_pack` | Pro | hosted | R03 |
-| Press_Forge | `addon_subscription` | Standard; Pro only if DEC-4 says so | mixed (local sidecar, hosted NeuroForge and DataForge) | R01, R02; `BDS-AF-CANEBRAKE-001` D4 |
-| World Engine | `one_time_addon` or none yet | Standard | local only | World Engine plan set (research only) |
-| Founders program | a property of the offers above | — | — | Master Plan; Market Analysis; DEC-3 |
+| Press_Forge | `addon_subscription` | Standard only (DEC-4) | mixed (local sidecar, hosted NeuroForge and DataForge) | R01, R02; `BDS-AF-CANEBRAKE-001` D4 |
+| World Engine | `one_time_addon`, a module inside AuthorForge (DEC-5) | Standard | local only | World Engine plan set (research only); price deferred |
+| Founders program | a property of the offers above | — | — | DEC-3: 100 numbered seats |
 
 Pro already covers these hosted capabilities, so none of them is a separate add-on: cloud narration voices, hosted deep analysis, Google Drive storage, Rake research missions (evidence/AC-00 §A.4, §A.6, §A.7). The local Submission Ledger is Standard (R06).
 
 ## B. The update window (DEC-2)
+
+**Ruled 2026-11-08: E** for the first release. A+ stays specified below for the review after a year of sales data.
 
 Two designs keep D02. Both need AUTHORITY_GAP-04 closed.
 
@@ -344,7 +346,7 @@ All evidence goes under `evidence/<AC-ID>/` in this plan set. A planned check is
 
 ---
 
-# 08 — Work packages and gates. WP-00 complete; WP-01 onward proposed.
+# 08 — Work packages and gates. WP-00 and WP-01 complete; WP-02 onward proposed.
 
 This component gives each work package its nine-field brief, and the gates between them.
 
@@ -380,7 +382,7 @@ This component gives each work package its nine-field brief, and the gates betwe
 - **Deliverables:** the rulings recorded.
 - **Acceptance criteria:** AC-01.
 - **Verification:** 07 AC-01.
-- **Stop conditions:** done when every decision has an outcome; a deferral keeps its blocked work packages blocked.
+- **Stop conditions:** done when every decision has an outcome; a deferral keeps its blocked work packages blocked. **Status: complete 2026-11-08** (all ten ruled; DEC-9 deferred).
 
 **WP-02 Offer kinds, rights reducer and catalog seed** — owner: forgecustomer
 
@@ -474,9 +476,10 @@ This component records the current authority, the decisions the plan needs, and 
 
 ## Current authority
 
-- **Planning:** asked for by the operator on 2026-11-08 ("yes … so we have all the evidence documented on our next steps"). This plan set is the result. Lifecycle: proposed.
-- **Implementation:** none. WP-02 onward also wait for the CP0 entry evidence (AUTHORITY_GAP-01).
-- **Planning completion is not authorization.** A ruling below authorizes no work package by itself.
+- **Planning:** asked for by the operator on 2026-11-08 ("yes … so we have all the evidence documented on our next steps").
+- **Rulings:** DEC-0 to DEC-9 were ruled on 2026-11-08 (operator, 2026-11-08: "OK I concur with recommendations - proceed", confirmed as "All DEC-0 to DEC-9"). Each ruling is recorded under its decision below. WP-01 is complete (AC-01 PASS, OC-G1 PASS).
+- **Lifecycle:** `authorized`, for the rulings only. The central registry has no `authorized` value, so its row reads `approved` (PSS-001 §3.8 mapping: plan `authorized` = registry `approved`).
+- **Implementation:** none. WP-02 to WP-08 need the CP0 entry evidence (AUTHORITY_GAP-01) and a separate operator authorization. The rulings authorize no work package by themselves (06).
 
 ## Decisions
 
@@ -489,6 +492,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 **Recommendation: Standard has no cloud allowance.** The `authorforge_included` plan keeps a zero cloud quota. This follows R05 and the RELACC cloud gate, which are newer.
 
 **Alternative:** a small included allowance, as a taste of Pro. It costs BDS money for every Standard customer, and it puts content egress terms on Standard.
+
+**Ruling (2026-11-08): accepted.** Standard has no cloud allowance. The `authorforge_included` plan keeps a zero cloud quota. AUTHORITY_GAP-07 is resolved.
 
 ### DEC-1 — Does Pro require Standard? (TIER-04)
 
@@ -504,6 +509,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 - Pro earns a perpetual Standard license after a number of paid months. Generous, but it adds a third rule to explain, test and write into the terms (R10).
 
 **Effect.** Sets `requires: [standard]` on the Pro offer (WP-02) and the license text (WP-07).
+
+**Ruling (2026-11-08): accepted.** Pro requires Standard. TIER-04 is closed.
 
 ### DEC-2 — How do Standard updates work?
 
@@ -523,6 +530,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 **Evidence that could change this:** a tax memo that classifies a renewal cleanly, or data on how often authors renew.
 
 **Correction.** In the 2026-11-08 conversation that led to this plan, A+ was recommended before the launch policy's major-version design was read. This recommendation replaces that one.
+
+**Ruling (2026-11-08): accepted.** E, paid major upgrades, for the first release. No `update_plan` offer is sold at the first release. A+ is revisited after a year of sales data.
 
 ### DEC-3 — The founders program
 
@@ -546,6 +555,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 
 **Alternatives:** 250 seats (more early revenue, more support load), or no locked Pro rate (simpler, a weaker offer). The cap is data (05 §D), so a later program can open more seats.
 
+**Ruling (2026-11-08): accepted.** 100 numbered founder seats. Benefits: a founder Standard price, the first major upgrade free, a Pro price locked while the subscription stays continuous (it ends after a lapse of more than 30 days), and a founder number. No lifetime Pro. A refunded seat number is not reused. The founder price itself waits for DEC-9.
+
 ### DEC-4 — Does Press_Forge need Pro?
 
 **Question.** Press_Forge is a monthly add-on (R01, R02). Can a Standard customer buy it without Pro?
@@ -556,11 +567,17 @@ Each decision has a plain-language question, a recommendation and the alternativ
 
 **Conflict recorded.** The Master Plan (2026-07-30) priced Press_Forge as a "$299 add-on" in its one-time column. R01 and R02 (2026-10-21) are newer and say monthly. The rulings stand.
 
+**Ruling (2026-11-08): accepted.** Press_Forge requires Standard only, not Pro. The ladder packet open question D-2 is closed.
+
 ### DEC-5 — World Engine's commercial form
 
 **Question.** World Engine is research only. It runs locally ("100% offline local validation"). How would it be sold?
 
-**Recommendation: defer.** Record the principle now: a local-only add-on is a `one_time_addon` (D04). Its own plan sets the price when it reaches a gate.
+**Recommendation (first version): defer,** and record the principle that a local-only add-on is a `one_time_addon` (D04).
+
+**Recommendation (revised 2026-11-08, after the operator asked "world engine defer?"):** rule the form now: a one-time add-on module inside AuthorForge that requires Standard. Defer only the price.
+
+**Ruling (2026-11-08): accepted, as revised the same day.** World Engine is a **one-time add-on module inside AuthorForge** (`one_time_addon`) that requires Standard. Its price is deferred to DEC-9 and to World Engine's own build gate. This answers the commercial half of the World Engine plan's own open question D2. The plan set's D11 (price, packaging and source-material rights) stays open there.
 
 ### DEC-6 — The shape of Pro
 
@@ -570,6 +587,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 
 **Alternative:** two tiers at launch. More choice, but no usage data to set the line between them.
 
+**Ruling (2026-11-08): accepted.** One Pro tier at launch, plus credit packs. An annual price comes after retention evidence. A second tier comes only after usage data.
+
 ### DEC-7 — How many machines per Standard license?
 
 **Question.** The current default is one device.
@@ -577,6 +596,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 **Recommendation: 3 active installations.** A desktop, a laptop, and room for a replacement machine. The author can deactivate a machine (`deactivate_installation` exists).
 
 **Alternative:** 2 installations. Stricter, with more support requests.
+
+**Ruling (2026-11-08): accepted.** 3 active installations per Standard license.
 
 ### DEC-8 — Must Standard check in online?
 
@@ -590,6 +611,8 @@ Each decision has a plain-language question, a recommendation and the alternativ
 - This matches the desktop today: "In local mode, entitlement enforcement is fully bypassed" (Author-Forge `doc/system/37-pro-entitlement.md:163`).
 
 **Alternative:** a long lease (for example one year). It is more control, and it is still a lockout risk.
+
+**Ruling (2026-11-08): accepted.** Local features never need a check-in. Activation happens once, online. The signed snapshot and the lease are needed only for hosted grants and for installing updates. AUTHORITY_GAP-08 is resolved.
 
 ### DEC-9 — Prices
 
@@ -606,9 +629,11 @@ Each decision has a plain-language question, a recommendation and the alternativ
 | Market Analysis, 2026-07-29 | $149; upgrade about $59–$79 | 250 at $79, with 12 months of updates | cloud packs $10, $25 and $50 |
 | Launch policy fee table | net $92.36 at $99; $139.16 at $149 | — | net $17.35 at $19; $26.64 at $29 |
 
+**Ruling (2026-11-08): deferred, as recommended.** Prices are set after the CP0 fee and tax evidence. No price is approved.
+
 ## Authorization requested
 
-None now. The next operator act is to rule DEC-0 to DEC-9, which is WP-01. After that, implementation needs:
+None now. WP-01 is complete. Implementation needs:
 
 1. the CP0 entry evidence (AUTHORITY_GAP-01); and
 2. a separate operator authorization for WP-02 onward.
@@ -618,11 +643,13 @@ None now. The next operator act is to rule DEC-0 to DEC-9, which is WP-01. After
 | AC | Status |
 |---|---|
 | AC-00 | **PASS** (evidence/AC-00/RESULT.md) |
-| AC-01 to AC-08 | not started |
+| AC-01 | **PASS** (evidence/AC-01/RESULT.md) |
+| AC-02 to AC-08 | not started |
 
 ## Handoff
 
 - **Repository:** this plan set, in forgecustomer `docs/plans/`, on a review branch.
 - **Drive:** /Forge/Plans/BDS_FOC_OFFER_CATALOG_v0.1_PLAN_SET is not yet uploaded.
 - **Forge registry:** the central registry row in forge `docs/canonical/plan_registry_v1.json` is a separate change.
-- **Author-Forge:** when DEC-1 and DEC-4 are ruled, the ladder packet's open question D-2 (does `pressforge` need `pro`) and TIER-04 close with them.
+- **Author-Forge and forge:** DEC-1 closes TIER-04. DEC-4 closes the ladder packet's open question D-2 (does `pressforge` need `pro`). Neither record is updated in this change.
+- **World Engine plan set (Drive):** DEC-5 answers the commercial half of its D2. The Drive document is not updated (Drive writes are blocked for agents).

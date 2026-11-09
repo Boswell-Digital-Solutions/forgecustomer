@@ -1,4 +1,4 @@
-# 08 — Work packages and gates. WP-00 complete; WP-01 onward proposed.
+# 08 — Work packages and gates. WP-00 and WP-01 complete; WP-02 onward proposed.
 
 This component gives each work package its nine-field brief, and the gates between them.
 
@@ -34,7 +34,7 @@ This component gives each work package its nine-field brief, and the gates betwe
 - **Deliverables:** the rulings recorded.
 - **Acceptance criteria:** AC-01.
 - **Verification:** 07 AC-01.
-- **Stop conditions:** done when every decision has an outcome; a deferral keeps its blocked work packages blocked.
+- **Stop conditions:** done when every decision has an outcome; a deferral keeps its blocked work packages blocked. **Status: complete 2026-11-08** (all ten ruled; DEC-9 deferred).
 
 **WP-02 Offer kinds, rights reducer and catalog seed** — owner: forgecustomer
 

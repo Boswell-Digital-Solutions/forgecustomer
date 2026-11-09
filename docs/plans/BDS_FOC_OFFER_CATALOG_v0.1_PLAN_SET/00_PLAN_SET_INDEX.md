@@ -6,8 +6,8 @@ This component gives the plan identity, the purpose, the source state and the re
 |---|---|
 | Plan ID | BDS-FOC-OFFER-CATALOG-v0.1 |
 | Title | AuthorForge offer catalog and licensing model — Standard, updates, Pro, add-ons and the founders program |
-| Lifecycle | proposed |
-| Authority | Planning only. The operator asked for this plan on 2026-11-08 ("yes … so we have all the evidence documented on our next steps"). It authorizes no implementation, migration, Stripe object, price, legal text, deployment or merge. It holds no exception to the CP0 STOP of the commerce launch policy. |
+| Lifecycle | authorized (rulings only; the central registry reads `approved`) |
+| Authority | DEC-0 to DEC-9 ruled by the operator on 2026-11-08 ("OK I concur with recommendations - proceed", confirmed as all ten). WP-00 and WP-01 are complete. It authorizes no implementation, migration, Stripe object, price, legal text, deployment or merge. WP-02 onward need the CP0 entry evidence and a separate authorization. It holds no exception to the CP0 STOP of the commerce launch policy. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-08 America/New_York |
 | Parent / extension target | Extends ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1` (CP0/WP00, 2026-08-31), its target model and its CP1 work packages. Takes the commercial rulings of forge `BDS-AF-ENTITLEMENT-LADDER-001` (R-2, R-5, 2026-10-21). Consumer plans: Author-Forge `BDS-AF-PROTIER-v0.1`, `BDS-AF-RELACC-v0.1`, `BDS-AF-CANEBRAKE-001` (D4); ForgeCustomer `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`. Tier ruling TIER-02 (2026-11-08, Author-Forge #1011). |

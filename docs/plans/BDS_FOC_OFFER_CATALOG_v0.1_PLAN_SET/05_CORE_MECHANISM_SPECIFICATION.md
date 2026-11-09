@@ -7,16 +7,18 @@ This component specifies the catalog, the update window, the add-on grants, the 
 | Offer | Kind | Requires | Lane | Source for the offer itself |
 |---|---|---|---|---|
 | AuthorForge Standard | `one_time_major_version` | — | local | R01, R07 |
-| Standard Updates and Support | `update_plan` | Standard | none (delivery only) | proposed here; DEC-2 |
-| AuthorForge Pro | `subscription` | Standard if DEC-1 = A | hosted | R01, R05 |
+| Standard Updates and Support | `update_plan` | Standard | none (delivery only) | **not offered at the first release** (DEC-2 = E) |
+| AuthorForge Pro | `subscription` | Standard (DEC-1) | hosted | R01, R05 |
 | Pro credit pack | `credit_pack` | Pro | hosted | R03 |
-| Press_Forge | `addon_subscription` | Standard; Pro only if DEC-4 says so | mixed (local sidecar, hosted NeuroForge and DataForge) | R01, R02; `BDS-AF-CANEBRAKE-001` D4 |
-| World Engine | `one_time_addon` or none yet | Standard | local only | World Engine plan set (research only) |
-| Founders program | a property of the offers above | — | — | Master Plan; Market Analysis; DEC-3 |
+| Press_Forge | `addon_subscription` | Standard only (DEC-4) | mixed (local sidecar, hosted NeuroForge and DataForge) | R01, R02; `BDS-AF-CANEBRAKE-001` D4 |
+| World Engine | `one_time_addon`, a module inside AuthorForge (DEC-5) | Standard | local only | World Engine plan set (research only); price deferred |
+| Founders program | a property of the offers above | — | — | DEC-3: 100 numbered seats |
 
 Pro already covers these hosted capabilities, so none of them is a separate add-on: cloud narration voices, hosted deep analysis, Google Drive storage, Rake research missions (evidence/AC-00 §A.4, §A.6, §A.7). The local Submission Ledger is Standard (R06).
 
 ## B. The update window (DEC-2)
+
+**Ruled 2026-11-08: E** for the first release. A+ stays specified below for the review after a year of sales data.
 
 Two designs keep D02. Both need AUTHORITY_GAP-04 closed.
 
