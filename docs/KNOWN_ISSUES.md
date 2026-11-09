@@ -6,6 +6,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261109-001 — two admin commercial-policy route handlers call `expect()` in a production path
+
+**Date found:** 2026-11-09
+**Status:** OPEN. Recorded by forge BDS-FGITR-v0.1 (governance truth audit).
+
+**What is wrong:** `CLAUDE.md:41` bans `unwrap()` and `expect()` in production paths. Two route handlers in `api/src/routes/mod.rs` call `serde_json::to_value(policy).expect("commercial policy is serializable")`, verified at `7cd8a13`. They are `admin_authorforge_commercial_policy` (`api/src/routes/mod.rs:1824`) and `admin_authorforge_commercial_policy_publish` (`api/src/routes/mod.rs:1866`). The router registers both handlers (`api/src/routes/mod.rs:151` and `:155`). No lint enforces the rule. No `clippy::unwrap_used` or `clippy::expect_used` setting exists in the repository. CI runs `cargo clippy --all-targets --all-features -- -D warnings` with the default lint set (`.github/workflows/ci.yml:60`).
+
+**Effect:** if the serialization fails, the handler panics instead of returning an `AppError` response.
+
+**Root cause:** Not established.
+
+**Fix:** None applied.
+
+**Scope:** Open.
+
+---
+
 ## KI-FOC-20261107-001 — the Supabase organization is on the Free plan, so the forgecustomer database has no automatic backups
 
 **Date found:** 2026-11-07
@@ -22,6 +39,8 @@ is reported as new, and written in the same session it is found.
 **Operator ruling (2026-11-07):** the organization moves to Pro in the week of the release ("We need to just plan on pro for week of release checklist"). It stays on Free until then.
 
 **Scope:** open. It must be added to the pre-release checklist next to O-04. The entry closes when the organization is on Pro and a first backup of both projects is visible in the Supabase dashboard.
+
+**Re-check 2026-11-09:** the pre-release checklist still has no Supabase item. Recorded by forge BDS-FGITR-v0.1 (governance truth audit). `Author-Forge@f3a39fa2:docs/plans/BDS_AF_PROTIER_v0.1_PLAN_SET/PRE_RELEASE_CHECKLIST.md` has O-04a (line 69), O-04b (line 70) and O-05 (line 72). None of them names Supabase or backups. The item that this scope requires is not added yet. Fix: none applied. Scope: open.
 
 ---
 
