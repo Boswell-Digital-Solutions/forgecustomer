@@ -1387,7 +1387,7 @@ ordinary CI skips the server and does not prove an end-to-end Stripe payment flo
 | `migrations` | Postgres 16 migration apply, deterministic reapply, seed idempotency, RLS coverage, customer RLS write-denial matrix, append-only ledger update rejection |
 | `contracts` | Redocly OpenAPI lint, JSON schema parse checks |
 | `secret-scan` | Gitleaks over repo history |
-| `audit` | `cargo audit` |
+| `audit` | `scripts/check-waived-crates.sh` and its tests: each guarded waiver's crate stays unreachable in the resolved dependency graph, fail-closed; then `cargo audit` |
 
 `.github/workflows/dependency-audit.yml` runs the same `cargo audit` on `main` every day at
 06:17 UTC, on manual dispatch, and on pull requests that change that workflow. A new RustSec

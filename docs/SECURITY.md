@@ -142,6 +142,10 @@ Current waivers:
     `cargo tree` command above prints anything. In the third case the crate is reachable through the
     resolved dependency graph. The exclusion evidence is then invalid, and the waiver comes out
     at once, pending a security reassessment.
+  - Enforcement: the CI `audit` job runs `scripts/check-waived-crates.sh` before `cargo audit`.
+    It fails when `libsqlite3-sys` is reachable, when it has left `Cargo.lock`, when `cargo tree`
+    errors, or when the positive control `sqlx-postgres` prints nothing. The RUSTSEC-2023-0071
+    waiver is not guarded by this script.
 
 ## Customer deletion (summary)
 
