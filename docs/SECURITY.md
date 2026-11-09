@@ -126,6 +126,21 @@ Current waivers:
   crate is not part of the compiled dependency graph. Lockfiles record optional
   dependencies for every feature combination, so the entry cannot be dropped while sqlx
   is a dependency. Remove the waiver when sqlx ships against a fixed `rsa`.
+- **RUSTSEC-2026-0459** (`libsqlite3-sys` 0.30.1, C SQLite CVE-2026-119375, fixed in
+  `>=0.39.0`). **Accepted residual risk, not a resolved vulnerability.** The vulnerable
+  version stays in `Cargo.lock`, and `KI-FOC-20261109-003` stays open.
+  - Path: `libsqlite3-sys` is a dependency of `sqlx-sqlite` only. `sqlx-sqlite` is an
+    optional dependency of `sqlx` and `sqlx-macros-core`. The service enables the sqlx
+    `postgres` feature and never the `sqlite` feature.
+  - Evidence: `cargo tree -i libsqlite3-sys --workspace --all-features --target all -e all`
+    prints nothing. The same command for `sqlx-postgres` prints a tree, which proves that the
+    command reads the graph.
+  - Upstream block: sqlx-sqlite 0.9.0, the newest release, requires
+    `libsqlite3-sys >=0.30.1, <0.38.0`. No sqlx release can take the fix.
+  - Remove the waiver when any of these holds: a sqlx release allows
+    `libsqlite3-sys >=0.39.0` (upgrade first); `libsqlite3-sys` leaves `Cargo.lock`; or the
+    `cargo tree` command above prints anything. In the third case the crate is compiled, the
+    justification is false, and the advisory applies at once.
 
 ## Customer deletion (summary)
 
