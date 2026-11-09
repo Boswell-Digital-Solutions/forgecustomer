@@ -9,7 +9,7 @@ is reported as new, and written in the same session it is found.
 ## KI-FOC-20261109-003 — `cargo audit` fails on RUSTSEC-2026-0459 for `libsqlite3-sys`, a lockfile-only crate
 
 **Date found:** 2026-11-09
-**Status:** OPEN. Found when the dependency audit failed on documentation PR #47.
+**Status:** OPEN. Accepted residual risk once the waiver merges. Not resolved: the vulnerable version stays in `Cargo.lock`. Found when the dependency audit failed on documentation PR #47.
 
 **What is wrong:** `cargo audit` reports RUSTSEC-2026-0459, `libsqlite3-sys` via C SQLite CVE-2026-119375, fixed in `>=0.39.0`. `Cargo.lock` records `libsqlite3-sys` 0.30.1. The scheduled dependency audit on `main` fails at `d8a97cf` with the same advisory, so the failure is not caused by any pull request.
 
@@ -19,7 +19,11 @@ is reported as new, and written in the same session it is found.
 
 **Fix:** none applied. Two options, both need the operator: (a) a waiver in `.cargo/audit.toml` with this justification, by the precedent of the RUSTSEC-2023-0071 `rsa` waiver; (b) an upgrade of sqlx to a release that allows `libsqlite3-sys >=0.39.0`.
 
-**Scope:** open. The entry closes when the dependency audit passes on `main`.
+**Re-check 2026-11-09, option (b):** the operator chose the upgrade. It is blocked upstream. The newest sqlx release is 0.9.0 (2026-05-21). Its `sqlx-sqlite` 0.9.0 requires `libsqlite3-sys >=0.30.1, <0.38.0` (crates.io dependency data). The advisory is fixed only in `>=0.39.0`. An upgrade to sqlx 0.9 leaves a vulnerable `libsqlite3-sys` in `Cargo.lock`, and a `[patch]` cannot replace a version outside that range. Fix: none applied. Option (b) becomes possible when a sqlx release allows `libsqlite3-sys >=0.39.0`.
+
+**Waiver 2026-11-09, option (a):** the operator authorized a reviewed PR that adds RUSTSEC-2026-0459 to the ignore list of `.cargo/audit.toml`, and nothing else ("APPROVED: Prepare a narrowly scoped dependency-audit waiver for RUSTSEC-2026-0459 in ForgeCustomer"). The authorization does not include a merge. The waiver records the path, the evidence, the upstream block and three removal conditions; `docs/SECURITY.md` lists it as accepted residual risk. The RUSTSEC-2023-0071 waiver is unchanged. The waiver is accepted residual risk from the operator's merge; it does not fix the vulnerability.
+
+**Scope:** open. The waiver does not close this entry. It closes when `libsqlite3-sys` leaves `Cargo.lock` or `Cargo.lock` holds `libsqlite3-sys >=0.39.0`, and the waiver is then removed. If `cargo tree -i libsqlite3-sys --workspace --all-features --target all -e all` prints anything first, the crate is reachable through the resolved dependency graph, the exclusion evidence is invalid, and the waiver must be removed at once, pending a security reassessment.
 
 ---
 
