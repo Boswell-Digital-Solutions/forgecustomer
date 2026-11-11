@@ -1,0 +1,27 @@
+{
+  "plan_id": "BDS-FOC-RAKE-ACCESS-ISSUER-v0.1",
+  "title": "ForgeCustomer Rake access-token issuer — token exchange for BDS applications",
+  "version": "0.1",
+  "owner_repository": "Boswell-Digital-Solutions/forgecustomer",
+  "scope": "cross_repository",
+  "lifecycle_status": "proposed",
+  "plan_path": "docs/plans/BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET/00_PLAN_SET_INDEX.md",
+  "tracking_issue": null,
+  "implementation": {
+    "completed_slices": 0,
+    "total_slices": 6,
+    "evidence_status": "none"
+  },
+  "next_action": "Proposed 2026-11-11 under D-JWTI-8. Next: the operator's answers to DEC-1 to DEC-5 in 09. After DEC-1: WP-00 (source lock), then WP-01 (token contract) as a forgecustomer PR.",
+  "blocker": "No work package is authorized. DEC-1 to DEC-5 are open. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
+  "doc_system_paths": [
+    "doc/system/03-api-contract.md",
+    "doc/system/10-authority-boundaries.md",
+    "doc/system/11-security-privacy.md",
+    "doc/system/12-configuration-operations.md"
+  ],
+  "last_verified": null,
+  "archive": null,
+  "superseded_by": null,
+  "closeout_reason": null
+}
