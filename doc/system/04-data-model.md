@@ -18,6 +18,12 @@ schema is additive and deterministic under `supabase/migrations`.
 | `0009_rls.sql` | Row-level security | Enables and forces RLS; creates own-row and public-catalog policies. |
 | `0010_seed_constraints.sql` | Determinism and indexes | Adds seed/constraint hardening and operational indexes. |
 | `0011_fleet_release_update_domain.sql` | Fleet, release, and update campaigns | `fleets`, `fleet_applications`, installation update metadata, `product_releases`, `release_artifacts`, `update_campaigns`, `update_campaign_holds`, `installation_update_events` |
+| `0012_mfa_required.sql` | Customer MFA flag | `customer_profiles.mfa_required` |
+| `0013_admin_mfa_requirement.sql` | Operator MFA changes | `customer_mfa_history` (append-only) |
+| `0014_mandatory_mfa_grace_period.sql` | Mandatory MFA rollout | `customer_profiles.mfa_grace_period_ends_at` |
+| `0015_authorforge_commercial_policy.sql` | Global commercial policy | `commercial_policy_versions` |
+| `0016_update_outcome_tickets.sql` | Updater receipt handles | `update_outcome_tickets`, `installation_update_events.update_ticket` |
+| `0017_rake_access_issuer.sql` | Rake access-token issuance (server-only, RLS forced with no customer policy) | `app_clients` (seeded with `authorforge`), `rake_tenant_pseudonyms`, `app_token_mints` |
 
 ### RLS posture
 

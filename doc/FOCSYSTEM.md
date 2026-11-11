@@ -253,9 +253,8 @@ The HTTP API uses JSON over HTTPS with base path `/v1`. The machine-readable con
 `contracts/openapi.yaml`; the router implementation is in `api/src/routes`.
 
 `contracts/rake-access-token-v1.schema.json` defines the Rake access token that ForgeCustomer
-will issue (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
+issues (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
 `contracts/vectors/rake-access-token-v1/`, and `api/tests/rake_access_contract.rs` checks them.
-The issuer routes are not built, so `openapi.yaml` does not list them yet.
 
 ### Public routes
 
@@ -269,6 +268,7 @@ The issuer routes are not built, so `openapi.yaml` does not list them yet.
 | `GET /v1/products/{product_key}/releases/latest` | implemented | Latest published release metadata for a channel. |
 | `GET /v1/products/{product_key}/downloads` | implemented | Generic bootstrap artifact lookup for the latest published release. |
 | `GET /v1/entitlements/keys` | implemented | Published Ed25519 verification keys. |
+| `GET /v1/app-tokens/keys` | implemented | Published Rake access-token public keys (`active` and `verify_only`); empty when no key is configured. |
 | `POST /v1/webhooks/stripe` | implemented processing layer | Verifies Stripe signature, parses a minimal event envelope, stores/dedupes by Stripe event id, ignores unsupported events, and transactionally applies supported checkout/subscription/invoice state with audit + outbox + subscription-linked license sync. |
 
 ### Customer routes
@@ -296,6 +296,7 @@ Current route surface:
 - `GET /v1/entitlements/current`
 - `POST /v1/entitlements/check`
 - `POST /v1/entitlements/offline-lease`
+- `POST /v1/app-tokens/rake`
 - `POST /v1/usage/check`
 - `POST /v1/usage/reserve`
 - `POST /v1/usage/commit`
@@ -343,6 +344,16 @@ profile PII anonymized, emails deleted, devices and licenses revoked with explic
 records, installations deactivated, PII-free receipt written, `customer_anonymized`
 queued, `deletion_completed` audited — and refuses while a non-terminal subscription
 remains. Anonymized accounts fail closed at the auth boundary.
+
+The Rake access-token exchange is implemented: `POST /v1/app-tokens/rake` takes the caller's
+Supabase JWT and an installation device proof, and returns a 300-second EdDSA token for Rake
+(`contracts/rake-access-token-v1.schema.json`). In order, each step fails closed: the
+`require_active` rules, a registered and active `app_clients` row, the proof (an Ed25519
+signature by the activated installation's registered device key, `iat` within 60 seconds, a
+single-use nonce), scopes inside the application's list with `rake:approve` only alone, the
+application's feature as an explicit `true`, then the pseudonym and the `app_token_mints` audit
+row in one transaction. An audit write failure returns 503 and no token. The response has
+`cache-control: no-store`. The token is never logged or stored.
 
 The usage surface is implemented: advisory `check`; idempotent `reserve` under a
 per-(customer, meter, period) lock with explainable `quota_decisions` rows and
@@ -570,6 +581,12 @@ schema is additive and deterministic under `supabase/migrations`.
 | `0009_rls.sql` | Row-level security | Enables and forces RLS; creates own-row and public-catalog policies. |
 | `0010_seed_constraints.sql` | Determinism and indexes | Adds seed/constraint hardening and operational indexes. |
 | `0011_fleet_release_update_domain.sql` | Fleet, release, and update campaigns | `fleets`, `fleet_applications`, installation update metadata, `product_releases`, `release_artifacts`, `update_campaigns`, `update_campaign_holds`, `installation_update_events` |
+| `0012_mfa_required.sql` | Customer MFA flag | `customer_profiles.mfa_required` |
+| `0013_admin_mfa_requirement.sql` | Operator MFA changes | `customer_mfa_history` (append-only) |
+| `0014_mandatory_mfa_grace_period.sql` | Mandatory MFA rollout | `customer_profiles.mfa_grace_period_ends_at` |
+| `0015_authorforge_commercial_policy.sql` | Global commercial policy | `commercial_policy_versions` |
+| `0016_update_outcome_tickets.sql` | Updater receipt handles | `update_outcome_tickets`, `installation_update_events.update_ticket` |
+| `0017_rake_access_issuer.sql` | Rake access-token issuance (server-only, RLS forced with no customer policy) | `app_clients` (seeded with `authorforge`), `rake_tenant_pseudonyms`, `app_token_mints` |
 
 ### RLS posture
 
@@ -1115,6 +1132,7 @@ role, and the API must preserve those boundaries even when integrations fail.
 | DataForge | Sanitized downstream evidence from the outbox. | Customer identity, licensing, subscriptions, billing truth, creative content. |
 | AuthorForge and product clients | Local creative work and local product state. | Commercial authority, entitlement minting, usage-ledger mutation. |
 | Forge Command/operator tooling | Operator workflows through admin APIs. | Bypassing ForgeCustomer mutation paths. |
+| ForgeCustomer application-token issuer | Short-lived Rake access tokens for registered applications, minted after a Supabase login, an installation device proof and an entitlement check; the tenant pseudonyms and the mint audit record. | Run tokens, lifecycle transitions, tokens for direct browser calls to Rake, Rake's data. |
 
 ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 
@@ -1122,6 +1140,8 @@ ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 
 - `auth.users.id` is an identity subject, not the business customer identifier.
   ForgeCustomer maps it to its own `customer_profiles.id`.
+- A Rake access token (`aud` `rake.application`) is valid only at Rake. ForgeCustomer issues
+  it and never accepts it. It carries pseudonyms, never `customer_id` or identity.
 - Customer JWTs are valid only for customer routes. Admin routes use a separate issuer
   and audience. Admin tokens are EdDSA and are verified against an Ed25519 public key
   (`ADMIN_JWT_PUBLIC_KEY`). There is no shared admin secret.
@@ -1202,14 +1222,22 @@ Admin tokens:
   admin secret.
 - A customer token cannot authorize an admin route.
 
-Rake access tokens (contract only; not issued yet):
+Rake access tokens (issued by `POST /v1/app-tokens/rake`):
 
 - ForgeCustomer is the ruled issuer of short-lived Rake access tokens for applications
   (forge authority table; plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`).
 - The contract is `contracts/rake-access-token-v1.schema.json`: EdDSA, `typ`
   `rake-access+jwt`, audience `rake.application`, pseudonymous `tenant_id` and `user_id`,
   a `scopes` list, at most 900 seconds of lifetime (300 issued).
-- No route issues these tokens, and no signing key for them exists.
+- The signing key is `RAKE_ACCESS_SIGNING_PRIVATE_KEY`, separate from the entitlement key.
+  Start-up fails if the two are equal, or if a Rake verify key is the entitlement key.
+  Without the key, the exchange returns 503 and the key list is empty.
+- Client authentication is an Ed25519 proof by the installation's registered device key.
+  The installation must be active and activated on an active license, with no revocation.
+  A proof is valid for 60 seconds and its nonce once (`app_token_mints.client_nonce`).
+- The token carries random pseudonyms from `rake_tenant_pseudonyms`, never `customer_id`,
+  the Supabase user id or an email. Account deletion revokes the pseudonyms.
+- `rake:approve` is issued only alone (DEC-6). Rake enforces its single use.
 
 An absent legacy JWT secret rejects HS256 tokens; it does not disable ES256 verification.
 Unavailable or invalid JWKS data fails closed. No customer token, private key, or auth
@@ -1224,6 +1252,7 @@ Server-side only:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `ENTITLEMENT_SIGNING_PRIVATE_KEY`
+- `RAKE_ACCESS_SIGNING_PRIVATE_KEY`
 - `DATAFORGE_SERVICE_TOKEN`
 - `UPDATE_ROLLOUT_SECRET`
 
@@ -1304,6 +1333,10 @@ ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 | `ENTITLEMENT_SIGNING_PRIVATE_KEY` | yes | none | Base64 Ed25519 seed for snapshot signing. |
 | `ENTITLEMENT_SIGNING_KEY_ID` | no | `entitlement-key-1` | Published signing key ID. |
 | `ENTITLEMENT_VERIFY_PUBLIC_KEYS` | no | empty | JSON object `{"<key_id>": "<base64 32-byte Ed25519 public key>"}` of retained and standby verification keys. They verify and are published on `GET /v1/entitlements/keys`; only the active key signs. A malformed value, a repeated `key_id`, or the active `key_id` with a different key fails start-up. Public keys only, so not a secret. |
+| `RAKE_ACCESS_SIGNING_PRIVATE_KEY` | no | empty | Base64 Ed25519 seed that signs Rake access tokens. Must differ from the entitlement key. Empty = `POST /v1/app-tokens/rake` returns 503. The operator creates it. |
+| `RAKE_ACCESS_SIGNING_KEY_ID` | no | `rake-access-1` | Published `kid` of the Rake access key. |
+| `RAKE_ACCESS_VERIFY_PUBLIC_KEYS` | no | empty | JSON `{"<kid>": "<base64 public key>"}` of retained and standby Rake access keys, published on `GET /v1/app-tokens/keys`. Set without the signing key, or holding the entitlement key, fails start-up. |
+| `RAKE_ACCESS_ISSUER` | no | `bds-forgecustomer` | The `iss` of every Rake access token. Rake pins it per `kid`. |
 | `DATAFORGE_API_URL` | no | empty | Enables outbox worker when set. |
 | `DATAFORGE_SERVICE_TOKEN` | no | empty | DataForge service bearer token. |
 | `UPDATE_ROLLOUT_SECRET` | required for update lookup | empty | Server-side HMAC secret for deterministic campaign rollout buckets. Empty returns `503` from the update endpoint. |

@@ -6,6 +6,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261111-001 — doc/system §4 listed migrations only through 0011
+
+**Date found:** 2026-11-11
+**Status:** CLOSED in the same change as this entry. Found while adding migration `0017` for plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1` WP-02. Source read at the WP-02 branch base (forgecustomer #53 head `ebd1dfc`).
+
+**What is wrong:** the "Migration domains" table in `doc/system/04-data-model.md` ended at `0011_fleet_release_update_domain.sql`. Migrations `0012` to `0016` exist in `supabase/migrations/` and were not listed.
+
+**Effect:** documentation only. A reader of §4 could miss the MFA columns, `customer_mfa_history`, `commercial_policy_versions` and `update_outcome_tickets`.
+
+**Root cause:** not established. The five migrations did not update §4.
+
+**Fix:** §4 now lists `0012` to `0017`, each with its domain and tables, read from each migration's header. `bash doc/system/BUILD.sh` rebuilt `doc/FOCSYSTEM.md`.
+
+**Scope:** closed when the change that adds this entry merges.
+
+---
+
 ## KI-FOC-20261109-004 — doc/system §10 says admin routes use a shared secret; the code verifies EdDSA tokens with a public key
 
 **Date found:** 2026-11-09

@@ -17,6 +17,7 @@ tags:
   - name: licensing
   - name: entitlements
   - name: usage
+  - name: app-tokens
   - name: checkout
   - name: webhooks
   - name: admin
@@ -567,6 +568,87 @@ paths:
       security: []
       responses:
         "200": { description: Key set }
+  /v1/app-tokens/keys:
+    get:
+      tags: [app-tokens]
+      summary: Published Rake access-token verification keys (public halves only)
+      security: []
+      responses:
+        "200":
+          description: Key set; empty when no Rake access key is configured
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schema, keys]
+                properties:
+                  schema: { type: string, const: forge.app-tokens.keys.v1 }
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [kid, alg, public_key, status]
+                      properties:
+                        kid: { type: string }
+                        alg: { type: string, const: EdDSA }
+                        public_key: { type: string, description: Base64 32-byte Ed25519 public key }
+                        status: { type: string, enum: [active, verify_only] }
+  /v1/app-tokens/rake:
+    post:
+      tags: [app-tokens]
+      summary: Exchange a Supabase login and an installation device proof for a Rake access token
+      description: >
+        BDS-FOC-RAKE-ACCESS-ISSUER-v0.1. The caller is the application backend, never a
+        browser. Requires an active profile (MFA rules apply), an activated installation
+        whose registered device key signs the proof, and the application's entitlement.
+        The token is EdDSA, 300 seconds, typ rake-access+jwt, audience rake.application
+        (contracts/rake-access-token-v1.schema.json). rake:approve is granted only alone.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [app_id, client_proof]
+              properties:
+                app_id: { type: string, examples: ["authorforge"] }
+                scopes:
+                  type: array
+                  items: { type: string }
+                  description: Omit to receive every allowed scope except rake:approve.
+                client_proof:
+                  type: object
+                  additionalProperties: false
+                  required: [installation_id, iat, nonce, signature]
+                  description: >
+                    Ed25519 signature by the installation's registered device key over the
+                    lines "forgecustomer.rake-access-exchange.v1", app_id, installation_id,
+                    scopes joined with "," (empty if omitted), iat and nonce, joined with "\n".
+                    iat must be within 60 seconds of server time; a nonce is single-use.
+                  properties:
+                    installation_id: { type: string, format: uuid }
+                    iat: { type: integer }
+                    nonce: { type: string, format: uuid }
+                    signature: { type: string, description: Base64 64-byte Ed25519 signature }
+      responses:
+        "200":
+          description: Token issued; Cache-Control no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, token_type, expires_in, scopes]
+                properties:
+                  access_token: { type: string }
+                  token_type: { type: string, const: Bearer }
+                  expires_in: { type: integer, const: 300 }
+                  scopes: { type: array, items: { type: string } }
+        "401": { description: "UNAUTHENTICATED, INVALID_TOKEN or CLIENT_AUTH_FAILED (details.reason: installation, device_key, activation, stale, malformed, signature, nonce_replayed)" }
+        "403": { description: "MFA_REQUIRED, APP_NOT_ALLOWED, SCOPE_NOT_ALLOWED or ENTITLEMENT_DENIED" }
+        "422": { description: Validation failed }
+        "503": { description: "No Rake access key configured, entitlement state unavailable, or the audit write failed (no token is returned)" }
   /v1/usage/check:
     post:
       tags: [usage]

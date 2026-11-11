@@ -3,6 +3,7 @@
 //! transaction together with their audit + outbox writes (see services/workers).
 
 pub mod admin;
+pub mod app_tokens;
 pub mod catalog;
 pub mod commerce;
 pub mod commercial_policy;
