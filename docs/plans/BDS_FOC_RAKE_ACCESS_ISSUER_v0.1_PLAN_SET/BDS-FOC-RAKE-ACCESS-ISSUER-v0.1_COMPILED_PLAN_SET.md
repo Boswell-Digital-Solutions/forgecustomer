@@ -19,7 +19,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Parent / extension target | rake `docs/reviews/RAKE_JWT_ISSUER_ARCHITECTURE_REVIEW_2026-11-10.md` and `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake `caac54c1a`). Findings: rake `RAKE-EXECUTION-JWT-NO-ISSUER-20261109`; Author-Forge `KI-AUF-20261106-003`. Authority row: forge `CLAUDE.md` "ForgeCustomer (application-token issuer; ruled 2026-11-11, not built)" (forge #411). Companion: forge `docs/architecture/rake_credential_authority_review.md`. |
 | Proposed canonical owner | Boswell-Digital-Solutions/forgecustomer for the issuer, its key and the token contract. Boswell-Digital-Solutions/rake for the verifier. Boswell-Digital-Solutions/Author-Forge for the first application client. Each work package pins its repository SHA. |
 | Primary candidate consumer | forgecustomer `api/src/routes/`, `api/src/services/signing.rs`, `api/src/config.rs`, `api/src/state.rs`, `supabase/migrations/`, `contracts/`; rake `auth/jwt_handler.py`, `auth/execution_access.py`, `auth/tenant_context.py`, `config.py`, `tests/conftest.py`, `service_contract.v1.json`; Author-Forge `apps/api/src/routes/rake.ts`. |
-| Canonical Drive destination | /Forge/Plans/BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET (not uploaded yet). The repository copy in forgecustomer `docs/plans/` is the reference copy until the upload. |
+| Canonical Drive destination | /Forge/Plans/BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET (Drive folder `1S9fhDpmwCLD-6NYg1Wbd8MTfteFB4_6N`, uploaded 2026-11-11). It holds the compiled plan, the four siblings, and `BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET_3448007.tar.gz` (35,500 bytes, SHA-256 `9ff11a10b546b156719d8729a84562d3ac6bb1fc39c6965489f311533fda0feb`). The archive is the plan set at forgecustomer `3448007`, built with `git archive --mtime=<commit time>` and `gzip -n -9` (two builds byte-identical). The repository copy is the current one; the Drive copy is refreshed at each lifecycle change. |
 | Compilation | Components 00–09, concatenated by hand into BDS-FOC-RAKE-ACCESS-ISSUER-v0.1_COMPILED_PLAN_SET.md. No build script. |
 
 ## Purpose
@@ -264,8 +264,9 @@ A deletion request (forgecustomer `doc/system/03` deletion surface) must revoke 
 WP-01 writes these files in forgecustomer `contracts/`:
 
 - `rake-access-token-v1.schema.json` — the header and claims of §1 and §2.
-- An addition to `contracts/openapi.yaml` — §3 and §4.
-- `vectors/rake-access-token-v1/` — positive and negative vectors, each with a test Ed25519 key that exists only for tests.
+- `vectors/rake-access-token-v1/vectors.json` and its generator `generate.py` — 2 positive and 14 negative vectors. The test key is derived from a published label, so no private key is stored.
+
+**Revision 2026-11-11 (WP-01):** the `contracts/openapi.yaml` entries for §3 and §4 move to WP-02. `openapi.yaml` lists only built routes, so an entry before the route exists would describe a route that does not exist.
 
 ## Provenance
 
@@ -384,14 +385,14 @@ Work-package status uses: `proposed`, `authorized`, `in_progress`, `delivered`, 
 
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). The others are NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS on the WP-01 candidate before merge (`evidence/AC-01/`). The others are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 
 | AC | WP / REQ | Method | Expected observation | Baseline and environment | Limits |
 |---|---|---|---|---|---|
 | AC-00 | WP-00 | Re-read each pinned file at the current default branch. `git diff --stat <pin> <head> -- <paths>` per repository. | Each path is unchanged, or each change is read and recorded with its effect on 04 and 05. | The 00 pins; the operator's machine | Source only. No deployed service is called. |
-| AC-01 | WP-01; REQ-03, REQ-05 | forgecustomer `cargo test -p forgecustomer-api rake_access_contract` validates every vector against `rake-access-token-v1.schema.json`. | Every positive vector validates. Each negative vector fails for its named reason: no `iss`, no `aud`, no `exp`, no `jti`, `alg` `HS256`, `alg` `none`, `scopes` as a string, lifetime 901 s, `type` `refresh`. The test output lists each vector id. | forgecustomer WP-01 branch; Linux, stable Rust | Static vectors. It proves the schema, not the runtime. |
+| AC-01 | WP-01; REQ-03, REQ-05 | forgecustomer `cargo test -p forgecustomer-api --test rake_access_contract` validates every vector against `rake-access-token-v1.schema.json`, checks the two cross-claim rules, and verifies each token signature. | Every positive vector validates. Each negative vector fails for its named reason: no `iss`, no `aud`, no `exp`, no `jti`, `alg` `HS256`, `alg` `none`, `scopes` as a string, lifetime 901 s, `type` `refresh`. The test output lists each vector id. | forgecustomer WP-01 branch; Linux, stable Rust | Static vectors. It proves the schema, not the runtime. |
 | AC-02 | WP-02; REQ-04, REQ-05, REQ-07, REQ-11 | forgecustomer integration tests for `POST /v1/app-tokens/rake` against a test database. | No token → 401. Bad Supabase token → 401. `aal1` with `mfa_required` → 403 `MFA_REQUIRED`. Unknown app → 403 `APP_NOT_ALLOWED`. Extra scope → 403 `SCOPE_NOT_ALLOWED`. Feature false → 403 `ENTITLEMENT_DENIED`. Key unset → 503. Audit write failure → 503 and no token. Success → 200, the token verifies with the published key, the claims match 04 §2, one `app_token_mints` row exists, `cache-control: no-store`. | forgecustomer WP-02 branch; the existing test harness | A test Supabase issuer, not the deployed project |
 | AC-03 | WP-02; REQ-09 | Start-up tests and a keys-route test. | Start-up fails when the Rake key equals the entitlement key. `GET /v1/app-tokens/keys` returns public keys only, with the active and standby `kid`. `GET /v1/entitlements/keys` does not list the Rake key. | as AC-02 | — |
 | AC-04 | WP-02; REQ-04, REQ-12 | Tests on the pseudonym mapping and the token body. | Two mints for one customer give the same `tenant_id`. Two customers give different values. A revoked row gives a new value. The decoded token holds no email, no Supabase `sub`, no `customer_id`. A deletion run revokes the row. | as AC-02 | — |
@@ -441,7 +442,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-01 — Token contract
 
-**Status:** authorized 2026-11-11 (DEC-1).
+**Status:** delivered for review 2026-11-11. AC-01 PASS on the candidate (`evidence/AC-01/`). Its merge needs the operator's word, because it adds a test.
 
 | Field | Brief |
 |---|---|
@@ -464,7 +465,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Prerequisites | G1. |
 | Permitted scope | forgecustomer `api/src/`, `supabase/migrations/` (three tables of 04 §5), `supabase/seed.sql`, `.env.example` (names only), `contracts/`, `doc/system/03`, `04`, `10`, `11`, `12`, `docs/KNOWN_ISSUES.md`. |
 | Boundaries | No deployed configuration, key or secret. No change to the entitlement key or its route. No change to customer or admin token rules. |
-| Deliverables | The route, the keys route, the migration, the deletion extension, the tests, the doc/system updates (closes AUTHORITY_GAP-02). |
+| Deliverables | The route, the keys route, the `contracts/openapi.yaml` entries for both (moved from WP-01), the migration, the deletion extension, the tests, the doc/system updates (closes AUTHORITY_GAP-02). |
 | Acceptance criteria | AC-02, AC-03, AC-04, AC-09. |
 | Verification | 07; forgecustomer CI including `cargo audit`. |
 | Stop conditions | Done when merged on the operator's word with the ACs PASS. Pause if the entitlement service cannot answer the feature check without a new authority. |
@@ -588,8 +589,8 @@ This component records the current authority, the decisions this plan needs, and
 
 ## Handoff
 
-- **Next action:** WP-01 as a forgecustomer PR (contract files and the AC-01 test). Its merge needs your word, because it adds a test.
+- **Next action:** your word to merge the WP-01 PR (contract files and the AC-01 test; AC-01 PASS on the candidate). After the merge and DEC-6, G1 passes.
 - **Your answer needed:** DEC-6.
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
-- **Not uploaded:** the Drive copy at /Forge/Plans.
+- **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

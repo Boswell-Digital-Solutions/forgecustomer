@@ -74,8 +74,9 @@ A deletion request (forgecustomer `doc/system/03` deletion surface) must revoke 
 WP-01 writes these files in forgecustomer `contracts/`:
 
 - `rake-access-token-v1.schema.json` — the header and claims of §1 and §2.
-- An addition to `contracts/openapi.yaml` — §3 and §4.
-- `vectors/rake-access-token-v1/` — positive and negative vectors, each with a test Ed25519 key that exists only for tests.
+- `vectors/rake-access-token-v1/vectors.json` and its generator `generate.py` — 2 positive and 14 negative vectors. The test key is derived from a published label, so no private key is stored.
+
+**Revision 2026-11-11 (WP-01):** the `contracts/openapi.yaml` entries for §3 and §4 move to WP-02. `openapi.yaml` lists only built routes, so an entry before the route exists would describe a route that does not exist.
 
 ## Provenance
 

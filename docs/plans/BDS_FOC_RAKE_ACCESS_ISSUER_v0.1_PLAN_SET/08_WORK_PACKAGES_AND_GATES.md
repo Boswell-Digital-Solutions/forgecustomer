@@ -36,7 +36,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-01 — Token contract
 
-**Status:** authorized 2026-11-11 (DEC-1).
+**Status:** delivered for review 2026-11-11. AC-01 PASS on the candidate (`evidence/AC-01/`). Its merge needs the operator's word, because it adds a test.
 
 | Field | Brief |
 |---|---|
@@ -59,7 +59,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Prerequisites | G1. |
 | Permitted scope | forgecustomer `api/src/`, `supabase/migrations/` (three tables of 04 §5), `supabase/seed.sql`, `.env.example` (names only), `contracts/`, `doc/system/03`, `04`, `10`, `11`, `12`, `docs/KNOWN_ISSUES.md`. |
 | Boundaries | No deployed configuration, key or secret. No change to the entitlement key or its route. No change to customer or admin token rules. |
-| Deliverables | The route, the keys route, the migration, the deletion extension, the tests, the doc/system updates (closes AUTHORITY_GAP-02). |
+| Deliverables | The route, the keys route, the `contracts/openapi.yaml` entries for both (moved from WP-01), the migration, the deletion extension, the tests, the doc/system updates (closes AUTHORITY_GAP-02). |
 | Acceptance criteria | AC-02, AC-03, AC-04, AC-09. |
 | Verification | 07; forgecustomer CI including `cargo audit`. |
 | Stop conditions | Done when merged on the operator's word with the ACs PASS. Pause if the entitlement service cannot answer the feature check without a new authority. |

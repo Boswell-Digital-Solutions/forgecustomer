@@ -252,6 +252,11 @@ attempt count. Event publishing must remain asynchronous to the customer transac
 The HTTP API uses JSON over HTTPS with base path `/v1`. The machine-readable contract is
 `contracts/openapi.yaml`; the router implementation is in `api/src/routes`.
 
+`contracts/rake-access-token-v1.schema.json` defines the Rake access token that ForgeCustomer
+will issue (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
+`contracts/vectors/rake-access-token-v1/`, and `api/tests/rake_access_contract.rs` checks them.
+The issuer routes are not built, so `openapi.yaml` does not list them yet.
+
 ### Public routes
 
 | Route | Status | Purpose |
@@ -1196,6 +1201,15 @@ Admin tokens:
 - Ed25519 public-key verification against Forge Command's Token Authority key; no shared
   admin secret.
 - A customer token cannot authorize an admin route.
+
+Rake access tokens (contract only; not issued yet):
+
+- ForgeCustomer is the ruled issuer of short-lived Rake access tokens for applications
+  (forge authority table; plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`).
+- The contract is `contracts/rake-access-token-v1.schema.json`: EdDSA, `typ`
+  `rake-access+jwt`, audience `rake.application`, pseudonymous `tenant_id` and `user_id`,
+  a `scopes` list, at most 900 seconds of lifetime (300 issued).
+- No route issues these tokens, and no signing key for them exists.
 
 An absent legacy JWT secret rejects HS256 tokens; it does not disable ES256 verification.
 Unavailable or invalid JWKS data fails closed. No customer token, private key, or auth

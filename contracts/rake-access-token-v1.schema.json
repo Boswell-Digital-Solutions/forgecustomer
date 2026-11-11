@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bds-digitalsolutions.com/schemas/forgecustomer/rake-access-token-v1.schema.json",
+  "title": "Rake access token v1 (decoded header and claims)",
+  "description": "BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 component 04 sections 1 and 2. ForgeCustomer issues the token; Rake verifies it. Rules that compare two claims (lifetime, sub equals user_id) are in api/tests/rake_access_contract.rs, because this schema cannot express them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["header", "claims"],
+  "properties": {
+    "header": { "$ref": "#/$defs/header" },
+    "claims": { "$ref": "#/$defs/claims" }
+  },
+  "$defs": {
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "typ", "kid"],
+      "properties": {
+        "alg": { "const": "EdDSA" },
+        "typ": { "const": "rake-access+jwt" },
+        "kid": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["iss", "aud", "sub", "tenant_id", "user_id", "app_id", "scopes", "type", "iat", "exp", "jti"],
+      "properties": {
+        "iss": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "aud": { "const": "rake.application" },
+        "sub": { "type": "string", "format": "uuid" },
+        "tenant_id": { "type": "string", "format": "uuid" },
+        "user_id": { "type": "string", "format": "uuid" },
+        "app_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["rake:read", "rake:execute", "rake:approve"] }
+        },
+        "type": { "const": "access" },
+        "iat": { "type": "integer", "minimum": 0 },
+        "exp": { "type": "integer", "minimum": 0 },
+        "jti": { "type": "string", "format": "uuid" }
+      }
+    }
+  }
+}

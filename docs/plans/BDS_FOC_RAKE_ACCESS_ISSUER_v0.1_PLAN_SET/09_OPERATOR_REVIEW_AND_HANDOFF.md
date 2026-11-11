@@ -73,8 +73,8 @@ This component records the current authority, the decisions this plan needs, and
 
 ## Handoff
 
-- **Next action:** WP-01 as a forgecustomer PR (contract files and the AC-01 test). Its merge needs your word, because it adds a test.
+- **Next action:** your word to merge the WP-01 PR (contract files and the AC-01 test; AC-01 PASS on the candidate). After the merge and DEC-6, G1 passes.
 - **Your answer needed:** DEC-6.
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
-- **Not uploaded:** the Drive copy at /Forge/Plans.
+- **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.
