@@ -1,0 +1,51 @@
+plan_id: BDS-FOC-RAKE-ACCESS-ISSUER-v0.1
+title: ForgeCustomer Rake access-token issuer — token exchange for BDS applications
+version: "0.1"
+lifecycle: proposed
+authority: "None for execution. D-JWTI-1..8 ruled 2026-11-11 (rake #186) fix the design and ask for this plan; they authorize no work."
+decision_owner: Charles (Charlie) Boswell
+prepared: "2026-11-11"
+timezone: America/New_York
+parent:
+  review: "rake docs/reviews/RAKE_JWT_ISSUER_ARCHITECTURE_REVIEW_2026-11-10.md"
+  rulings: "rake docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md"
+  findings: [RAKE-EXECUTION-JWT-NO-ISSUER-20261109, KI-AUF-20261106-003]
+  authority_row: "forge CLAUDE.md ForgeCustomer (application-token issuer), forge #411"
+proposed_canonical_owner: "Boswell-Digital-Solutions/forgecustomer (issuer, key, contract); rake (verifier); Author-Forge (first client)"
+source_lock:
+  - { repository: Boswell-Digital-Solutions/forgecustomer, branch: main, commit: 3a2ce487e }
+  - { repository: Boswell-Digital-Solutions/rake, branch: master, commit: caac54c1a }
+  - { repository: Boswell-Digital-Solutions/Author-Forge, branch: main, commit: 1856b3b73 }
+  - { repository: Boswell-Digital-Solutions/bds_website, branch: main, commit: 3b6a2e51d }
+  - { repository: Boswell-Digital-Solutions/forge, branch: main, commit: 88fda8241 }
+canonical_drive_destination: /Forge/Plans/BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET
+drive_upload: not_uploaded
+compilation: "00-09 concatenated by hand into BDS-FOC-RAKE-ACCESS-ISSUER-v0.1_COMPILED_PLAN_SET.md"
+rulings: [R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11, R12]
+rulings_status: "R01-R08 ruled 2026-11-11 (D-JWTI); R09-R12 carried from standing rules"
+gaps:
+  - { id: AUTHORITY_GAP-01, topic: AuthorForge excerpt approval, path removal, project reference and Rake no-persistence, blocks: [G6] }
+  - { id: AUTHORITY_GAP-02, topic: forgecustomer doc/system 10 and 11 omit application-token issuance, blocks: [] }
+  - { id: AUTHORITY_GAP-03, topic: no desktop device key sent or verified, blocks: ["WP-04 if DEC-2 = A"] }
+  - { id: AUTHORITY_GAP-04, topic: rake service_contract token_types omit the application JWT, blocks: [] }
+  - { id: AUTHORITY_GAP-05, topic: Supabase signing-key type unread, blocks: [] }
+  - { id: AUTHORITY_GAP-06, topic: Rake deployed ALLOWED_ORIGINS unread, blocks: [] }
+requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-12, REQ-13, REQ-14]
+work_packages:
+  - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: proposed }
+  - { id: WP-01, title: Token contract, owner: forgecustomer, acceptance: [AC-01, AC-09], status: proposed }
+  - { id: WP-02, title: Issuer in ForgeCustomer, owner: forgecustomer, acceptance: [AC-02, AC-03, AC-04, AC-09], status: proposed }
+  - { id: WP-03, title: Verifier in Rake, owner: rake, acceptance: [AC-05, AC-06, AC-09], status: proposed }
+  - { id: WP-04, title: Author-Forge client, owner: Author-Forge, acceptance: [AC-07, AC-09], status: proposed }
+  - { id: WP-05, title: Acceptance on deployed services, owner: cross-repository, acceptance: [AC-08, AC-09], status: proposed }
+acceptance_criteria: { AC-00: NOT_RUN, AC-01: NOT_RUN, AC-02: NOT_RUN, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN, AC-09: NOT_RUN }
+gates: [G0, G1, G2, G3, G4, G5, G6]
+gate_order: "G0 -> G1 -> {G2, G3} -> G4 -> G5; G6 needs G2, G3 and AUTHORITY_GAP-01"
+decisions_requested:
+  - { id: DEC-1, topic: authorize WP-00 and WP-01, recommendation: yes, status: open }
+  - { id: DEC-2, topic: desktop client authentication, recommendation: "A, installation device key", status: open }
+  - { id: DEC-3, topic: tenant and user ids in the token, recommendation: "A, stored random pseudonym per customer and audience", status: open }
+  - { id: DEC-4, topic: algorithm, scope claim and lifetime, recommendation: "EdDSA; scopes list; 300 s; no refresh", status: open }
+  - { id: DEC-5, topic: jti replay rule and approve scope, recommendation: "log jti, no replay store; no rake:approve in v1", status: open }
+consumer_mapping: { registry_schema: bds.plan-registry.v1, lifecycle: { proposed: proposed, authorized: approved } }
+house_form_conformance: BDS-PSS-001
