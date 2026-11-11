@@ -45,14 +45,22 @@ Admin tokens:
   admin secret.
 - A customer token cannot authorize an admin route.
 
-Rake access tokens (contract only; not issued yet):
+Rake access tokens (issued by `POST /v1/app-tokens/rake`):
 
 - ForgeCustomer is the ruled issuer of short-lived Rake access tokens for applications
   (forge authority table; plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`).
 - The contract is `contracts/rake-access-token-v1.schema.json`: EdDSA, `typ`
   `rake-access+jwt`, audience `rake.application`, pseudonymous `tenant_id` and `user_id`,
   a `scopes` list, at most 900 seconds of lifetime (300 issued).
-- No route issues these tokens, and no signing key for them exists.
+- The signing key is `RAKE_ACCESS_SIGNING_PRIVATE_KEY`, separate from the entitlement key.
+  Start-up fails if the two are equal, or if a Rake verify key is the entitlement key.
+  Without the key, the exchange returns 503 and the key list is empty.
+- Client authentication is an Ed25519 proof by the installation's registered device key.
+  The installation must be active and activated on an active license, with no revocation.
+  A proof is valid for 60 seconds and its nonce once (`app_token_mints.client_nonce`).
+- The token carries random pseudonyms from `rake_tenant_pseudonyms`, never `customer_id`,
+  the Supabase user id or an email. Account deletion revokes the pseudonyms.
+- `rake:approve` is issued only alone (DEC-6). Rake enforces its single use.
 
 An absent legacy JWT secret rejects HS256 tokens; it does not disable ES256 verification.
 Unavailable or invalid JWKS data fails closed. No customer token, private key, or auth
@@ -67,6 +75,7 @@ Server-side only:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `ENTITLEMENT_SIGNING_PRIVATE_KEY`
+- `RAKE_ACCESS_SIGNING_PRIVATE_KEY`
 - `DATAFORGE_SERVICE_TOKEN`
 - `UPDATE_ROLLOUT_SECRET`
 

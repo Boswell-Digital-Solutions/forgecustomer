@@ -75,7 +75,7 @@ This component records the current authority, the decisions this plan needs, and
 ## Handoff
 
 - **Next action:** the merge of the WP-01 PR (the operator gave the word on 2026-11-11; the agent's merge was refused by the session's permission classifier, so the operator merges it). After the merge, G1 passes.
-- **Your word needed:** WP-02 (issuer in ForgeCustomer) and WP-03 (verifier in Rake).
+- **WP-02 and WP-03 authorized 2026-11-11** ("check and yes"). WP-02 is delivered for review (AC-02 to AC-04). Each merge needs the operator.
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

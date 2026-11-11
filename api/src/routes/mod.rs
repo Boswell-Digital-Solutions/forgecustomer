@@ -5,6 +5,7 @@
 //! Every route is fully implemented; auth boundaries (customer vs operator, role-gated
 //! mutations) are enforced ahead of all data access.
 
+pub mod app_tokens;
 pub mod catalog;
 pub mod entitlements;
 pub mod health;
@@ -75,7 +76,8 @@ pub fn build_router(state: AppState) -> Router {
             "/v1/products/:product_key/downloads",
             get(public_bootstrap_download),
         )
-        .route("/v1/entitlements/keys", get(entitlements::keys));
+        .route("/v1/entitlements/keys", get(entitlements::keys))
+        .route("/v1/app-tokens/keys", get(app_tokens::keys));
 
     let customer = Router::new()
         .route("/v1/account", get(account_get))
@@ -122,6 +124,7 @@ pub fn build_router(state: AppState) -> Router {
             "/v1/entitlements/offline-lease",
             post(entitlements::offline_lease),
         )
+        .route("/v1/app-tokens/rake", post(app_tokens::exchange_rake))
         .route("/v1/usage/check", post(usage_check))
         .route("/v1/usage/reserve", post(usage_reserve))
         .route("/v1/usage/commit", post(usage_commit))

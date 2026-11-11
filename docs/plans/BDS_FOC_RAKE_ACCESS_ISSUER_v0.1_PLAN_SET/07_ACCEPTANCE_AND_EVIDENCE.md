@@ -1,6 +1,6 @@
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS on the WP-01 candidate before merge (`evidence/AC-01/`). The others are NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS on the WP-01 candidate before merge (`evidence/AC-01/`). AC-02 and AC-03 are PASS on the WP-02 candidate before merge, and AC-04 is PASS except its deletion row, which is UNVERIFIED (`evidence/AC-02/`). The others are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 

@@ -36,6 +36,15 @@ pub struct Config {
     /// active key comes from the signing key above and is not repeated here. Empty = none.
     pub entitlement_verify_public_keys: Vec<(String, String)>,
 
+    /// Rake access-token signing seed (base64 Ed25519). Empty = the exchange returns 503.
+    /// Must differ from the entitlement key (BDS-FOC-RAKE-ACCESS-ISSUER-v0.1).
+    pub rake_access_signing_private_key: String,
+    pub rake_access_signing_key_id: String,
+    /// Retained and standby Rake access public keys, `RAKE_ACCESS_VERIFY_PUBLIC_KEYS`.
+    pub rake_access_verify_public_keys: Vec<(String, String)>,
+    /// The `iss` value of every Rake access token.
+    pub rake_access_issuer: String,
+
     pub dataforge_api_url: String,
     pub dataforge_service_token: String,
 
@@ -110,6 +119,8 @@ fn parse_percent_list(key: &'static str, default: &[u8]) -> Result<Vec<u8>, Conf
 
 /// The variable that carries retained and pending entitlement verification keys.
 pub const VERIFY_PUBLIC_KEYS_VAR: &str = "ENTITLEMENT_VERIFY_PUBLIC_KEYS";
+/// The variable that carries retained and standby Rake access verification keys.
+pub const RAKE_ACCESS_VERIFY_PUBLIC_KEYS_VAR: &str = "RAKE_ACCESS_VERIFY_PUBLIC_KEYS";
 
 /// Parse `ENTITLEMENT_VERIFY_PUBLIC_KEYS`: a JSON object
 /// `{"<key_id>": "<base64 32-byte Ed25519 public key>"}`, the shape DataForge Local uses for
@@ -120,12 +131,21 @@ pub const VERIFY_PUBLIC_KEYS_VAR: &str = "ENTITLEMENT_VERIFY_PUBLIC_KEYS";
 /// also fails: a plain JSON map would keep the last value and hide the conflict. The key bytes
 /// themselves are checked where they are loaded (`AppState::build`).
 pub fn parse_verify_public_keys(raw: Option<&str>) -> Result<Vec<(String, String)>, ConfigError> {
+    parse_public_key_map(VERIFY_PUBLIC_KEYS_VAR, raw)
+}
+
+/// Parse a `{"<key_id>": "<base64 public key>"}` variable, with the rules of
+/// `parse_verify_public_keys`, naming `var` in the error.
+pub fn parse_public_key_map(
+    var: &'static str,
+    raw: Option<&str>,
+) -> Result<Vec<(String, String)>, ConfigError> {
     let Some(raw) = raw.map(str::trim).filter(|raw| !raw.is_empty()) else {
         return Ok(Vec::new());
     };
     let entries: VerifyKeyEntries = serde_json::from_str(raw).map_err(|e| {
         ConfigError::Invalid(
-            VERIFY_PUBLIC_KEYS_VAR,
+            var,
             format!("must be a JSON object of key_id to base64 public key: {e}"),
         )
     })?;
@@ -205,6 +225,15 @@ impl Config {
             entitlement_verify_public_keys: parse_verify_public_keys(
                 std::env::var(VERIFY_PUBLIC_KEYS_VAR).ok().as_deref(),
             )?,
+            rake_access_signing_private_key: optional("RAKE_ACCESS_SIGNING_PRIVATE_KEY", ""),
+            rake_access_signing_key_id: optional("RAKE_ACCESS_SIGNING_KEY_ID", "rake-access-1"),
+            rake_access_verify_public_keys: parse_public_key_map(
+                RAKE_ACCESS_VERIFY_PUBLIC_KEYS_VAR,
+                std::env::var(RAKE_ACCESS_VERIFY_PUBLIC_KEYS_VAR)
+                    .ok()
+                    .as_deref(),
+            )?,
+            rake_access_issuer: optional("RAKE_ACCESS_ISSUER", "bds-forgecustomer"),
             dataforge_api_url: optional("DATAFORGE_API_URL", ""),
             dataforge_service_token: optional("DATAFORGE_SERVICE_TOKEN", ""),
             update_rollout_secret: optional("UPDATE_ROLLOUT_SECRET", ""),

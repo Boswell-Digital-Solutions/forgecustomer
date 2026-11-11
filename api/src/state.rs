@@ -8,6 +8,7 @@ use sqlx::PgPool;
 use crate::auth::{customer::CustomerJwtValidator, JwtValidator};
 use crate::config::Config;
 use crate::middleware::rate_limit::RateLimiter;
+use crate::services::rake_access::{RakeAccessIssuer, RakeAccessKeyError};
 use crate::services::signing::{Signer25519, VerifyingKeyRing};
 
 #[derive(Clone)]
@@ -16,6 +17,9 @@ pub struct AppState {
     pub pool: PgPool,
     pub signer: Arc<Signer25519>,
     pub key_ring: Arc<VerifyingKeyRing>,
+    /// Rake access-token issuer. `None` when no Rake signing key is configured: the
+    /// exchange then fails closed with 503.
+    pub rake_access: Option<Arc<RakeAccessIssuer>>,
     pub customer_validator: CustomerJwtValidator,
     pub admin_validator: JwtValidator,
     pub posture_validator: JwtValidator,
@@ -29,6 +33,8 @@ pub enum StateError {
     Signing(#[from] crate::services::signing::SigningError),
     #[error("{var}: {0}", var = crate::config::VERIFY_PUBLIC_KEYS_VAR)]
     VerifyKeys(String),
+    #[error(transparent)]
+    RakeAccess(#[from] RakeAccessKeyError),
     #[error("database pool error: {0}")]
     Pool(#[from] sqlx::Error),
     #[error("http client error: {0}")]
@@ -86,6 +92,23 @@ impl AppState {
             &config.entitlement_verify_public_keys,
         )?;
 
+        let rake_access = match config.rake_access_signing_private_key.trim() {
+            "" if config.rake_access_verify_public_keys.is_empty() => None,
+            "" => {
+                return Err(RakeAccessKeyError::VerifyKeys(
+                    "set without RAKE_ACCESS_SIGNING_PRIVATE_KEY".to_string(),
+                )
+                .into())
+            }
+            seed => Some(Arc::new(RakeAccessIssuer::new(
+                &config.rake_access_signing_key_id,
+                seed,
+                &config.rake_access_verify_public_keys,
+                &config.rake_access_issuer,
+                &signer.public_key_base64(),
+            )?)),
+        };
+
         let customer_validator = CustomerJwtValidator::new(
             &config.supabase_jwt_secret,
             &config.supabase_jwt_issuer,
@@ -130,6 +153,7 @@ impl AppState {
             pool,
             signer: Arc::new(signer),
             key_ring: Arc::new(key_ring),
+            rake_access,
             customer_validator,
             admin_validator,
             posture_validator,

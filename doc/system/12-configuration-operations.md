@@ -25,6 +25,10 @@ ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 | `ENTITLEMENT_SIGNING_PRIVATE_KEY` | yes | none | Base64 Ed25519 seed for snapshot signing. |
 | `ENTITLEMENT_SIGNING_KEY_ID` | no | `entitlement-key-1` | Published signing key ID. |
 | `ENTITLEMENT_VERIFY_PUBLIC_KEYS` | no | empty | JSON object `{"<key_id>": "<base64 32-byte Ed25519 public key>"}` of retained and standby verification keys. They verify and are published on `GET /v1/entitlements/keys`; only the active key signs. A malformed value, a repeated `key_id`, or the active `key_id` with a different key fails start-up. Public keys only, so not a secret. |
+| `RAKE_ACCESS_SIGNING_PRIVATE_KEY` | no | empty | Base64 Ed25519 seed that signs Rake access tokens. Must differ from the entitlement key. Empty = `POST /v1/app-tokens/rake` returns 503. The operator creates it. |
+| `RAKE_ACCESS_SIGNING_KEY_ID` | no | `rake-access-1` | Published `kid` of the Rake access key. |
+| `RAKE_ACCESS_VERIFY_PUBLIC_KEYS` | no | empty | JSON `{"<kid>": "<base64 public key>"}` of retained and standby Rake access keys, published on `GET /v1/app-tokens/keys`. Set without the signing key, or holding the entitlement key, fails start-up. |
+| `RAKE_ACCESS_ISSUER` | no | `bds-forgecustomer` | The `iss` of every Rake access token. Rake pins it per `kid`. |
 | `DATAFORGE_API_URL` | no | empty | Enables outbox worker when set. |
 | `DATAFORGE_SERVICE_TOKEN` | no | empty | DataForge service bearer token. |
 | `UPDATE_ROLLOUT_SECRET` | required for update lookup | empty | Server-side HMAC secret for deterministic campaign rollout buckets. Empty returns `503` from the update endpoint. |
