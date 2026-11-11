@@ -20,6 +20,8 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-00 — Source lock
 
+**Status:** delivered 2026-11-11. AC-00 PASS (`evidence/AC-00/`). G0 PASS.
+
 | Field | Brief |
 |---|---|
 | Outcome | The 00 pins are confirmed or updated, so 04 and 05 rest on current code. |
@@ -33,6 +35,8 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Stop conditions | Done when AC-00 is recorded. Pause if a pinned file changed in a way that breaks 04 or 05. Then record the change and revise the plan first. |
 
 ## WP-01 — Token contract
+
+**Status:** authorized 2026-11-11 (DEC-1).
 
 | Field | Brief |
 |---|---|

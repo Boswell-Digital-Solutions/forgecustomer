@@ -6,8 +6,8 @@ This component gives the plan identity, the purpose, the source state and the re
 |---|---|
 | Plan ID | BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 |
 | Title | ForgeCustomer Rake access-token issuer — token exchange for BDS applications |
-| Lifecycle | proposed |
-| Authority | None for execution. The operator ruled the target design on 2026-11-11 (D-JWTI-1 to D-JWTI-8) and asked for this plan (D-JWTI-8). The rulings authorize no issuer code, verifier change, contract, key, configuration, deployment or merge. |
+| Lifecycle | authorized |
+| Authority | Operator ruling 2026-11-11 ("do it"): DEC-1 to DEC-5 accepted as recommended. WP-00 and WP-01 are authorized. WP-02 onward need G1 and the operator's word. No route, key, configuration, deployment or code merge is authorized. Before that: the D-JWTI rulings fixed the design and authorized no work. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-11 America/New_York |
 | Parent / extension target | rake `docs/reviews/RAKE_JWT_ISSUER_ARCHITECTURE_REVIEW_2026-11-10.md` and `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake `caac54c1a`). Findings: rake `RAKE-EXECUTION-JWT-NO-ISSUER-20261109`; Author-Forge `KI-AUF-20261106-003`. Authority row: forge `CLAUDE.md` "ForgeCustomer (application-token issuer; ruled 2026-11-11, not built)" (forge #411). Companion: forge `docs/architecture/rake_credential_authority_review.md`. |
@@ -52,7 +52,7 @@ It writes new code only where nothing exists: the exchange route, a dedicated si
 
 ## Status
 
-Proposed. No acceptance criterion has run. No decision in 09 is ruled.
+Authorized 2026-11-11 for WP-00 and WP-01 (receipt `evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md`). AC-00 PASS. DEC-6 is open (09). The other acceptance criteria are NOT_RUN.
 
 ## Read order and components
 

@@ -1,6 +1,6 @@
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. Every criterion is NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). The others are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 
