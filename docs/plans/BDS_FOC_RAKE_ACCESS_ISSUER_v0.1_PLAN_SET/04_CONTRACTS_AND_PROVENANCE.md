@@ -30,9 +30,13 @@ Rake refuses a token with any other `alg` or `typ`.
 
 The token carries no email, no Supabase user id, no ForgeCustomer `customer_id`, no project id and no path.
 
-### 2.3 `jti` rule (DEC-5)
+### 2.3 `jti` rule (DEC-5, DEC-6)
 
-The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of each accepted request. Neither side stores `jti` for replay refusal. The 300-second lifetime and backend-only custody bound the replay window.
+The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of each accepted request.
+
+- **Read and execute tokens (DEC-5):** neither side stores `jti` for replay refusal. The 300-second lifetime and backend-only custody bound the replay window.
+- **Approve tokens (DEC-6):** a token that carries `rake:approve` must carry no other scope. It is single-use. On the first approve call, Rake inserts its `jti` into a `consumed_approve_tokens` table (`jti` primary key, `exp`) in the same transaction as the approval. A second use of the same `jti` gets 401 `TOKEN_ALREADY_USED`. Rows past `exp` plus the 60-second skew may be deleted.
+- The issuer refuses a request that mixes `rake:approve` with another scope (403 `SCOPE_NOT_ALLOWED`).
 
 ## 3. Key set
 
@@ -63,7 +67,7 @@ The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of ea
 
 | Table | Columns | Rules |
 |---|---|---|
-| `app_clients` | `app_id` (pk), `audience`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute}`, `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
+| `app_clients` | `app_id` (pk), `audience`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute,rake:approve}` (DEC-6), `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
 | `rake_tenant_pseudonyms` | `customer_id` (fk), `audience`, `tenant_pseudonym` (uuid, random), `user_pseudonym` (uuid, random), `created_at`, `revoked_at` | One active row per (customer, audience). Created on first mint. Revocation creates a new row. Never sent to DataForge. |
 | `app_token_mints` | `jti` (pk), `customer_id`, `app_id`, `audience`, `kid`, `scopes`, `issued_at`, `expires_at`, `client_auth_method` | No token value. No request body. Written in the same transaction as the decision. |
 
@@ -74,8 +78,9 @@ A deletion request (forgecustomer `doc/system/03` deletion surface) must revoke 
 WP-01 writes these files in forgecustomer `contracts/`:
 
 - `rake-access-token-v1.schema.json` — the header and claims of §1 and §2.
-- An addition to `contracts/openapi.yaml` — §3 and §4.
-- `vectors/rake-access-token-v1/` — positive and negative vectors, each with a test Ed25519 key that exists only for tests.
+- `vectors/rake-access-token-v1/vectors.json` and its generator `generate.py` — 3 positive and 15 negative vectors. The test key is derived from a published label, so no private key is stored.
+
+**Revision 2026-11-11 (WP-01):** the `contracts/openapi.yaml` entries for §3 and §4 move to WP-02. `openapi.yaml` lists only built routes, so an entry before the route exists would describe a route that does not exist.
 
 ## Provenance
 

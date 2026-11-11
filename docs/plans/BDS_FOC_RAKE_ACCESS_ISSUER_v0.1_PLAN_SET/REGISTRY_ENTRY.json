@@ -12,8 +12,8 @@
     "total_slices": 6,
     "evidence_status": "partial"
   },
-  "next_action": "DEC-1 to DEC-5 ruled 2026-11-11 as recommended. WP-00 delivered (AC-00 PASS, G0 PASS). Next: WP-01 (token contract) as a forgecustomer PR; its merge needs the operator's word. DEC-6 (rake:approve for AuthorForge, from AC-00) is open.",
-  "blocker": "DEC-6 is open. WP-02 onward need G1 and the operator's word. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
+  "next_action": "DEC-1 to DEC-6 ruled 2026-11-11 (DEC-6 = A, single-use approve token). WP-00 delivered (AC-00 PASS, G0 PASS). WP-01 delivered (AC-01 PASS); the operator gave the word to merge it. After the merge, G1 passes. Next: the operator's word for WP-02 and WP-03.",
+  "blocker": "WP-02 onward need the operator's word. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
   "doc_system_paths": [
     "doc/system/03-api-contract.md",
     "doc/system/10-authority-boundaries.md",

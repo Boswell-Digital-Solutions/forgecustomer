@@ -3,6 +3,11 @@
 The HTTP API uses JSON over HTTPS with base path `/v1`. The machine-readable contract is
 `contracts/openapi.yaml`; the router implementation is in `api/src/routes`.
 
+`contracts/rake-access-token-v1.schema.json` defines the Rake access token that ForgeCustomer
+will issue (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
+`contracts/vectors/rake-access-token-v1/`, and `api/tests/rake_access_contract.rs` checks them.
+The issuer routes are not built, so `openapi.yaml` does not list them yet.
+
 ### Public routes
 
 | Route | Status | Purpose |
