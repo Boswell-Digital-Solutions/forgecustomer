@@ -12,7 +12,7 @@
     "total_slices": 6,
     "evidence_status": "partial"
   },
-  "next_action": "DEC-1 to DEC-6 ruled 2026-11-11 (DEC-6 = A, single-use approve token). WP-00 delivered (AC-00 PASS, G0 PASS). WP-01 delivered (AC-01 PASS); the operator gave the word to merge it. After the merge, G1 passes. Next: the operator's word for WP-02 and WP-03.",
+  "next_action": "WP-02 and WP-03 authorized 2026-11-11. WP-01 (forgecustomer #53) awaits the operator's merge. WP-02 delivered for review on a branch stacked on #53 (AC-02 to AC-04 PASS on the candidate; the deletion row of AC-04 unverified). WP-03 is in progress in rake.",
   "blocker": "WP-02 onward need the operator's word. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
   "doc_system_paths": [
     "doc/system/03-api-contract.md",

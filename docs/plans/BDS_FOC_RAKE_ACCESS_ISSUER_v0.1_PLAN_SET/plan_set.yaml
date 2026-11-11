@@ -34,11 +34,11 @@ requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08, R
 work_packages:
   - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: delivered_2026-11-11 }
   - { id: WP-01, title: Token contract, owner: forgecustomer, acceptance: [AC-01, AC-09], status: delivered_for_review_2026-11-11 }
-  - { id: WP-02, title: Issuer in ForgeCustomer, owner: forgecustomer, acceptance: [AC-02, AC-03, AC-04, AC-09], status: proposed }
-  - { id: WP-03, title: Verifier in Rake, owner: rake, acceptance: [AC-05, AC-06, AC-09], status: proposed }
+  - { id: WP-02, title: Issuer in ForgeCustomer, owner: forgecustomer, acceptance: [AC-02, AC-03, AC-04, AC-09], status: delivered_for_review_2026-11-11 }
+  - { id: WP-03, title: Verifier in Rake, owner: rake, acceptance: [AC-05, AC-06, AC-09], status: authorized_2026-11-11 }
   - { id: WP-04, title: Author-Forge client, owner: Author-Forge, acceptance: [AC-07, AC-09], status: proposed }
   - { id: WP-05, title: Acceptance on deployed services, owner: cross-repository, acceptance: [AC-08, AC-09], status: proposed }
-acceptance_criteria: { AC-00: PASS, AC-01: PASS_pre_merge, AC-02: NOT_RUN, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN, AC-09: NOT_RUN }
+acceptance_criteria: { AC-00: PASS, AC-01: PASS_pre_merge, AC-02: PASS_pre_merge, AC-03: PASS_pre_merge, AC-04: PASS_pre_merge_deletion_row_unverified, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN, AC-09: NOT_RUN }
 gates: [G0, G1, G2, G3, G4, G5, G6]
 gate_dispositions: { G0: PASS_2026-11-11 }
 gate_order: "G0 -> G1 -> {G2, G3} -> G4 -> G5; G6 needs G2, G3 and AUTHORITY_GAP-01"

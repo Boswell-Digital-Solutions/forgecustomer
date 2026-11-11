@@ -4,9 +4,8 @@ The HTTP API uses JSON over HTTPS with base path `/v1`. The machine-readable con
 `contracts/openapi.yaml`; the router implementation is in `api/src/routes`.
 
 `contracts/rake-access-token-v1.schema.json` defines the Rake access token that ForgeCustomer
-will issue (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
+issues (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
 `contracts/vectors/rake-access-token-v1/`, and `api/tests/rake_access_contract.rs` checks them.
-The issuer routes are not built, so `openapi.yaml` does not list them yet.
 
 ### Public routes
 
@@ -20,6 +19,7 @@ The issuer routes are not built, so `openapi.yaml` does not list them yet.
 | `GET /v1/products/{product_key}/releases/latest` | implemented | Latest published release metadata for a channel. |
 | `GET /v1/products/{product_key}/downloads` | implemented | Generic bootstrap artifact lookup for the latest published release. |
 | `GET /v1/entitlements/keys` | implemented | Published Ed25519 verification keys. |
+| `GET /v1/app-tokens/keys` | implemented | Published Rake access-token public keys (`active` and `verify_only`); empty when no key is configured. |
 | `POST /v1/webhooks/stripe` | implemented processing layer | Verifies Stripe signature, parses a minimal event envelope, stores/dedupes by Stripe event id, ignores unsupported events, and transactionally applies supported checkout/subscription/invoice state with audit + outbox + subscription-linked license sync. |
 
 ### Customer routes
@@ -47,6 +47,7 @@ Current route surface:
 - `GET /v1/entitlements/current`
 - `POST /v1/entitlements/check`
 - `POST /v1/entitlements/offline-lease`
+- `POST /v1/app-tokens/rake`
 - `POST /v1/usage/check`
 - `POST /v1/usage/reserve`
 - `POST /v1/usage/commit`
@@ -94,6 +95,16 @@ profile PII anonymized, emails deleted, devices and licenses revoked with explic
 records, installations deactivated, PII-free receipt written, `customer_anonymized`
 queued, `deletion_completed` audited — and refuses while a non-terminal subscription
 remains. Anonymized accounts fail closed at the auth boundary.
+
+The Rake access-token exchange is implemented: `POST /v1/app-tokens/rake` takes the caller's
+Supabase JWT and an installation device proof, and returns a 300-second EdDSA token for Rake
+(`contracts/rake-access-token-v1.schema.json`). In order, each step fails closed: the
+`require_active` rules, a registered and active `app_clients` row, the proof (an Ed25519
+signature by the activated installation's registered device key, `iat` within 60 seconds, a
+single-use nonce), scopes inside the application's list with `rake:approve` only alone, the
+application's feature as an explicit `true`, then the pseudonym and the `app_token_mints` audit
+row in one transaction. An audit write failure returns 503 and no token. The response has
+`cache-control: no-store`. The token is never logged or stored.
 
 The usage surface is implemented: advisory `check`; idempotent `reserve` under a
 per-(customer, meter, period) lock with explainable `quota_decisions` rows and

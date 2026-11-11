@@ -415,6 +415,17 @@ pub async fn execute_deletion(
     .await?
     .rows_affected();
 
+    // Rake tenant pseudonyms: revoke, so no later mint reuses them (plan
+    // BDS-FOC-RAKE-ACCESS-ISSUER-v0.1, 04 §5). Mint audit rows keep only the anonymized
+    // customer id.
+    sqlx::query(
+        "update public.rake_tenant_pseudonyms set revoked_at = now() \
+         where customer_id = $1 and revoked_at is null",
+    )
+    .bind(customer_id)
+    .execute(&mut *tx)
+    .await?;
+
     // Licenses: explicit revocation (never silently reactivatable).
     let license_ids = sqlx::query_scalar::<_, Uuid>(
         r#"

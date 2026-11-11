@@ -119,8 +119,8 @@ ForgeCustomer must stay inside forgecustomer `doc/system/10`. The exchange store
 | ID | Gap | Effect | Blocks |
 |---|---|---|---|
 | AUTHORITY_GAP-01 | Author-Forge has no ruled design for excerpt approval, path removal and the pseudonymous project reference. Rake has no no-persistence rule for AuthorForge content (`RAKE-AUTHORFORGE-CONTENT-TO-DATAFORGE-20261106`). | A working credential would let a desktop path, a project id and author content reach Rake and DataForge. | WP-04 activation in cloud mode (G6) |
-| AUTHORITY_GAP-02 | forgecustomer `doc/system/10` and `11` do not list application-token issuance. | The repository's canonical docs disagree with the forge authority row. | Nothing; WP-02 fixes it in the same change |
-| AUTHORITY_GAP-03 | Author-Forge sends no `device_public_key` (`src-tauri/src/fleet_updates.rs:1628`). ForgeCustomer verifies no device signature today. | Desktop client authentication option A in DEC-2 needs new code on both sides. | WP-04 if DEC-2 = A |
+| AUTHORITY_GAP-02 | forgecustomer `doc/system/10` and `11` do not list application-token issuance. | The repository's canonical docs disagree with the forge authority row. | Nothing. **Closed by WP-02 (2026-11-11):** `doc/system/10` and `11` now list it. |
+| AUTHORITY_GAP-03 | Author-Forge sends no `device_public_key` (`src-tauri/src/fleet_updates.rs:1628`). ForgeCustomer verifies no device signature today. | Desktop client authentication option A in DEC-2 needs new code on both sides. **2026-11-11:** the ForgeCustomer side is built in WP-02. The Author-Forge side (generate, register and keep the device key) stays open. | WP-04 |
 | AUTHORITY_GAP-04 | Rake `service_contract.v1.json` `auth_requirements.token_types` names no application JWT (review §2.6). | The contract file disagrees with the code. | Nothing; WP-03 fixes it |
 | AUTHORITY_GAP-05 | The Supabase project's signing-key type was not read (review §9). | It does not change this design, which verifies Supabase tokens with the existing ForgeCustomer verifier. | Nothing |
 | AUTHORITY_GAP-06 | Rake's deployed `ALLOWED_ORIGINS` was not read (review §9). | R05 needs no public origin. A public origin there is a separate finding. | Nothing |
@@ -239,14 +239,15 @@ The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of ea
 
 `POST /v1/app-tokens/rake`
 
-- **Caller authentication:** `Authorization: Bearer <Supabase access token>`, then the client authentication of DEC-2.
-- **Request body:** `{"app_id": "authorforge", "scopes": ["rake:read", "rake:execute"]}`. `scopes` is optional. If omitted, the issuer grants every allowed scope.
+- **Caller authentication:** `Authorization: Bearer <Supabase access token>`, then the client authentication of DEC-2: `client_proof`, an Ed25519 signature by the activated installation's registered device key.
+- **Request body:** `{"app_id": "authorforge", "scopes": ["rake:read", "rake:execute"], "client_proof": {"installation_id", "iat", "nonce", "signature"}}`. `scopes` is optional. If omitted, the issuer grants every allowed scope except `rake:approve` (DEC-6).
+- **Proof message (WP-02):** the lines `forgecustomer.rake-access-exchange.v1`, `app_id`, `installation_id`, the scopes as sent joined with `,` (empty if omitted), `iat` and `nonce`, joined with `\n`. `iat` must be within 60 seconds of server time. A `nonce` is single-use. The installation must be active, with an active device and an active, unexpired license activation, and no revocation (the offline-lease rules).
 - **Success, 200:** `{"access_token": "...", "token_type": "Bearer", "expires_in": 300, "scopes": [...]}`. The response has `cache-control: no-store`.
 
 | Status | Code | Cause |
 |---|---|---|
 | 401 | `UNAUTHORIZED` | Missing or invalid Supabase token |
-| 401 | `CLIENT_AUTH_FAILED` | DEC-2 client authentication failed |
+| 401 | `CLIENT_AUTH_FAILED` | DEC-2 client authentication failed. `details.reason`: `installation`, `device_key`, `activation`, `stale`, `malformed`, `signature`, `nonce_replayed` |
 | 403 | `MFA_REQUIRED` | The existing `require_active` rule |
 | 403 | `APP_NOT_ALLOWED` | Unknown or disabled `app_id` |
 | 403 | `SCOPE_NOT_ALLOWED` | A requested scope is outside the application's list |
@@ -257,9 +258,9 @@ The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of ea
 
 | Table | Columns | Rules |
 |---|---|---|
-| `app_clients` | `app_id` (pk), `audience`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute,rake:approve}` (DEC-6), `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
+| `app_clients` | `app_id` (pk), `audience`, `product_key`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute,rake:approve}` (DEC-6), `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
 | `rake_tenant_pseudonyms` | `customer_id` (fk), `audience`, `tenant_pseudonym` (uuid, random), `user_pseudonym` (uuid, random), `created_at`, `revoked_at` | One active row per (customer, audience). Created on first mint. Revocation creates a new row. Never sent to DataForge. |
-| `app_token_mints` | `jti` (pk), `customer_id`, `app_id`, `audience`, `kid`, `scopes`, `issued_at`, `expires_at`, `client_auth_method` | No token value. No request body. Written in the same transaction as the decision. |
+| `app_token_mints` | `jti` (pk), `customer_id`, `app_id`, `audience`, `kid`, `scopes`, `installation_id`, `client_auth_method`, `client_nonce` (unique), `issued_at`, `expires_at` | No token value. No request body. Written in the same transaction as the decision. |
 
 A deletion request (forgecustomer `doc/system/03` deletion surface) must revoke the pseudonym row and keep `app_token_mints` rows only with the anonymized `customer_id`. WP-02 extends the existing deletion transaction.
 
@@ -389,7 +390,7 @@ Work-package status uses: `proposed`, `authorized`, `in_progress`, `delivered`, 
 
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS on the WP-01 candidate before merge (`evidence/AC-01/`). The others are NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS on the WP-01 candidate before merge (`evidence/AC-01/`). AC-02 and AC-03 are PASS on the WP-02 candidate before merge, and AC-04 is PASS except its deletion row, which is UNVERIFIED (`evidence/AC-02/`). The others are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 
@@ -461,6 +462,10 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Stop conditions | Done when merged with AC-01 PASS. Pause if a decision ruling changes a claim. Then revise 04 first. |
 
 ## WP-02 — Issuer in ForgeCustomer
+
+**Status:** delivered for review 2026-11-11 (authorized: operator "check and yes"). AC-02 and AC-03 PASS on the candidate; AC-04 PASS except the deletion row (UNVERIFIED). Merge needs the operator.
+
+**Scope note (2026-11-11):** AC-02 names "the existing test harness". The repository's harness for database-backed HTTP checks is the SQL fixture plus runner plus CI job pattern of `update_campaign_http_smoke`. So WP-02 also writes `api/tests/rake_access_routes.rs`, `supabase/tests/rake_access_http_smoke.sql`, `scripts/rake_access_http_smoke.sh` and `.py`, and one CI job in `.github/workflows/ci.yml` that copies the existing smoke job. The PR names this for the operator.
 
 | Field | Brief |
 |---|---|
@@ -595,7 +600,7 @@ This component records the current authority, the decisions this plan needs, and
 ## Handoff
 
 - **Next action:** the merge of the WP-01 PR (the operator gave the word on 2026-11-11; the agent's merge was refused by the session's permission classifier, so the operator merges it). After the merge, G1 passes.
-- **Your word needed:** WP-02 (issuer in ForgeCustomer) and WP-03 (verifier in Rake).
+- **WP-02 and WP-03 authorized 2026-11-11** ("check and yes"). WP-02 is delivered for review (AC-02 to AC-04). Each merge needs the operator.
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

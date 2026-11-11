@@ -49,14 +49,15 @@ The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of ea
 
 `POST /v1/app-tokens/rake`
 
-- **Caller authentication:** `Authorization: Bearer <Supabase access token>`, then the client authentication of DEC-2.
-- **Request body:** `{"app_id": "authorforge", "scopes": ["rake:read", "rake:execute"]}`. `scopes` is optional. If omitted, the issuer grants every allowed scope.
+- **Caller authentication:** `Authorization: Bearer <Supabase access token>`, then the client authentication of DEC-2: `client_proof`, an Ed25519 signature by the activated installation's registered device key.
+- **Request body:** `{"app_id": "authorforge", "scopes": ["rake:read", "rake:execute"], "client_proof": {"installation_id", "iat", "nonce", "signature"}}`. `scopes` is optional. If omitted, the issuer grants every allowed scope except `rake:approve` (DEC-6).
+- **Proof message (WP-02):** the lines `forgecustomer.rake-access-exchange.v1`, `app_id`, `installation_id`, the scopes as sent joined with `,` (empty if omitted), `iat` and `nonce`, joined with `\n`. `iat` must be within 60 seconds of server time. A `nonce` is single-use. The installation must be active, with an active device and an active, unexpired license activation, and no revocation (the offline-lease rules).
 - **Success, 200:** `{"access_token": "...", "token_type": "Bearer", "expires_in": 300, "scopes": [...]}`. The response has `cache-control: no-store`.
 
 | Status | Code | Cause |
 |---|---|---|
 | 401 | `UNAUTHORIZED` | Missing or invalid Supabase token |
-| 401 | `CLIENT_AUTH_FAILED` | DEC-2 client authentication failed |
+| 401 | `CLIENT_AUTH_FAILED` | DEC-2 client authentication failed. `details.reason`: `installation`, `device_key`, `activation`, `stale`, `malformed`, `signature`, `nonce_replayed` |
 | 403 | `MFA_REQUIRED` | The existing `require_active` rule |
 | 403 | `APP_NOT_ALLOWED` | Unknown or disabled `app_id` |
 | 403 | `SCOPE_NOT_ALLOWED` | A requested scope is outside the application's list |
@@ -67,9 +68,9 @@ The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of ea
 
 | Table | Columns | Rules |
 |---|---|---|
-| `app_clients` | `app_id` (pk), `audience`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute,rake:approve}` (DEC-6), `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
+| `app_clients` | `app_id` (pk), `audience`, `product_key`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute,rake:approve}` (DEC-6), `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
 | `rake_tenant_pseudonyms` | `customer_id` (fk), `audience`, `tenant_pseudonym` (uuid, random), `user_pseudonym` (uuid, random), `created_at`, `revoked_at` | One active row per (customer, audience). Created on first mint. Revocation creates a new row. Never sent to DataForge. |
-| `app_token_mints` | `jti` (pk), `customer_id`, `app_id`, `audience`, `kid`, `scopes`, `issued_at`, `expires_at`, `client_auth_method` | No token value. No request body. Written in the same transaction as the decision. |
+| `app_token_mints` | `jti` (pk), `customer_id`, `app_id`, `audience`, `kid`, `scopes`, `installation_id`, `client_auth_method`, `client_nonce` (unique), `issued_at`, `expires_at` | No token value. No request body. Written in the same transaction as the decision. |
 
 A deletion request (forgecustomer `doc/system/03` deletion surface) must revoke the pseudonym row and keep `app_token_mints` rows only with the anonymized `customer_id`. WP-02 extends the existing deletion transaction.
 

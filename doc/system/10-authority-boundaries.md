@@ -13,6 +13,7 @@ role, and the API must preserve those boundaries even when integrations fail.
 | DataForge | Sanitized downstream evidence from the outbox. | Customer identity, licensing, subscriptions, billing truth, creative content. |
 | AuthorForge and product clients | Local creative work and local product state. | Commercial authority, entitlement minting, usage-ledger mutation. |
 | Forge Command/operator tooling | Operator workflows through admin APIs. | Bypassing ForgeCustomer mutation paths. |
+| ForgeCustomer application-token issuer | Short-lived Rake access tokens for registered applications, minted after a Supabase login, an installation device proof and an entitlement check; the tenant pseudonyms and the mint audit record. | Run tokens, lifecycle transitions, tokens for direct browser calls to Rake, Rake's data. |
 
 ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 
@@ -20,6 +21,8 @@ ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 
 - `auth.users.id` is an identity subject, not the business customer identifier.
   ForgeCustomer maps it to its own `customer_profiles.id`.
+- A Rake access token (`aud` `rake.application`) is valid only at Rake. ForgeCustomer issues
+  it and never accepts it. It carries pseudonyms, never `customer_id` or identity.
 - Customer JWTs are valid only for customer routes. Admin routes use a separate issuer
   and audience. Admin tokens are EdDSA and are verified against an Ed25519 public key
   (`ADMIN_JWT_PUBLIC_KEY`). There is no shared admin secret.

@@ -29,6 +29,14 @@ pub enum ErrorCode {
     Internal,
     ServiceUnavailable,
     NotImplemented,
+    /// The application's client authentication (installation device proof) failed.
+    ClientAuthFailed,
+    /// The `app_id` is unknown or disabled.
+    AppNotAllowed,
+    /// A requested scope is outside the application's list, or `rake:approve` is mixed.
+    ScopeNotAllowed,
+    /// The application's required feature is not `true` for the customer.
+    EntitlementDenied,
 }
 
 impl ErrorCode {
@@ -54,6 +62,10 @@ impl ErrorCode {
             ErrorCode::Internal => "INTERNAL",
             ErrorCode::ServiceUnavailable => "SERVICE_UNAVAILABLE",
             ErrorCode::NotImplemented => "NOT_IMPLEMENTED",
+            ErrorCode::ClientAuthFailed => "CLIENT_AUTH_FAILED",
+            ErrorCode::AppNotAllowed => "APP_NOT_ALLOWED",
+            ErrorCode::ScopeNotAllowed => "SCOPE_NOT_ALLOWED",
+            ErrorCode::EntitlementDenied => "ENTITLEMENT_DENIED",
         }
     }
 
@@ -62,7 +74,11 @@ impl ErrorCode {
             ErrorCode::Unauthenticated
             | ErrorCode::InvalidToken
             | ErrorCode::TokenExpired
-            | ErrorCode::WrongAudience => StatusCode::UNAUTHORIZED,
+            | ErrorCode::WrongAudience
+            | ErrorCode::ClientAuthFailed => StatusCode::UNAUTHORIZED,
+            ErrorCode::AppNotAllowed
+            | ErrorCode::ScopeNotAllowed
+            | ErrorCode::EntitlementDenied => StatusCode::FORBIDDEN,
             ErrorCode::Forbidden
             | ErrorCode::CustomerSuspended
             | ErrorCode::Revoked

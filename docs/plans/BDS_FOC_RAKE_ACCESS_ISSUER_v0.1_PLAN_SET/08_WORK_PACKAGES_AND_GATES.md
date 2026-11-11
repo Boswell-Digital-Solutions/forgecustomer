@@ -52,6 +52,10 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-02 — Issuer in ForgeCustomer
 
+**Status:** delivered for review 2026-11-11 (authorized: operator "check and yes"). AC-02 and AC-03 PASS on the candidate; AC-04 PASS except the deletion row (UNVERIFIED). Merge needs the operator.
+
+**Scope note (2026-11-11):** AC-02 names "the existing test harness". The repository's harness for database-backed HTTP checks is the SQL fixture plus runner plus CI job pattern of `update_campaign_http_smoke`. So WP-02 also writes `api/tests/rake_access_routes.rs`, `supabase/tests/rake_access_http_smoke.sql`, `scripts/rake_access_http_smoke.sh` and `.py`, and one CI job in `.github/workflows/ci.yml` that copies the existing smoke job. The PR names this for the operator.
+
 | Field | Brief |
 |---|---|
 | Outcome | 05 §2 works in ForgeCustomer. |
