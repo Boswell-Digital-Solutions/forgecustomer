@@ -6,8 +6,8 @@
 
 | Step | Command (from `api/` unless noted) | Observed |
 |---|---|---|
-| Vectors | `python3 -I contracts/vectors/rake-access-token-v1/generate.py` (repository root), run twice, outputs compared with `cmp` | 16 vectors; the two runs are byte-identical |
-| Contract test | `cargo test -p forgecustomer-api --test rake_access_contract -- --nocapture` | 1 test passed: "2 valid, 14 invalid vectors checked" |
+| Vectors | `python3 -I contracts/vectors/rake-access-token-v1/generate.py` (repository root), run twice, outputs compared with `cmp` | 18 vectors; the two runs are byte-identical |
+| Contract test | `cargo test -p forgecustomer-api --test rake_access_contract -- --nocapture` | 1 test passed: "3 valid, 15 invalid vectors checked" |
 | Mutation check | `alg` changed from `{"const": "EdDSA"}` to `{"type": "string"}` in the schema, then the same test | FAILED at `invalid-05-alg-hs256: schema accepted it`. The schema was restored and compared with `cmp`. |
 | Repository gate | `cargo fmt --all --check`; `cargo clippy --all-targets --all-features -- -D warnings`; `cargo test --all` | fmt clean after formatting the new file; clippy exit 0; tests: 146 passed and 1 ignored (lib), 1 passed (contract), 36 passed (security) |
 
@@ -30,9 +30,14 @@ The test fails a negative vector unless the refusal text names the vector's `fie
 | invalid-11-aud-list | schema | `$.claims.aud: not equal to "rake.application"` |
 | invalid-12-extra-email | schema | `$.claims: unexpected property email` |
 | invalid-13-sub-not-user | rule | `sub differs from user_id` |
-| invalid-14-tampered-signature | signature | `verify: InvalidSignature` |
+| invalid-14-tampered-signature | signature | `verify: InvalidSignature` (the payload swaps `tenant_id`; the signature is the original) |
+| invalid-15-approve-mixed | rule | `rake:approve must be the only scope` (DEC-6) |
 
-The two valid vectors verify with `jsonwebtoken` EdDSA, and their decoded claims and header equal the vector.
+The three valid vectors (read and execute; read only; approve only) verify with `jsonwebtoken` EdDSA, and their decoded claims and header equal the vector.
+
+## DEC-6 addition
+
+After DEC-6 (2026-11-11), the contract gained the rule that `rake:approve` stands alone, with `valid-03-approve-only` and `invalid-15-approve-mixed`. The first rerun failed on `invalid-14-tampered-signature`, because its forged payload added `rake:approve` beside other scopes, so the new rule refused it before the signature check. The test requires that vector to fail only on the signature. The forged payload now swaps `tenant_id` instead. The rerun passed, and the full gate passed again (146 + 1 + 36, 1 ignored).
 
 ## Secret scan
 

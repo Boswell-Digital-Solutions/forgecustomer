@@ -73,6 +73,37 @@
       ]
     },
     {
+      "id": "valid-03-approve-only",
+      "expect": "valid",
+      "reason": null,
+      "field": null,
+      "header": {
+        "alg": "EdDSA",
+        "typ": "rake-access+jwt",
+        "kid": "rake-access-test-1"
+      },
+      "claims": {
+        "iss": "bds-forgecustomer",
+        "aud": "rake.application",
+        "sub": "6f1d2c3b-4a59-4e8d-9c7b-1a2b3c4d5e6f",
+        "tenant_id": "0b9a8c7d-6e5f-4a3b-8c2d-1e0f9a8b7c6d",
+        "user_id": "6f1d2c3b-4a59-4e8d-9c7b-1a2b3c4d5e6f",
+        "app_id": "authorforge",
+        "scopes": [
+          "rake:approve"
+        ],
+        "type": "access",
+        "iat": 1794000000,
+        "exp": 1794000300,
+        "jti": "5e4d3c2b-1a09-4f8e-8d7c-6b5a4f3e2d1c"
+      },
+      "jws_parts": [
+        "eyJhbGciOiJFZERTQSIsImtpZCI6InJha2UtYWNjZXNzLXRlc3QtMSIsInR5cCI6InJha2UtYWNjZXNzK2p3dCJ9",
+        "eyJhcHBfaWQiOiJhdXRob3Jmb3JnZSIsImF1ZCI6InJha2UuYXBwbGljYXRpb24iLCJleHAiOjE3OTQwMDAzMDAsImlhdCI6MTc5NDAwMDAwMCwiaXNzIjoiYmRzLWZvcmdlY3VzdG9tZXIiLCJqdGkiOiI1ZTRkM2MyYi0xYTA5LTRmOGUtOGQ3Yy02YjVhNGYzZTJkMWMiLCJzY29wZXMiOlsicmFrZTphcHByb3ZlIl0sInN1YiI6IjZmMWQyYzNiLTRhNTktNGU4ZC05YzdiLTFhMmIzYzRkNWU2ZiIsInRlbmFudF9pZCI6IjBiOWE4YzdkLTZlNWYtNGEzYi04YzJkLTFlMGY5YThiN2M2ZCIsInR5cGUiOiJhY2Nlc3MiLCJ1c2VyX2lkIjoiNmYxZDJjM2ItNGE1OS00ZThkLTljN2ItMWEyYjNjNGQ1ZTZmIn0",
+        "soO31hPTfFGn2l7LUDoj7VG1C2NrMxLsrRW_wjawsyOmodW5jrvcrltI4jzuOjkYUAVb0EK-eyLIodVlRtB8Bw"
+      ]
+    },
+    {
       "id": "invalid-01-no-iss",
       "expect": "invalid",
       "reason": "schema",
@@ -419,10 +450,10 @@
       }
     },
     {
-      "id": "invalid-14-tampered-signature",
+      "id": "invalid-15-approve-mixed",
       "expect": "invalid",
-      "reason": "signature",
-      "field": "verify",
+      "reason": "rule",
+      "field": "rake:approve",
       "header": {
         "alg": "EdDSA",
         "typ": "rake-access+jwt",
@@ -437,8 +468,34 @@
         "app_id": "authorforge",
         "scopes": [
           "rake:read",
-          "rake:execute",
           "rake:approve"
+        ],
+        "type": "access",
+        "iat": 1794000000,
+        "exp": 1794000300,
+        "jti": "3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a"
+      }
+    },
+    {
+      "id": "invalid-14-tampered-signature",
+      "expect": "invalid",
+      "reason": "signature",
+      "field": "verify",
+      "header": {
+        "alg": "EdDSA",
+        "typ": "rake-access+jwt",
+        "kid": "rake-access-test-1"
+      },
+      "claims": {
+        "iss": "bds-forgecustomer",
+        "aud": "rake.application",
+        "sub": "6f1d2c3b-4a59-4e8d-9c7b-1a2b3c4d5e6f",
+        "tenant_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",
+        "user_id": "6f1d2c3b-4a59-4e8d-9c7b-1a2b3c4d5e6f",
+        "app_id": "authorforge",
+        "scopes": [
+          "rake:read",
+          "rake:execute"
         ],
         "type": "access",
         "iat": 1794000000,
@@ -447,7 +504,7 @@
       },
       "jws_parts": [
         "eyJhbGciOiJFZERTQSIsImtpZCI6InJha2UtYWNjZXNzLXRlc3QtMSIsInR5cCI6InJha2UtYWNjZXNzK2p3dCJ9",
-        "eyJhcHBfaWQiOiJhdXRob3Jmb3JnZSIsImF1ZCI6InJha2UuYXBwbGljYXRpb24iLCJleHAiOjE3OTQwMDAzMDAsImlhdCI6MTc5NDAwMDAwMCwiaXNzIjoiYmRzLWZvcmdlY3VzdG9tZXIiLCJqdGkiOiIzYzJiMWEwOS04ZjdlLTRkNmMtOWI1YS00ZjNlMmQxYzBiOWEiLCJzY29wZXMiOlsicmFrZTpyZWFkIiwicmFrZTpleGVjdXRlIiwicmFrZTphcHByb3ZlIl0sInN1YiI6IjZmMWQyYzNiLTRhNTktNGU4ZC05YzdiLTFhMmIzYzRkNWU2ZiIsInRlbmFudF9pZCI6IjBiOWE4YzdkLTZlNWYtNGEzYi04YzJkLTFlMGY5YThiN2M2ZCIsInR5cGUiOiJhY2Nlc3MiLCJ1c2VyX2lkIjoiNmYxZDJjM2ItNGE1OS00ZThkLTljN2ItMWEyYjNjNGQ1ZTZmIn0",
+        "eyJhcHBfaWQiOiJhdXRob3Jmb3JnZSIsImF1ZCI6InJha2UuYXBwbGljYXRpb24iLCJleHAiOjE3OTQwMDAzMDAsImlhdCI6MTc5NDAwMDAwMCwiaXNzIjoiYmRzLWZvcmdlY3VzdG9tZXIiLCJqdGkiOiIzYzJiMWEwOS04ZjdlLTRkNmMtOWI1YS00ZjNlMmQxYzBiOWEiLCJzY29wZXMiOlsicmFrZTpyZWFkIiwicmFrZTpleGVjdXRlIl0sInN1YiI6IjZmMWQyYzNiLTRhNTktNGU4ZC05YzdiLTFhMmIzYzRkNWU2ZiIsInRlbmFudF9pZCI6IjlkOGM3YjZhLTVmNGUtNGQzYy04YjJhLTFmMGU5ZDhjN2I2YSIsInR5cGUiOiJhY2Nlc3MiLCJ1c2VyX2lkIjoiNmYxZDJjM2ItNGE1OS00ZThkLTljN2ItMWEyYjNjNGQ1ZTZmIn0",
         "0zBK0nwA_mnqHpx65y56FG_nO3ODgwkDizsnpzsF51D0y9nsVGIOFKuj-ZdwTCQCey-5gLT6rORSWbpO6z2YBA"
       ]
     }

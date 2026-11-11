@@ -48,6 +48,6 @@ decisions_requested:
   - { id: DEC-3, topic: tenant and user ids in the token, recommendation: "A, stored random pseudonym per customer and audience", status: approved_2026-11-11 }
   - { id: DEC-4, topic: algorithm, scope claim and lifetime, recommendation: "EdDSA; scopes list; 300 s; no refresh", status: approved_2026-11-11 }
   - { id: DEC-5, topic: jti replay rule and approve scope, recommendation: "log jti, no replay store; no rake:approve in v1", status: approved_2026-11-11 }
-  - { id: DEC-6, topic: rake:approve for AuthorForge (from AC-00), recommendation: "A, single-use jti for approve tokens", status: open }
+  - { id: DEC-6, topic: rake:approve for AuthorForge (from AC-00), recommendation: "A, single-use jti for approve tokens", status: approved_2026-11-11_A }
 consumer_mapping: { registry_schema: bds.plan-registry.v1, lifecycle: { proposed: proposed, authorized: approved } }
 house_form_conformance: BDS-PSS-001

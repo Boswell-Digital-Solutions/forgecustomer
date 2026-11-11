@@ -220,9 +220,13 @@ Rake refuses a token with any other `alg` or `typ`.
 
 The token carries no email, no Supabase user id, no ForgeCustomer `customer_id`, no project id and no path.
 
-### 2.3 `jti` rule (DEC-5)
+### 2.3 `jti` rule (DEC-5, DEC-6)
 
-The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of each accepted request. Neither side stores `jti` for replay refusal. The 300-second lifetime and backend-only custody bound the replay window.
+The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of each accepted request.
+
+- **Read and execute tokens (DEC-5):** neither side stores `jti` for replay refusal. The 300-second lifetime and backend-only custody bound the replay window.
+- **Approve tokens (DEC-6):** a token that carries `rake:approve` must carry no other scope. It is single-use. On the first approve call, Rake inserts its `jti` into a `consumed_approve_tokens` table (`jti` primary key, `exp`) in the same transaction as the approval. A second use of the same `jti` gets 401 `TOKEN_ALREADY_USED`. Rows past `exp` plus the 60-second skew may be deleted.
+- The issuer refuses a request that mixes `rake:approve` with another scope (403 `SCOPE_NOT_ALLOWED`).
 
 ## 3. Key set
 
@@ -253,7 +257,7 @@ The issuer writes each `jti` to the mint audit record. Rake logs the `jti` of ea
 
 | Table | Columns | Rules |
 |---|---|---|
-| `app_clients` | `app_id` (pk), `audience`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute}`, `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
+| `app_clients` | `app_id` (pk), `audience`, `allowed_scopes` (text[]), `required_feature_key`, `client_auth_method`, `status`, `created_at` | Seeded by migration. Seed row: `authorforge`, `rake.application`, `{rake:read,rake:execute,rake:approve}` (DEC-6), `authorforge.cloud.enabled`, the DEC-2 method, `active`. |
 | `rake_tenant_pseudonyms` | `customer_id` (fk), `audience`, `tenant_pseudonym` (uuid, random), `user_pseudonym` (uuid, random), `created_at`, `revoked_at` | One active row per (customer, audience). Created on first mint. Revocation creates a new row. Never sent to DataForge. |
 | `app_token_mints` | `jti` (pk), `customer_id`, `app_id`, `audience`, `kid`, `scopes`, `issued_at`, `expires_at`, `client_auth_method` | No token value. No request body. Written in the same transaction as the decision. |
 
@@ -264,7 +268,7 @@ A deletion request (forgecustomer `doc/system/03` deletion surface) must revoke 
 WP-01 writes these files in forgecustomer `contracts/`:
 
 - `rake-access-token-v1.schema.json` — the header and claims of §1 and §2.
-- `vectors/rake-access-token-v1/vectors.json` and its generator `generate.py` — 2 positive and 14 negative vectors. The test key is derived from a published label, so no private key is stored.
+- `vectors/rake-access-token-v1/vectors.json` and its generator `generate.py` — 3 positive and 15 negative vectors. The test key is derived from a published label, so no private key is stored.
 
 **Revision 2026-11-11 (WP-01):** the `contracts/openapi.yaml` entries for §3 and §4 move to WP-02. `openapi.yaml` lists only built routes, so an entry before the route exists would describe a route that does not exist.
 
@@ -393,11 +397,11 @@ Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another 
 |---|---|---|---|---|---|
 | AC-00 | WP-00 | Re-read each pinned file at the current default branch. `git diff --stat <pin> <head> -- <paths>` per repository. | Each path is unchanged, or each change is read and recorded with its effect on 04 and 05. | The 00 pins; the operator's machine | Source only. No deployed service is called. |
 | AC-01 | WP-01; REQ-03, REQ-05 | forgecustomer `cargo test -p forgecustomer-api --test rake_access_contract` validates every vector against `rake-access-token-v1.schema.json`, checks the two cross-claim rules, and verifies each token signature. | Every positive vector validates. Each negative vector fails for its named reason: no `iss`, no `aud`, no `exp`, no `jti`, `alg` `HS256`, `alg` `none`, `scopes` as a string, lifetime 901 s, `type` `refresh`. The test output lists each vector id. | forgecustomer WP-01 branch; Linux, stable Rust | Static vectors. It proves the schema, not the runtime. |
-| AC-02 | WP-02; REQ-04, REQ-05, REQ-07, REQ-11 | forgecustomer integration tests for `POST /v1/app-tokens/rake` against a test database. | No token → 401. Bad Supabase token → 401. `aal1` with `mfa_required` → 403 `MFA_REQUIRED`. Unknown app → 403 `APP_NOT_ALLOWED`. Extra scope → 403 `SCOPE_NOT_ALLOWED`. Feature false → 403 `ENTITLEMENT_DENIED`. Key unset → 503. Audit write failure → 503 and no token. Success → 200, the token verifies with the published key, the claims match 04 §2, one `app_token_mints` row exists, `cache-control: no-store`. | forgecustomer WP-02 branch; the existing test harness | A test Supabase issuer, not the deployed project |
+| AC-02 | WP-02; REQ-04, REQ-05, REQ-07, REQ-11 | forgecustomer integration tests for `POST /v1/app-tokens/rake` against a test database. | No token → 401. Bad Supabase token → 401. `aal1` with `mfa_required` → 403 `MFA_REQUIRED`. Unknown app → 403 `APP_NOT_ALLOWED`. Extra scope → 403 `SCOPE_NOT_ALLOWED`. `rake:approve` with another scope → 403 `SCOPE_NOT_ALLOWED`. Feature false → 403 `ENTITLEMENT_DENIED`. Key unset → 503. Audit write failure → 503 and no token. Success → 200, the token verifies with the published key, the claims match 04 §2, one `app_token_mints` row exists, `cache-control: no-store`. | forgecustomer WP-02 branch; the existing test harness | A test Supabase issuer, not the deployed project |
 | AC-03 | WP-02; REQ-09 | Start-up tests and a keys-route test. | Start-up fails when the Rake key equals the entitlement key. `GET /v1/app-tokens/keys` returns public keys only, with the active and standby `kid`. `GET /v1/entitlements/keys` does not list the Rake key. | as AC-02 | — |
 | AC-04 | WP-02; REQ-04, REQ-12 | Tests on the pseudonym mapping and the token body. | Two mints for one customer give the same `tenant_id`. Two customers give different values. A revoked row gives a new value. The decoded token holds no email, no Supabase `sub`, no `customer_id`. A deletion run revokes the row. | as AC-02 | — |
 | AC-05 | WP-03; REQ-01 | rake `pytest tests/` with the test key pinned. | A token from the 04 vectors is accepted on a read route and on an execute route. The existing scope and tenant tests pass unchanged. | rake WP-03 branch; Python per rake CI | — |
-| AC-06 | WP-03; REQ-02, REQ-03, REQ-05, REQ-06, REQ-10, REQ-11 | rake negative tests. Each test asserts the status and the refusal reason. | 401 for: an HS256 token signed with any secret; `alg` `none`; wrong `iss`; wrong `aud`; unknown `kid`; known `kid` with the wrong `iss`; expired; no `jti`; `type` `refresh`; `typ` missing; lifetime over 900 s. 503 when `RAKE_ACCESS_TRUSTED_KEYS` is empty. The runner output names each test. A generic failure or a skipped test does not count. | as AC-05 | — |
+| AC-06 | WP-03; REQ-02, REQ-03, REQ-05, REQ-06, REQ-10, REQ-11 | rake negative tests. Each test asserts the status and the refusal reason. | 401 for: an HS256 token signed with any secret; `alg` `none`; wrong `iss`; wrong `aud`; unknown `kid`; known `kid` with the wrong `iss`; expired; no `jti`; `type` `refresh`; `typ` missing; lifetime over 900 s; a token that mixes `rake:approve` with another scope; a second approve call with the same approve token (`TOKEN_ALREADY_USED`, and the first call succeeded). 503 when `RAKE_ACCESS_TRUSTED_KEYS` is empty. The runner output names each test. A generic failure or a skipped test does not count. | as AC-05 | — |
 | AC-07 | WP-04; REQ-08, REQ-12 | Author-Forge `apps/api` route tests. | In cloud mode, `rakeRequest` sends `Authorization: Bearer` with the exchanged token. In local mode it calls no exchange and sends no bearer. No route response body holds the Rake token. A Rake 401 causes one new exchange, then an error. | Author-Forge WP-04 branch; its backend test harness | Fixture ForgeCustomer and Rake servers |
 | AC-08 | WP-05; REQ-13 | 05 §6 against the deployed services, run or authorized by the operator. | Steps 2 and 3 succeed. Steps 4, 5 and 6 are refused with the named status. | Deployed ForgeCustomer and Rake after G4; a test account | Records statuses, `jti`, `kid` and times only. No token value. |
 | AC-09 | every WP; REQ-14 | Read the diff of each WP. Run `bash doc/system/BUILD.sh` in each repository changed. Run forge `python3 scripts/check-plan-registry.py`. | Each changed route, setting and caller is in that repository's `doc/system/`. The findings in 00 carry a dated update. The registry row matches this plan's lifecycle. | Each WP's PR | Review-time check |
@@ -477,9 +481,9 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Outcome | 05 §3 works in Rake, and the HS256 path is gone. |
 | Starting evidence | rake `auth/jwt_handler.py`, `auth/execution_access.py:9-88`, `auth/tenant_context.py`, `auth/__init__.py`, `config.py:282-304`, `config.py:659-681`, `forge_keys.py:56-57`, `tests/conftest.py:35`, `:167`, `service_contract.v1.json`, `render.yaml:44-45`. |
 | Prerequisites | G1. The contract vectors from WP-01. |
-| Permitted scope | Those files, rake tests, rake `doc/system/` parts that name the JWT, `docs/KNOWN_ISSUES.md`. `render.yaml` may drop `JWT_SECRET_KEY` and declare `RAKE_ACCESS_TRUSTED_KEYS` without a value. |
+| Permitted scope | Those files, `api/mission_routes.py` (the approve handler, for the single-use check), one alembic migration for `consumed_approve_tokens` (DEC-6), rake tests, rake `doc/system/` parts that name the JWT, `docs/KNOWN_ISSUES.md`. `render.yaml` may drop `JWT_SECRET_KEY` and declare `RAKE_ACCESS_TRUSTED_KEYS` without a value. |
 | Boundaries | No deployed configuration change. The API-key path is unchanged. Scope and tenant binding are unchanged. |
-| Deliverables | The verifier, the tests, the contract update, the doc/system updates. |
+| Deliverables | The verifier, the single-use approve check and its migration (DEC-6), the tests, the contract update, the doc/system updates. |
 | Acceptance criteria | AC-05, AC-06, AC-09. |
 | Verification | 07; rake CI (all required jobs). |
 | Stop conditions | Done when merged on the operator's word. Pause if a non-test caller of `create_access_token` appears. |
@@ -523,6 +527,7 @@ This component records the current authority, the decisions this plan needs, and
 - D-JWTI-1 to D-JWTI-8, ruled 2026-11-11. Receipt: rake `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake #186, `caac54c1a`). They fix the target design and ask for this plan. They authorize no work.
 - The operator asked for this draft on 2026-11-11 ("I concur proceed", after the offer to draft the issuer plan as a proposed plan).
 - Planning is complete.
+- **DEC-6 ruled 2026-11-11: A** ("yes"). Receipt: `evidence/RULINGS/2026-11-11_DEC-6_OPERATOR_RULING.md`.
 - **DEC-1 to DEC-5 ruled 2026-11-11** ("do it"), each as recommended. Receipt: `evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md`. WP-00 and WP-01 are authorized.
 - WP-00 delivered: AC-00 PASS, G0 PASS.
 
@@ -576,7 +581,7 @@ This component records the current authority, the decisions this plan needs, and
   - No `rake:approve` for applications in v1. WP-00 checks whether the Author-Forge mission flow needs it. If it does, the plan returns to you with a single-use `jti` rule for approve only.
 - **Alternative:** a single-use store in Rake for every token. It needs a database table and a lookup on every request.
 
-### DEC-6 — Approve permission for AuthorForge (new, from WP-00)
+### DEC-6 (ruled 2026-11-11: A, single-use approve token) — Approve permission for AuthorForge (new, from WP-00)
 
 - **Question:** Rake runs a mission only after someone calls its approve route. AuthorForge creates missions but never approves them (AC-00). Should AuthorForge tokens carry `rake:approve`?
 - **Options:**
@@ -589,8 +594,8 @@ This component records the current authority, the decisions this plan needs, and
 
 ## Handoff
 
-- **Next action:** your word to merge the WP-01 PR (contract files and the AC-01 test; AC-01 PASS on the candidate). After the merge and DEC-6, G1 passes.
-- **Your answer needed:** DEC-6.
+- **Next action:** the merge of the WP-01 PR (the operator gave the word on 2026-11-11; the agent's merge was refused by the session's permission classifier, so the operator merges it). After the merge, G1 passes.
+- **Your word needed:** WP-02 (issuer in ForgeCustomer) and WP-03 (verifier in Rake).
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

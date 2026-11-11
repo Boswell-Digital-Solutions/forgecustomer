@@ -7,6 +7,7 @@ This component records the current authority, the decisions this plan needs, and
 - D-JWTI-1 to D-JWTI-8, ruled 2026-11-11. Receipt: rake `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake #186, `caac54c1a`). They fix the target design and ask for this plan. They authorize no work.
 - The operator asked for this draft on 2026-11-11 ("I concur proceed", after the offer to draft the issuer plan as a proposed plan).
 - Planning is complete.
+- **DEC-6 ruled 2026-11-11: A** ("yes"). Receipt: `evidence/RULINGS/2026-11-11_DEC-6_OPERATOR_RULING.md`.
 - **DEC-1 to DEC-5 ruled 2026-11-11** ("do it"), each as recommended. Receipt: `evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md`. WP-00 and WP-01 are authorized.
 - WP-00 delivered: AC-00 PASS, G0 PASS.
 
@@ -60,7 +61,7 @@ This component records the current authority, the decisions this plan needs, and
   - No `rake:approve` for applications in v1. WP-00 checks whether the Author-Forge mission flow needs it. If it does, the plan returns to you with a single-use `jti` rule for approve only.
 - **Alternative:** a single-use store in Rake for every token. It needs a database table and a lookup on every request.
 
-### DEC-6 — Approve permission for AuthorForge (new, from WP-00)
+### DEC-6 (ruled 2026-11-11: A, single-use approve token) — Approve permission for AuthorForge (new, from WP-00)
 
 - **Question:** Rake runs a mission only after someone calls its approve route. AuthorForge creates missions but never approves them (AC-00). Should AuthorForge tokens carry `rake:approve`?
 - **Options:**
@@ -73,8 +74,8 @@ This component records the current authority, the decisions this plan needs, and
 
 ## Handoff
 
-- **Next action:** your word to merge the WP-01 PR (contract files and the AC-01 test; AC-01 PASS on the candidate). After the merge and DEC-6, G1 passes.
-- **Your answer needed:** DEC-6.
+- **Next action:** the merge of the WP-01 PR (the operator gave the word on 2026-11-11; the agent's merge was refused by the session's permission classifier, so the operator merges it). After the merge, G1 passes.
+- **Your word needed:** WP-02 (issuer in ForgeCustomer) and WP-03 (verifier in Rake).
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

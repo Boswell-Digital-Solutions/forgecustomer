@@ -47,7 +47,7 @@ def vec(vid, expect, reason=None, header=None, claims=None, token=False, tamper=
         t = sign(h, c)
         if tamper:
             head, body, sig = t.split(".")
-            c2 = dict(c, scopes=["rake:read", "rake:execute", "rake:approve"])
+            c2 = dict(c, tenant_id="9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a")  # tenant swap
             t = head + "." + b64u(compact(c2)) + "." + sig
             v["claims"] = c2
         # Stored as its three parts, not one compact string, so that secret scanners
@@ -62,6 +62,7 @@ def withh(**kw): h = copy.deepcopy(HEADER); h.update(kw); return h
 vectors = [
     vec("valid-01-read-execute", "valid", token=True),
     vec("valid-02-read-only", "valid", claims=withc(scopes=["rake:read"], jti="7a6b5c4d-3e2f-4a1b-9c8d-7e6f5a4b3c2d"), token=True),
+    vec("valid-03-approve-only", "valid", claims=withc(scopes=["rake:approve"], jti="5e4d3c2b-1a09-4f8e-8d7c-6b5a4f3e2d1c"), token=True),
     vec("invalid-01-no-iss", "invalid", "schema", claims=without("iss"), field="iss"),
     vec("invalid-02-no-aud", "invalid", "schema", claims=without("aud"), field="aud"),
     vec("invalid-03-no-exp", "invalid", "schema", claims=without("exp"), field="exp"),
@@ -75,6 +76,7 @@ vectors = [
     vec("invalid-11-aud-list", "invalid", "schema", claims=withc(aud=["rake.application"]), field="aud"),
     vec("invalid-12-extra-email", "invalid", "schema", claims=withc(email="author@example.com"), field="email"),
     vec("invalid-13-sub-not-user", "invalid", "rule", claims=withc(sub="0b9a8c7d-6e5f-4a3b-8c2d-1e0f9a8b7c6d"), field="sub"),
+    vec("invalid-15-approve-mixed", "invalid", "rule", claims=withc(scopes=["rake:read", "rake:approve"]), field="rake:approve"),
     vec("invalid-14-tampered-signature", "invalid", "signature", token=True, tamper=True, field="verify"),
 ]
 

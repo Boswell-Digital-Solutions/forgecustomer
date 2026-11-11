@@ -71,9 +71,9 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Outcome | 05 §3 works in Rake, and the HS256 path is gone. |
 | Starting evidence | rake `auth/jwt_handler.py`, `auth/execution_access.py:9-88`, `auth/tenant_context.py`, `auth/__init__.py`, `config.py:282-304`, `config.py:659-681`, `forge_keys.py:56-57`, `tests/conftest.py:35`, `:167`, `service_contract.v1.json`, `render.yaml:44-45`. |
 | Prerequisites | G1. The contract vectors from WP-01. |
-| Permitted scope | Those files, rake tests, rake `doc/system/` parts that name the JWT, `docs/KNOWN_ISSUES.md`. `render.yaml` may drop `JWT_SECRET_KEY` and declare `RAKE_ACCESS_TRUSTED_KEYS` without a value. |
+| Permitted scope | Those files, `api/mission_routes.py` (the approve handler, for the single-use check), one alembic migration for `consumed_approve_tokens` (DEC-6), rake tests, rake `doc/system/` parts that name the JWT, `docs/KNOWN_ISSUES.md`. `render.yaml` may drop `JWT_SECRET_KEY` and declare `RAKE_ACCESS_TRUSTED_KEYS` without a value. |
 | Boundaries | No deployed configuration change. The API-key path is unchanged. Scope and tenant binding are unchanged. |
-| Deliverables | The verifier, the tests, the contract update, the doc/system updates. |
+| Deliverables | The verifier, the single-use approve check and its migration (DEC-6), the tests, the contract update, the doc/system updates. |
 | Acceptance criteria | AC-05, AC-06, AC-09. |
 | Verification | 07; rake CI (all required jobs). |
 | Stop conditions | Done when merged on the operator's word. Pause if a non-test caller of `create_access_token` appears. |

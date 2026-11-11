@@ -3,7 +3,8 @@
 //! Checks every vector in `contracts/vectors/rake-access-token-v1/vectors.json`:
 //!  * against `contracts/rake-access-token-v1.schema.json`, with a validator for the
 //!    exact keyword subset that schema uses (an unknown keyword fails the test);
-//!  * against the two rules the schema cannot express (lifetime, `sub` == `user_id`);
+//!  * against the rules the schema cannot express (lifetime, `sub` == `user_id`, and
+//!    DEC-6: `rake:approve` stands alone);
 //!  * for vectors with a compact token, the EdDSA signature, verified with
 //!    `jsonwebtoken` and the test public key derived here from the published label.
 //!
@@ -187,6 +188,11 @@ fn rule_violation(claims: &Map<String, Value>, max_lifetime: i64) -> Option<Stri
     if claims["sub"] != claims["user_id"] {
         return Some("sub differs from user_id".into());
     }
+    // DEC-6: an approve token carries rake:approve and nothing else.
+    let scopes = claims["scopes"].as_array().unwrap();
+    if scopes.iter().any(|s| s == "rake:approve") && scopes.len() != 1 {
+        return Some("rake:approve must be the only scope".into());
+    }
     None
 }
 
@@ -240,7 +246,7 @@ fn rake_access_contract_vectors() {
     let max_lifetime = doc["max_lifetime_seconds"].as_i64().unwrap();
 
     let vectors = doc["vectors"].as_array().unwrap();
-    assert!(vectors.len() >= 16, "expected the full vector set");
+    assert!(vectors.len() >= 18, "expected the full vector set");
     let (mut valid, mut invalid) = (0, 0);
 
     for v in vectors {
@@ -326,5 +332,5 @@ fn rake_access_contract_vectors() {
         }
     }
     println!("rake-access-token-v1: {valid} valid, {invalid} invalid vectors checked");
-    assert_eq!((valid, invalid), (2, 14));
+    assert_eq!((valid, invalid), (3, 15));
 }
