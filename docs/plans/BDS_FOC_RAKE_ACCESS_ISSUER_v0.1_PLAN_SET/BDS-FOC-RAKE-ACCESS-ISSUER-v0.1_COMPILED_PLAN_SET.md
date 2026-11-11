@@ -1,6 +1,6 @@
 # BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 — compiled plan set
 
-ForgeCustomer Rake access-token issuer — token exchange for BDS applications. Lifecycle: proposed. Components 00–09 in order, maintained by hand. An edit to a component must be mirrored here in the same change.
+ForgeCustomer Rake access-token issuer — token exchange for BDS applications. Lifecycle: authorized. Components 00–09 in order, maintained by hand. An edit to a component must be mirrored here in the same change.
 
 ---
 
@@ -12,8 +12,8 @@ This component gives the plan identity, the purpose, the source state and the re
 |---|---|
 | Plan ID | BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 |
 | Title | ForgeCustomer Rake access-token issuer — token exchange for BDS applications |
-| Lifecycle | proposed |
-| Authority | None for execution. The operator ruled the target design on 2026-11-11 (D-JWTI-1 to D-JWTI-8) and asked for this plan (D-JWTI-8). The rulings authorize no issuer code, verifier change, contract, key, configuration, deployment or merge. |
+| Lifecycle | authorized |
+| Authority | Operator ruling 2026-11-11 ("do it"): DEC-1 to DEC-5 accepted as recommended. WP-00 and WP-01 are authorized. WP-02 onward need G1 and the operator's word. No route, key, configuration, deployment or code merge is authorized. Before that: the D-JWTI rulings fixed the design and authorized no work. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-11 America/New_York |
 | Parent / extension target | rake `docs/reviews/RAKE_JWT_ISSUER_ARCHITECTURE_REVIEW_2026-11-10.md` and `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake `caac54c1a`). Findings: rake `RAKE-EXECUTION-JWT-NO-ISSUER-20261109`; Author-Forge `KI-AUF-20261106-003`. Authority row: forge `CLAUDE.md` "ForgeCustomer (application-token issuer; ruled 2026-11-11, not built)" (forge #411). Companion: forge `docs/architecture/rake_credential_authority_review.md`. |
@@ -58,7 +58,7 @@ It writes new code only where nothing exists: the exchange route, a dedicated si
 
 ## Status
 
-Proposed. No acceptance criterion has run. No decision in 09 is ruled.
+Authorized 2026-11-11 for WP-00 and WP-01 (receipt `evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md`). AC-00 PASS. DEC-6 is open (09). The other acceptance criteria are NOT_RUN.
 
 ## Read order and components
 
@@ -384,7 +384,7 @@ Work-package status uses: `proposed`, `authorized`, `in_progress`, `delivered`, 
 
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. Every criterion is NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). The others are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 
@@ -425,6 +425,8 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-00 — Source lock
 
+**Status:** delivered 2026-11-11. AC-00 PASS (`evidence/AC-00/`). G0 PASS.
+
 | Field | Brief |
 |---|---|
 | Outcome | The 00 pins are confirmed or updated, so 04 and 05 rest on current code. |
@@ -438,6 +440,8 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Stop conditions | Done when AC-00 is recorded. Pause if a pinned file changed in a way that breaks 04 or 05. Then record the change and revise the plan first. |
 
 ## WP-01 — Token contract
+
+**Status:** authorized 2026-11-11 (DEC-1).
 
 | Field | Brief |
 |---|---|
@@ -517,18 +521,20 @@ This component records the current authority, the decisions this plan needs, and
 
 - D-JWTI-1 to D-JWTI-8, ruled 2026-11-11. Receipt: rake `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake #186, `caac54c1a`). They fix the target design and ask for this plan. They authorize no work.
 - The operator asked for this draft on 2026-11-11 ("I concur proceed", after the offer to draft the issuer plan as a proposed plan).
-- Planning is complete. Nothing is authorized. No acceptance criterion has run.
+- Planning is complete.
+- **DEC-1 to DEC-5 ruled 2026-11-11** ("do it"), each as recommended. Receipt: `evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md`. WP-00 and WP-01 are authorized.
+- WP-00 delivered: AC-00 PASS, G0 PASS.
 
 ## Decisions
 
-### DEC-1 — Start the plan (WP-00 and WP-01)
+### DEC-1 (ruled 2026-11-11: as recommended) — Start the plan (WP-00 and WP-01)
 
 - **Question:** may an agent lock the sources and write the token contract as files in forgecustomer?
 - **Recommendation: yes.** WP-00 is read-only. WP-01 adds a schema, test vectors and one test. Neither changes a route, a key or a deployment.
 - **Effect:** the plan becomes `authorized` for WP-00 and WP-01 only. WP-02 onward stay proposed until G1 and your word.
 - **Alternative:** defer. The plan stays proposed. Rake keeps its HS256 path with no issuer.
 
-### DEC-2 — How the desktop app proves it is AuthorForge
+### DEC-2 (ruled 2026-11-11: as recommended) — How the desktop app proves it is AuthorForge
 
 - **Question:** the AuthorForge desktop app cannot keep a secret, because anyone can read a file on their own machine. What must it show, besides the user's login, to get a Rake token?
 - **Options:**
@@ -540,7 +546,7 @@ This component records the current authority, the decisions this plan needs, and
 - **Reversibility:** B can move to A later with a new `client_auth_method` value. Nothing is in production, so there is no migration.
 - **Uncertainty:** the keyring state in Author-Forge was not re-read for this plan.
 
-### DEC-3 — Which tenant id Rake sees
+### DEC-3 (ruled 2026-11-11: as recommended) — Which tenant id Rake sees
 
 - **Question:** Rake needs a tenant id and a user id. Which values does the token carry?
 - **Options:**
@@ -551,7 +557,7 @@ This component records the current authority, the decisions this plan needs, and
 - **Cost of A:** one table and one lookup per mint.
 - **Not decided here:** the book-level separation inside a tenant. Today Author-Forge sets `tenant_id` to the project id. Under this plan the tenant is per customer. A book reference inside the tenant is part of AUTHORITY_GAP-01.
 
-### DEC-4 — Signature, scope format and lifetime
+### DEC-4 (ruled 2026-11-11: as recommended) — Signature, scope format and lifetime
 
 - **Question:** which algorithm, which scope claim and how long a token lives?
 - **Recommendation:**
@@ -561,7 +567,7 @@ This component records the current authority, the decisions this plan needs, and
 - **Alternative:** ES256, which the review also allows, and the OAuth `scope` string. Either one changes code in Rake with no security gain.
 - **Tradeoff:** a short lifetime means one exchange call about every five minutes per active user. The backend caches the token.
 
-### DEC-5 — Replay rule and the approve scope
+### DEC-5 (ruled 2026-11-11: as recommended) — Replay rule and the approve scope
 
 - **Question:** must Rake refuse a token it has already seen? Do application tokens get `rake:approve`?
 - **Recommendation:**
@@ -569,10 +575,21 @@ This component records the current authority, the decisions this plan needs, and
   - No `rake:approve` for applications in v1. WP-00 checks whether the Author-Forge mission flow needs it. If it does, the plan returns to you with a single-use `jti` rule for approve only.
 - **Alternative:** a single-use store in Rake for every token. It needs a database table and a lookup on every request.
 
+### DEC-6 — Approve permission for AuthorForge (new, from WP-00)
+
+- **Question:** Rake runs a mission only after someone calls its approve route. AuthorForge creates missions but never approves them (AC-00). Should AuthorForge tokens carry `rake:approve`?
+- **Options:**
+  - **A. Yes, with a single-use rule (recommended).** A token that carries `rake:approve` is usable once for an approve call. Rake stores the `jti` until the token expires and refuses a second use. AuthorForge requests an approve token only when the author approves a mission.
+  - **B. Yes, with no replay store.** Same as the other scopes. Simpler, but a captured token can approve again within five minutes.
+  - **C. No.** AuthorForge missions cannot run until a different approval path exists.
+- **Why A:** an approval spends the author's money and starts work. One click must give one approval. The store is small: one row per approve token for five minutes.
+- **Cost of A:** a `jti` table or cache in Rake, and a separate exchange call with `scopes: ["rake:approve"]`. WP-03 grows by one test group.
+- **What waits on this:** only the AuthorForge approve step in WP-04 and the approve rows of the contract. WP-01 can merge without it.
+
 ## Handoff
 
-- **Next action:** your answers to DEC-1 to DEC-5.
-- **After DEC-1:** WP-00, then WP-01 as a forgecustomer PR.
+- **Next action:** WP-01 as a forgecustomer PR (contract files and the AC-01 test). Its merge needs your word, because it adds a test.
+- **Your answer needed:** DEC-6.
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Not uploaded:** the Drive copy at /Forge/Plans.
