@@ -13,7 +13,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Plan ID | BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 |
 | Title | ForgeCustomer Rake access-token issuer — token exchange for BDS applications |
 | Lifecycle | authorized |
-| Authority | Operator ruling 2026-11-11 ("do it"): DEC-1 to DEC-5 accepted as recommended. WP-00 and WP-01 are authorized. WP-02 onward need G1 and the operator's word. No route, key, configuration, deployment or code merge is authorized. Before that: the D-JWTI rulings fixed the design and authorized no work. |
+| Authority | Operator ruling 2026-11-11 ("do it"): DEC-1 to DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 ("check and yes"): WP-02 and WP-03 authorized; DEC-6 ruled A. WP-01, WP-02 and WP-03 merged on the operator's word. No key, configuration or deployment is authorized; that is G4, the operator's. Before that: the D-JWTI rulings fixed the design and authorized no work. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-11 America/New_York |
 | Parent / extension target | rake `docs/reviews/RAKE_JWT_ISSUER_ARCHITECTURE_REVIEW_2026-11-10.md` and `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake `caac54c1a`). Findings: rake `RAKE-EXECUTION-JWT-NO-ISSUER-20261109`; Author-Forge `KI-AUF-20261106-003`. Authority row: forge `CLAUDE.md` "ForgeCustomer (application-token issuer; ruled 2026-11-11, not built)" (forge #411). Companion: forge `docs/architecture/rake_credential_authority_review.md`. |
@@ -58,7 +58,11 @@ It writes new code only where nothing exists: the exchange route, a dedicated si
 
 ## Status
 
-Authorized 2026-11-11 for WP-00 and WP-01 (receipt `evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md`). AC-00 PASS. DEC-6 is open (09). The other acceptance criteria are NOT_RUN.
+Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization.
+
+- Merged: WP-01 (forgecustomer #53, `6d21e62`), WP-02 (forgecustomer #55, `8e0cf28`), WP-03 (rake #188, `9b7af47`, with forge #424, `27efccb`).
+- AC-00, AC-01, AC-02, AC-03, AC-05 and AC-06 PASS. AC-04 PASS except its deletion row, which is UNVERIFIED. AC-07 to AC-09 NOT_RUN.
+- G0, G1 and G3 PASS. G2 is open on the AC-04 deletion row. G4 waits on G2 and on the operator.
 
 ## Read order and components
 
@@ -390,7 +394,7 @@ Work-package status uses: `proposed`, `authorized`, `in_progress`, `delivered`, 
 
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS on the WP-01 candidate before merge (`evidence/AC-01/`). AC-02 and AC-03 are PASS on the WP-02 candidate before merge, and AC-04 is PASS except its deletion row, which is UNVERIFIED (`evidence/AC-02/`). The others are NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS, and the merged contract test passed on forgecustomer `main` (`evidence/AC-01/`). AC-02 and AC-03 are PASS, and AC-04 is PASS except its deletion row, which is UNVERIFIED (`evidence/AC-02/`); the merged files are the tested files, and `main` CI passed on the merge. AC-05 and AC-06 are PASS on rake `master` at the WP-03 merge (`evidence/AC-05/`). AC-07 to AC-09 are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 
@@ -427,6 +431,8 @@ This component defines each work package with its nine-field brief, and the gate
 
 Order: G0 → G1 → {G2, G3} → G4 → G5. G6 is independent of G5 but needs G2 and G3.
 
+Gate status (2026-11-12): G0 PASS. G1 PASS (WP-01 merged, AC-01 PASS, DEC-2 to DEC-5 ruled). G2 open: WP-02 is merged and AC-02 and AC-03 PASS, but the AC-04 deletion row is UNVERIFIED. G3 PASS (WP-03 merged, AC-05 and AC-06 PASS). G4 waits on G2.
+
 WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §2.2), so the merge breaks no caller.
 
 ## WP-00 — Source lock
@@ -447,7 +453,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-01 — Token contract
 
-**Status:** delivered for review 2026-11-11. AC-01 PASS on the candidate (`evidence/AC-01/`). Its merge needs the operator's word, because it adds a test.
+**Status:** merged 2026-11-11 (forgecustomer #53, merge `6d21e62`). AC-01 PASS (`evidence/AC-01/`).
 
 | Field | Brief |
 |---|---|
@@ -463,7 +469,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-02 — Issuer in ForgeCustomer
 
-**Status:** delivered for review 2026-11-11 (authorized: operator "check and yes"). AC-02 and AC-03 PASS on the candidate; AC-04 PASS except the deletion row (UNVERIFIED). Merge needs the operator.
+**Status:** merged 2026-11-11 (forgecustomer #55, merge `8e0cf28`; authorized: operator "check and yes"). AC-02 and AC-03 PASS; AC-04 PASS except the deletion row (UNVERIFIED). The deletion row needs a test that runs a deletion; no such work is authorized.
 
 **Scope note (2026-11-11):** AC-02 names "the existing test harness". The repository's harness for database-backed HTTP checks is the SQL fixture plus runner plus CI job pattern of `update_campaign_http_smoke`. So WP-02 also writes `api/tests/rake_access_routes.rs`, `supabase/tests/rake_access_http_smoke.sql`, `scripts/rake_access_http_smoke.sh` and `.py`, and one CI job in `.github/workflows/ci.yml` that copies the existing smoke job. The PR names this for the operator.
 
@@ -480,6 +486,8 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Stop conditions | Done when merged on the operator's word with the ACs PASS. Pause if the entitlement service cannot answer the feature check without a new authority. |
 
 ## WP-03 — Verifier in Rake
+
+**Status:** merged 2026-11-11 (rake #188, merge `9b7af47`; forge #424, merge `27efccb`; authorized: operator "check and yes"). AC-05 and AC-06 PASS (`evidence/AC-05/`). G3 PASS.
 
 | Field | Brief |
 |---|---|
@@ -599,8 +607,8 @@ This component records the current authority, the decisions this plan needs, and
 
 ## Handoff
 
-- **Next action:** the merge of the WP-01 PR (the operator gave the word on 2026-11-11; the agent's merge was refused by the session's permission classifier, so the operator merges it). After the merge, G1 passes.
-- **WP-02 and WP-03 authorized 2026-11-11** ("check and yes"). WP-02 is delivered for review (AC-02 to AC-04). Each merge needs the operator.
+- **Merged:** WP-01 (forgecustomer #53), WP-02 (forgecustomer #55) and WP-03 (rake #188, with forge #424), each on the operator's word. G1 and G3 PASS.
+- **Next action:** G2 needs the AC-04 deletion row. That means a forgecustomer test that runs a customer deletion and checks that the Rake pseudonyms are revoked. No work is authorized for it. The alternative is an operator ruling that accepts G2 without that row.
 - **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

@@ -69,3 +69,11 @@ Making the entitlement check always pass (`if false && !matches!(...)`) made the
 - **Deletion revokes the pseudonyms** (04 §5): the code is in `repositories::privacy::execute_deletion`, but no test runs a deletion. The deletion flow needs an operator token and a cooling-off period. This row of AC-04 is UNVERIFIED.
 - The Supabase token in the smoke is the legacy HS256 test path. The ES256 JWKS path is the existing verifier and is not changed.
 - Two customers is not a broad "different customers get different tenants" proof. The values come from `gen_random_uuid()` with a unique constraint.
+
+## After merge (2026-11-12)
+
+- forgecustomer #55 merged on head `532fa35dc87cae1e48fa273394945273b5d230f4`. That head merges `main` (after WP-01) into the candidate `e4586104c92e88141f40f71ffdc7f290fe9a758b`. `git diff --stat e458610 532fa35` is empty, so the merged files are the files tested above. Merge commit `8e0cf284736f1dd1b9fc0e195dce172cf79135fa`, 2026-11-11T13:37:50Z.
+- The `main` push run `43030867714` on the merge commit passed every job:
+  - `rake access HTTP smoke` (`130557325593`): every check line is `PASS`, no line is `FAIL`, and the last line is `rake access HTTP smoke: PASS`.
+  - `fmt + clippy + test` (`130557325546`): `tests/rake_access_routes.rs` 7 passed; `tests/rake_access_contract.rs` 1 passed; lib 155 passed, 1 ignored.
+- AC-02 and AC-03 stay PASS. AC-04 stays PASS except the deletion row, which is still UNVERIFIED: no test runs a deletion. G2 waits on that row.

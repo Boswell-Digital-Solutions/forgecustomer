@@ -48,3 +48,10 @@ The first push stored each signed vector as one compact token. The CI secret sca
 - The schema check uses a validator in the test for the keywords the schema uses. The test fails if the schema gains any other keyword. It is not a general JSON Schema validator. A full validator would need a new dependency, which is outside WP-01's permitted scope.
 - The vectors prove the contract and the signature format. They do not prove the issuer route or Rake's verifier (AC-02 to AC-06).
 - The token was signed in Python (`cryptography` 46.0.5) and verified in Rust. That is one cross-language check. Rake's verifier is checked in WP-03.
+
+## After merge (2026-11-12)
+
+- forgecustomer #53 merged on head `ebd1dfcf97dec04a06b38845d5fe83f28cf40717`, the candidate above. Merge commit `6d21e62b683fba8de862c888c2498447ef849dfe`, 2026-11-11T13:05:16Z.
+- The `main` push run `43025968228` on the merge commit: job `fmt + clippy + test` (`130540710877`) ran `tests/rake_access_contract.rs` and printed `test rake_access_contract_vectors ... ok`.
+- The same run failed its `secret scan` job only. The scan read old commit `39d485d` on the remote branch `feat/rake-access-issuer` (the closed #54), not a WP-01 file. The next `main` run (`43030867714`, on `8e0cf28`) passed its secret scan after that branch was deleted.
+- AC-01 stays PASS.
