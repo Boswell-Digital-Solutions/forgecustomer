@@ -16,6 +16,8 @@ This component defines each work package with its nine-field brief, and the gate
 
 Order: G0 → G1 → {G2, G3} → G4 → G5. G6 is independent of G5 but needs G2 and G3.
 
+Gate status (2026-11-12): G0 PASS. G1 PASS (WP-01 merged, AC-01 PASS, DEC-2 to DEC-5 ruled). G2 open: WP-02 is merged and AC-02 and AC-03 PASS, but the AC-04 deletion row is UNVERIFIED. G3 PASS (WP-03 merged, AC-05 and AC-06 PASS). G4 waits on G2.
+
 WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §2.2), so the merge breaks no caller.
 
 ## WP-00 — Source lock
@@ -36,7 +38,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-01 — Token contract
 
-**Status:** delivered for review 2026-11-11. AC-01 PASS on the candidate (`evidence/AC-01/`). Its merge needs the operator's word, because it adds a test.
+**Status:** merged 2026-11-11 (forgecustomer #53, merge `6d21e62`). AC-01 PASS (`evidence/AC-01/`).
 
 | Field | Brief |
 |---|---|
@@ -52,7 +54,7 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 
 ## WP-02 — Issuer in ForgeCustomer
 
-**Status:** delivered for review 2026-11-11 (authorized: operator "check and yes"). AC-02 and AC-03 PASS on the candidate; AC-04 PASS except the deletion row (UNVERIFIED). Merge needs the operator.
+**Status:** merged 2026-11-11 (forgecustomer #55, merge `8e0cf28`; authorized: operator "check and yes"). AC-02 and AC-03 PASS; AC-04 PASS except the deletion row (UNVERIFIED). The deletion row needs a test that runs a deletion; no such work is authorized.
 
 **Scope note (2026-11-11):** AC-02 names "the existing test harness". The repository's harness for database-backed HTTP checks is the SQL fixture plus runner plus CI job pattern of `update_campaign_http_smoke`. So WP-02 also writes `api/tests/rake_access_routes.rs`, `supabase/tests/rake_access_http_smoke.sql`, `scripts/rake_access_http_smoke.sh` and `.py`, and one CI job in `.github/workflows/ci.yml` that copies the existing smoke job. The PR names this for the operator.
 
@@ -69,6 +71,8 @@ WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §
 | Stop conditions | Done when merged on the operator's word with the ACs PASS. Pause if the entitlement service cannot answer the feature check without a new authority. |
 
 ## WP-03 — Verifier in Rake
+
+**Status:** merged 2026-11-11 (rake #188, merge `9b7af47`; forge #424, merge `27efccb`; authorized: operator "check and yes"). AC-05 and AC-06 PASS (`evidence/AC-05/`). G3 PASS.
 
 | Field | Brief |
 |---|---|
