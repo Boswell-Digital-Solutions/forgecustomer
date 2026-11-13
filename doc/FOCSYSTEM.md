@@ -1455,7 +1455,7 @@ A change to `.github/workflows/**` is code.
 | Workflow or job | Class | Documentation-only change |
 | --- | --- | --- |
 | `documentation.yml` | Documentation CI | Runs. It builds `doc/system` and fails on a difference in `doc/`. |
-| `ci.yml` jobs `rust`, `migrations`, `release-pipeline-smoke`, `update-campaign-http-smoke`, `contracts`, `audit` | Code CI | Skip. |
+| `ci.yml` jobs `rust`, `migrations`, `release-pipeline-smoke`, `update-campaign-http-smoke`, `rake-access-http-smoke`, `contracts`, `audit` | Code CI | Skip. |
 | `ci.yml` job `secret-scan` | Security scan | Runs on every change. |
 | `ci.yml` job `scope` | Scope decision | Runs on every change. |
 | `dependency-audit.yml` | Scheduled audit | No change. It runs daily, on dispatch, and on a change to that workflow. |
@@ -1534,6 +1534,12 @@ Do not rename a job that a rule requires.
 - The CI update-campaign HTTP smoke job starts the real API against live PostgreSQL,
   mints a customer JWT, and proves Tauri response shape, same-version/same-build 204s,
   minimum supported/updater version gates, and deterministic rollout bucket behavior.
+- The CI rake access HTTP smoke job starts the real API against live PostgreSQL. It
+  checks the Rake token exchange refusals and success, the published keys, pseudonym
+  stability and replacement, and an audit write failure. It also runs an account
+  deletion through the customer and admin routes. The executed deletion must revoke
+  the customer's Rake pseudonym, and a later exchange must be refused (plan
+  `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`, AC-02 to AC-04). The smoke needs a fresh database.
 - Valid operator token reaches admin reads and then fails on the unreachable test
   database, proving auth clears before data access.
 - Public health route requires no token.
