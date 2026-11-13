@@ -22,3 +22,7 @@ supabase/.env
 *.swp
 .idea/
 .vscode/
+
+# Python bytecode (scripts/rake_access_http_smoke.py)
+__pycache__/
+*.pyc
