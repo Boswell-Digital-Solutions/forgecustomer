@@ -53,6 +53,12 @@ begin
     ) as t(tag, customer_id, auth_user_id, device_id, installation_id, license_id, public_key,
            mfa_required, entitled, device_status)
   loop
+    -- The deletion run leaves append-only audit rows for E, so its profile cannot be
+    -- deleted again. Stop with a clear message instead of a trigger error.
+    if exists (select 1 from public.customer_profiles
+               where id = r.customer_id and status = 'anonymized') then
+      raise exception 'rake access smoke needs a fresh database: customer % was deleted by an earlier run', r.tag;
+    end if;
     delete from public.app_token_mints where customer_id = r.customer_id;
     delete from public.customer_profiles where id = r.customer_id;
 
