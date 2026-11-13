@@ -2,7 +2,7 @@ plan_id: BDS-FOC-RAKE-ACCESS-ISSUER-v0.1
 title: ForgeCustomer Rake access-token issuer — token exchange for BDS applications
 version: "0.1"
 lifecycle: authorized
-authority: "Operator ruling 2026-11-11 (do it): DEC-1..DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 (check and yes): WP-02 and WP-03 authorized; DEC-6 = A. WP-01..WP-03 merged on the operator's word. G4 executed by the operator 2026-11-12, before G2 passed. Operator 2026-11-12: G2 = A; records PR may open, not merge. Deletion test (forgecustomer #57) merged on the operator's word 2026-11-13; G2 PASS 2026-11-13, after G4."
+authority: "Operator ruling 2026-11-11 (do it): DEC-1..DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 (check and yes): WP-02 and WP-03 authorized; DEC-6 = A. WP-01..WP-03 merged on the operator's word. G4 executed by the operator 2026-11-12, before G2 passed. Operator 2026-11-12: G2 = A; records PR may open, not merge. Deletion test (forgecustomer #57) merged on the operator's word 2026-11-13; G2 PASS 2026-11-13, after G4. Operator 2026-11-13: the executed G4 plus the 2026-11-13 database fixes meets the WP-05 G4 prerequisite; G4 stays not PASS."
 decision_owner: Charles (Charlie) Boswell
 prepared: "2026-11-11"
 timezone: America/New_York

@@ -13,7 +13,7 @@
     "evidence_status": "partial"
   },
   "next_action": "WP-01 to WP-03 merged 2026-11-11. G1, G2 and G3 PASS; G2 passed 2026-11-13 on the deletion test (forgecustomer #57). G4 was executed by the operator 2026-11-12 before G2 passed; recorded as executed, not PASS. Next: AC-08 (WP-05) live test with a test account.",
-  "blocker": "G4 open item: standby seed custody unverified; no standby rotation before that. AC-08 needs a test account and the operator. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
+  "blocker": "AC-08: WP-05 is not authorized and two synthetic test accounts are needed. G4's status for WP-05 is ruled (2026-11-13): met; G4 stays not PASS. G4 open item: standby seed custody unverified; no standby rotation before that. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
   "doc_system_paths": [
     "doc/system/03-api-contract.md",
     "doc/system/10-authority-boundaries.md",

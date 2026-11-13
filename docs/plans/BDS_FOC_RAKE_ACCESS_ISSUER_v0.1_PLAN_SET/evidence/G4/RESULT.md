@@ -53,6 +53,7 @@ The runtime screenshot, the receipt text and `rake-access-public-config.json` st
 ## Verification boundaries
 
 - **Not exercised:** a customer sign-in, a token exchange, a Rake call with a valid token, and an approve call. These are AC-08 and need a test account.
+  - **Update 2026-11-13:** G4 did not apply ForgeCustomer migration `0017` to the deployed ForgeCustomer database. So at G4 a token exchange could not have succeeded there. The HTTP check passed because the key route does not use the database. The gap was found and `0017` applied on 2026-11-13 on the operator's word (`docs/KNOWN_ISSUES.md`, `KI-FOC-20261113-001`, closed).
 - **Not read by the agent:** the Render deploy records, the variables of either service, and Rake's shell. Those rows rest on the operator's receipt.
 - **Approve-token table location — unresolved.** Rake's `render.yaml` says its `DATABASE_URL` is the DataForge database. DataForgedb has no `jobs` or `missions` table, which Rake owns. So it is not shown that deployed Rake reads DataForgedb. If it does not, the approve table is in a database Rake does not use. Rake tracks this in its `docs/KNOWN_ISSUES.md` (`RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`).
   - **Update 2026-11-13 — resolved.** A read-only probe through deployed Rake's own connection showed DataForgedb. DataForge migration `20261113_01` then created `jobs` and `missions` there. The rake entry is closed (rake #196).
@@ -65,3 +66,4 @@ The runtime screenshot, the receipt text and `rake-access-public-config.json` st
 - G2 stays open until the deletion test (forgecustomer #57) merges and passes on `main`.
   - **Update 2026-11-13:** G2 PASS (`../G2/RESULT.md`). G4 stays executed out of order, not PASS.
 - AC-08 (WP-05) needs G2, G3 and G4 and the open items above.
+  - **Update 2026-11-13:** operator ruling: the executed G4, plus the two 2026-11-13 database fixes, meets WP-05's G4 prerequisite. G4 stays not PASS. AC-08 starts with a read-only re-check of G4 (`../RULINGS/2026-11-13_G4_SUFFICIENT_FOR_WP-05_OPERATOR_RULING.md`).
