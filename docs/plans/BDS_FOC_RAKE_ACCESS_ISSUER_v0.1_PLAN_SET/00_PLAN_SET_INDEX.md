@@ -52,12 +52,12 @@ It writes new code only where nothing exists: the exchange route, a dedicated si
 
 ## Status
 
-Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization, twice.
+Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization, twice, and 2026-11-13 for G2.
 
 - Merged: WP-01 (forgecustomer #53, `6d21e62`), WP-02 (forgecustomer #55, `8e0cf28`), WP-03 (rake #188, `9b7af47`, with forge #424, `27efccb`).
-- AC-00, AC-01, AC-02, AC-03, AC-05 and AC-06 PASS. AC-04 PASS except its deletion row, which is UNVERIFIED. AC-07 to AC-09 NOT_RUN.
-- G0, G1 and G3 PASS. G2 is open on the AC-04 deletion row. The deletion test is forgecustomer #57, not merged.
-- G4 was executed by the operator on 2026-11-12, before G2 passed. It is recorded as executed out of order, not PASS (`evidence/G4/`). Standby seed custody and the approve-table database are unresolved.
+- AC-00 to AC-06 PASS. The AC-04 deletion row passed on `main` on 2026-11-13 (`evidence/AC-04/`). AC-07 to AC-09 NOT_RUN.
+- G0, G1, G2 and G3 PASS. G2 passed on 2026-11-13, after G4 ran (`evidence/G2/`). The deletion test is forgecustomer #57, merge `a49b73e`.
+- G4 was executed by the operator on 2026-11-12, before G2 passed. It is recorded as executed out of order, not PASS (`evidence/G4/`). The G2 PASS does not change that. Standby seed custody is unresolved. Deployed Rake uses DataForgedb, where the approve table is (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`, closed 2026-11-13).
 
 ## Read order and components
 

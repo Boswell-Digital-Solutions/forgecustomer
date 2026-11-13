@@ -58,12 +58,12 @@ It writes new code only where nothing exists: the exchange route, a dedicated si
 
 ## Status
 
-Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization, twice.
+Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization, twice, and 2026-11-13 for G2.
 
 - Merged: WP-01 (forgecustomer #53, `6d21e62`), WP-02 (forgecustomer #55, `8e0cf28`), WP-03 (rake #188, `9b7af47`, with forge #424, `27efccb`).
-- AC-00, AC-01, AC-02, AC-03, AC-05 and AC-06 PASS. AC-04 PASS except its deletion row, which is UNVERIFIED. AC-07 to AC-09 NOT_RUN.
-- G0, G1 and G3 PASS. G2 is open on the AC-04 deletion row. The deletion test is forgecustomer #57, not merged.
-- G4 was executed by the operator on 2026-11-12, before G2 passed. It is recorded as executed out of order, not PASS (`evidence/G4/`). Standby seed custody and the approve-table database are unresolved.
+- AC-00 to AC-06 PASS. The AC-04 deletion row passed on `main` on 2026-11-13 (`evidence/AC-04/`). AC-07 to AC-09 NOT_RUN.
+- G0, G1, G2 and G3 PASS. G2 passed on 2026-11-13, after G4 ran (`evidence/G2/`). The deletion test is forgecustomer #57, merge `a49b73e`.
+- G4 was executed by the operator on 2026-11-12, before G2 passed. It is recorded as executed out of order, not PASS (`evidence/G4/`). The G2 PASS does not change that. Standby seed custody is unresolved. Deployed Rake uses DataForgedb, where the approve table is (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`, closed 2026-11-13).
 
 ## Read order and components
 
@@ -395,7 +395,7 @@ Work-package status uses: `proposed`, `authorized`, `in_progress`, `delivered`, 
 
 # 07 — Acceptance and evidence
 
-This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS, and the merged contract test passed on forgecustomer `main` (`evidence/AC-01/`). AC-02 and AC-03 are PASS, and AC-04 is PASS except its deletion row, which is UNVERIFIED (`evidence/AC-02/`); the merged files are the tested files, and `main` CI passed on the merge. AC-05 and AC-06 are PASS on rake `master` at the WP-03 merge (`evidence/AC-05/`). AC-07 to AC-09 are NOT_RUN.
+This component defines each acceptance criterion, its check and its evidence. AC-00 is PASS (2026-11-11, `evidence/AC-00/`). AC-01 is PASS, and the merged contract test passed on forgecustomer `main` (`evidence/AC-01/`). AC-02 to AC-04 are PASS (`evidence/AC-02/`); the merged files are the tested files, and `main` CI passed on the merge. The AC-04 deletion row passed on `main` on 2026-11-13 (`evidence/AC-04/`). AC-05 and AC-06 are PASS on rake `master` at the WP-03 merge (`evidence/AC-05/`). AC-07 to AC-09 are NOT_RUN.
 
 Evidence goes to `evidence/AC-nn/` in this plan set, unless a row names another place. Each record names the source commit, the environment, the exact command, the test ids that ran and the observed result. A skipped or unavailable check is recorded as such. It does not pass.
 
@@ -432,7 +432,7 @@ This component defines each work package with its nine-field brief, and the gate
 
 Order: G0 → G1 → {G2, G3} → G4 → G5. G6 is independent of G5 but needs G2 and G3.
 
-Gate status (2026-11-12): G0 PASS. G1 PASS (WP-01 merged, AC-01 PASS, DEC-2 to DEC-5 ruled). G2 open: WP-02 is merged and AC-02 and AC-03 PASS, but the AC-04 deletion row is UNVERIFIED. G3 PASS (WP-03 merged, AC-05 and AC-06 PASS). G4 was executed by the operator on 2026-11-12, while G2 was open. That is out of order. G4 is recorded as executed, not PASS (`evidence/G4/RESULT.md`). Operator 2026-11-12: G2 = A, a deletion test (forgecustomer #57). G2 stays open until that test merges and passes on `main`.
+Gate status (2026-11-12): G0 PASS. G1 PASS (WP-01 merged, AC-01 PASS, DEC-2 to DEC-5 ruled). G2 open: WP-02 is merged and AC-02 and AC-03 PASS, but the AC-04 deletion row is UNVERIFIED. G3 PASS (WP-03 merged, AC-05 and AC-06 PASS). G4 was executed by the operator on 2026-11-12, while G2 was open. That is out of order. G4 is recorded as executed, not PASS (`evidence/G4/RESULT.md`). Operator 2026-11-12: G2 = A, a deletion test (forgecustomer #57). Update 2026-11-13: #57 merged (`a49b73e`) and its CI job passed on `main`, so the AC-04 deletion row and G2 PASS (`evidence/G2/RESULT.md`). G4 stays executed, not PASS.
 
 WP-03 removes Rake's HS256 path. No known holder of a Rake JWT exists (review §2.2), so the merge breaks no caller.
 
@@ -610,7 +610,8 @@ This component records the current authority, the decisions this plan needs, and
 
 - **Merged:** WP-01 (forgecustomer #53), WP-02 (forgecustomer #55) and WP-03 (rake #188, with forge #424), each on the operator's word. G1 and G3 PASS.
 - **G4 (2026-11-12):** the operator created the keys, set the variables and deployed both services, before G2 passed. Recorded as executed out of order, not PASS (`evidence/G4/RESULT.md`).
-- **Next action:** G2 = A (operator, 2026-11-12). The deletion test is forgecustomer #57. It needs the operator's word to merge, then a pass on `main`.
-- **Your open items:** show that the standby seed `rake-access-0` is in a secret manager; no standby rotation before that. Confirm which database deployed Rake's `DATABASE_URL` names (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`).
+- **G2 (2026-11-13):** PASS. The deletion test (forgecustomer #57, merge `a49b73e`) passed on `main` (`evidence/G2/RESULT.md`). A token issued before a deletion stays valid until its `exp` (300 s, plus 60 s skew).
+- **Next action:** AC-08 (WP-05), a live test against the deployed services with a test account. It needs the operator.
+- **Your open items:** show that the standby seed `rake-access-0` is in a secret manager; no standby rotation before that. The database question is closed: deployed Rake uses DataForgedb, and its tables exist there (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`, closed 2026-11-13).
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

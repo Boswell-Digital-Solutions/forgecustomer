@@ -77,3 +77,4 @@ Making the entitlement check always pass (`if false && !matches!(...)`) made the
   - `rake access HTTP smoke` (`130557325593`): every check line is `PASS`, no line is `FAIL`, and the last line is `rake access HTTP smoke: PASS`.
   - `fmt + clippy + test` (`130557325546`): `tests/rake_access_routes.rs` 7 passed; `tests/rake_access_contract.rs` 1 passed; lib 155 passed, 1 ignored.
 - AC-02 and AC-03 stay PASS. AC-04 stays PASS except the deletion row, which is still UNVERIFIED: no test runs a deletion. G2 waits on that row.
+- **Update 2026-11-13:** the deletion row passed on `main` (forgecustomer #57). The record is `../AC-04/RESULT.md`.

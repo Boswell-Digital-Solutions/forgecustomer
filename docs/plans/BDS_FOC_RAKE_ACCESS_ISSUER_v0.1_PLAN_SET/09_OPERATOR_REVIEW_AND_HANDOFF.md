@@ -76,7 +76,8 @@ This component records the current authority, the decisions this plan needs, and
 
 - **Merged:** WP-01 (forgecustomer #53), WP-02 (forgecustomer #55) and WP-03 (rake #188, with forge #424), each on the operator's word. G1 and G3 PASS.
 - **G4 (2026-11-12):** the operator created the keys, set the variables and deployed both services, before G2 passed. Recorded as executed out of order, not PASS (`evidence/G4/RESULT.md`).
-- **Next action:** G2 = A (operator, 2026-11-12). The deletion test is forgecustomer #57. It needs the operator's word to merge, then a pass on `main`.
-- **Your open items:** show that the standby seed `rake-access-0` is in a secret manager; no standby rotation before that. Confirm which database deployed Rake's `DATABASE_URL` names (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`).
+- **G2 (2026-11-13):** PASS. The deletion test (forgecustomer #57, merge `a49b73e`) passed on `main` (`evidence/G2/RESULT.md`). A token issued before a deletion stays valid until its `exp` (300 s, plus 60 s skew).
+- **Next action:** AC-08 (WP-05), a live test against the deployed services with a test account. It needs the operator.
+- **Your open items:** show that the standby seed `rake-access-0` is in a secret manager; no standby rotation before that. The database question is closed: deployed Rake uses DataForgedb, and its tables exist there (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`, closed 2026-11-13).
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.
