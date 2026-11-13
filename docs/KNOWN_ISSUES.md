@@ -6,10 +6,10 @@ is reported as new, and written in the same session it is found.
 
 ---
 
-## KI-FOC-20261113-001 — the deployed ForgeCustomer database lacks migration 0017, so the Rake exchange and account deletion cannot work there
+## KI-FOC-20261113-001 — the deployed ForgeCustomer database lacked migration 0017, so the Rake exchange and account deletion could not work there
 
 **Date found:** 2026-11-13
-**Status:** OPEN. Found while preparing AC-08 of plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`. Source read at `origin/main` `9eb2561`.
+**Status:** CLOSED 2026-11-13. Found while preparing AC-08 of plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`. Source read at `origin/main` `9eb2561`.
 
 **What is wrong:** Supabase project `sffgcltrwewnjzvrzjak` (forgecustomer) records migrations `0001` to `0016`. The repository has `0001` to `0017`. `0017_rake_access_issuer.sql` creates `app_clients` (with the `authorforge` row), `rake_tenant_pseudonyms` and `app_token_mints`. A read-only catalog query on 2026-11-13 found none of the three tables in any schema.
 
@@ -22,9 +22,13 @@ is reported as new, and written in the same session it is found.
 
 **Root cause:** no deploy step applies migrations. They are applied to the deployed project by hand. G4 (2026-11-12) set keys and variables and deployed the code. Its records do not name `0017`. The G4 database check covered DataForgedb only (`evidence/G4/g4-database-verification.json`).
 
-**Fix:** none yet. Apply `0017_rake_access_issuer.sql` to the deployed project, then check the three tables and the `authorforge` row. That changes a deployed database, so it needs the operator's authorization.
+**Fix:** operator authorization 2026-11-13 ("yes", a reply in the agent session; no signed record). The agent applied `0017_rake_access_issuer.sql` from `main` unchanged (SHA-256 `1496148aa60cfdcb8da3ea312ddff88e367edea8b6b9152c99fbf72b972dca4f`) through the Supabase migration tool.
+- Before applying: `customer_profiles` and `installations` exist. The pooler role `postgres` bypasses RLS, and the existing tables already use forced RLS. So the new tables follow the posture the API already works with.
+- The tool recorded the migration as version `20261113093444`, name `rake_access_issuer`. Migrations `0001` to `0016` are recorded under their file numbers. The content is the same; only the version label differs.
 
-**Scope:** open until `0017` is recorded in the deployed project and a read-only check shows the three tables.
+**Verification (read-only, after applying):** `app_clients`, `rake_tenant_pseudonyms` and `app_token_mints` exist. Each has RLS enabled and forced, with 0 policies. `app_clients` holds `authorforge`: `active`, `authorforge.cloud.enabled`, `rake:read,rake:execute,rake:approve`. The other two tables hold 0 rows. No exchange or deletion ran against the deployed service, so the effect on those routes is not yet observed. AC-08 covers the exchange.
+
+**Scope:** closed 2026-11-13. The migration is recorded in the deployed project and the read-only check shows the three tables.
 
 ---
 
