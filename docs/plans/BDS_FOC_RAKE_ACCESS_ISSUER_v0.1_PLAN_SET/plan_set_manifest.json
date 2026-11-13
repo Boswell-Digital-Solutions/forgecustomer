@@ -26,8 +26,14 @@
     "evidence/AC-05/RESULT.md",
     "evidence/AC-05/UNIT_TEST_IDS.txt",
     "evidence/AC-06/RESULT.md",
+    "evidence/G4/RESULT.md",
+    "evidence/G4/forgecustomer-published-keys.json",
+    "evidence/G4/g4-database-verification.json",
+    "evidence/G4/g4-http-verification.json",
+    "evidence/G4/rake-consumed-approve-tokens.sql",
     "evidence/RULINGS/2026-11-11_DEC-1_TO_DEC-5_OPERATOR_RULING.md",
     "evidence/RULINGS/2026-11-11_DEC-6_OPERATOR_RULING.md",
+    "evidence/RULINGS/2026-11-12_G2_OPTION_A_AND_RECORDS_OPERATOR_RULING.md",
     "plan_set.yaml",
     "plan_set_manifest.json"
   ]
