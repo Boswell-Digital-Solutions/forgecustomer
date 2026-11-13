@@ -2,7 +2,7 @@ plan_id: BDS-FOC-RAKE-ACCESS-ISSUER-v0.1
 title: ForgeCustomer Rake access-token issuer — token exchange for BDS applications
 version: "0.1"
 lifecycle: authorized
-authority: "Operator ruling 2026-11-11 (do it): DEC-1..DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 (check and yes): WP-02 and WP-03 authorized; DEC-6 = A. WP-01..WP-03 merged on the operator's word. G4 executed by the operator 2026-11-12, before G2 passed. Operator 2026-11-12: G2 = A; records PR may open, not merge."
+authority: "Operator ruling 2026-11-11 (do it): DEC-1..DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 (check and yes): WP-02 and WP-03 authorized; DEC-6 = A. WP-01..WP-03 merged on the operator's word. G4 executed by the operator 2026-11-12, before G2 passed. Operator 2026-11-12: G2 = A; records PR may open, not merge. Deletion test (forgecustomer #57) merged on the operator's word 2026-11-13; G2 PASS 2026-11-13, after G4."
 decision_owner: Charles (Charlie) Boswell
 prepared: "2026-11-11"
 timezone: America/New_York
@@ -38,9 +38,9 @@ work_packages:
   - { id: WP-03, title: Verifier in Rake, owner: rake, acceptance: [AC-05, AC-06, AC-09], status: merged_2026-11-11 }
   - { id: WP-04, title: Author-Forge client, owner: Author-Forge, acceptance: [AC-07, AC-09], status: proposed }
   - { id: WP-05, title: Acceptance on deployed services, owner: cross-repository, acceptance: [AC-08, AC-09], status: proposed }
-acceptance_criteria: { AC-00: PASS, AC-01: PASS, AC-02: PASS, AC-03: PASS, AC-04: PASS_except_deletion_row_unverified, AC-05: PASS, AC-06: PASS, AC-07: NOT_RUN, AC-08: NOT_RUN, AC-09: NOT_RUN }
+acceptance_criteria: { AC-00: PASS, AC-01: PASS, AC-02: PASS, AC-03: PASS, AC-04: PASS_2026-11-13, AC-05: PASS, AC-06: PASS, AC-07: NOT_RUN, AC-08: NOT_RUN, AC-09: NOT_RUN }
 gates: [G0, G1, G2, G3, G4, G5, G6]
-gate_dispositions: { G0: PASS_2026-11-11, G1: PASS_2026-11-11, G2: OPEN_AC-04_deletion_row_unverified, G3: PASS_2026-11-12, G4: EXECUTED_2026-11-12_BEFORE_G2_not_PASS }
+gate_dispositions: { G0: PASS_2026-11-11, G1: PASS_2026-11-11, G2: PASS_2026-11-13_after_G4, G3: PASS_2026-11-12, G4: EXECUTED_2026-11-12_BEFORE_G2_not_PASS }
 gate_order: "G0 -> G1 -> {G2, G3} -> G4 -> G5; G6 needs G2, G3 and AUTHORITY_GAP-01"
 decisions_requested:
   - { id: DEC-1, topic: authorize WP-00 and WP-01, recommendation: yes, status: approved_2026-11-11 }
