@@ -66,3 +66,4 @@ The runtime screenshot, the receipt text and `rake-access-public-config.json` st
 - G2 stays open until the deletion test (forgecustomer #57) merges and passes on `main`.
   - **Update 2026-11-13:** G2 PASS (`../G2/RESULT.md`). G4 stays executed out of order, not PASS.
 - AC-08 (WP-05) needs G2, G3 and G4 and the open items above.
+  - **Update 2026-11-13:** operator ruling: the executed G4, plus the two 2026-11-13 database fixes, meets WP-05's G4 prerequisite. G4 stays not PASS. AC-08 starts with a read-only re-check of G4 (`../RULINGS/2026-11-13_G4_SUFFICIENT_FOR_WP-05_OPERATOR_RULING.md`).

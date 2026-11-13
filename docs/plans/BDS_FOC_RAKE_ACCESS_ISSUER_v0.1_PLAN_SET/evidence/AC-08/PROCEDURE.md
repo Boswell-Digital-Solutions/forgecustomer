@@ -11,7 +11,7 @@ Each is the operator's. The procedure does not start until all are met.
 | # | Prerequisite | State on 2026-11-13 |
 |---|---|---|
 | P1 | WP-05 is authorized. | Not authorized |
-| P2 | A ruling on G4. WP-05 lists G4 as a prerequisite. G4 is recorded as executed before G2, not PASS, and may not be made PASS after the fact. The ruling says whether the executed G4 meets the WP-05 prerequisite, or what must run first. | Open |
+| P2 | A ruling on G4. WP-05 lists G4 as a prerequisite. G4 is recorded as executed before G2, not PASS, and may not be made PASS after the fact. The ruling says whether the executed G4 meets the WP-05 prerequisite, or what must run first. | Ruled 2026-11-13: met, with step 0 below (`../RULINGS/2026-11-13_G4_SUFFICIENT_FOR_WP-05_OPERATOR_RULING.md`) |
 | P3 | Migration `0017` is applied to the deployed ForgeCustomer database, and a read-only check shows `app_clients` (with the `authorforge` row), `rake_tenant_pseudonyms` and `app_token_mints`. Without it, step 2 cannot pass (`KI-FOC-20261113-001`). | Met 2026-11-13: applied as version `20261113093444`; the read-only check passed |
 | P4 | Two synthetic test accounts exist (next section). No real customer account is used. | Not created |
 | P5 | An operator admin token for the deployed ForgeCustomer admin routes, for the account setup only. | The operator's; not checked by the agent |
@@ -35,6 +35,7 @@ The runner is a script on the operator's machine. It calls only `https://forge-c
 
 | Step | Call | Expected |
 |---|---|---|
+| 0 | Read-only re-check of G4: `GET /v1/app-tokens/keys` (`rake-access-1` `active`, `rake-access-0` `verify_only`, the G4 public keys); Rake `GET /api/v1/jobs` with an invalid EdDSA token; Rake `GET /api/v1/health`; a catalog read of DataForgedb (`jobs`, `missions`, `consumed_approve_tokens`) and of the ForgeCustomer database (`app_clients` with `authorforge`, `rake_tenant_pseudonyms`, `app_token_mints`) | Keys as stated; 401; `healthy`; all six tables present. Any other result stops the run before step 1 (operator ruling 2026-11-13) |
 | 1 | Account A signs in to Supabase with TOTP. | A session with `aal2` |
 | 2 | `POST /v1/app-tokens/rake`, `app_id` `authorforge`, `scopes` `["rake:read"]`, a fresh `client_proof` | 200, `cache-control: no-store`, `expires_in` 300. Header `alg` `EdDSA`, `kid` `rake-access-1`. Claims `iss` `bds-forgecustomer`, `aud` `rake.application`, `type` `access`, `app_id` `authorforge`, `scopes` `["rake:read"]`, `exp` = `iat` + 300; no email, Supabase user id or `customer_id` (04 §2) |
 | 3 | Rake `GET /api/v1/jobs` with the token | 200 |
