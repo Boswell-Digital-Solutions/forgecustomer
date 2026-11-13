@@ -12,7 +12,7 @@ Each is the operator's. The procedure does not start until all are met.
 |---|---|---|
 | P1 | WP-05 is authorized. | Not authorized |
 | P2 | A ruling on G4. WP-05 lists G4 as a prerequisite. G4 is recorded as executed before G2, not PASS, and may not be made PASS after the fact. The ruling says whether the executed G4 meets the WP-05 prerequisite, or what must run first. | Open |
-| P3 | Migration `0017` is applied to the deployed ForgeCustomer database, and a read-only check shows `app_clients` (with the `authorforge` row), `rake_tenant_pseudonyms` and `app_token_mints`. Without it, step 2 cannot pass (`KI-FOC-20261113-001`). | Not applied |
+| P3 | Migration `0017` is applied to the deployed ForgeCustomer database, and a read-only check shows `app_clients` (with the `authorforge` row), `rake_tenant_pseudonyms` and `app_token_mints`. Without it, step 2 cannot pass (`KI-FOC-20261113-001`). | Met 2026-11-13: applied as version `20261113093444`; the read-only check passed |
 | P4 | Two synthetic test accounts exist (next section). No real customer account is used. | Not created |
 | P5 | An operator admin token for the deployed ForgeCustomer admin routes, for the account setup only. | Operator holds |
 
