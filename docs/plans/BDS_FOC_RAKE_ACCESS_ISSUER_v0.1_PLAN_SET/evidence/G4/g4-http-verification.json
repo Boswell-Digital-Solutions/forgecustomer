@@ -1,0 +1,10 @@
+{
+  "verified_at": "2026-11-12T23:30:58.479386+00:00",
+  "forgecustomer_published_keys_match": true,
+  "forgecustomer_keys_http_status": 200,
+  "rake_health_http_status": 200,
+  "rake_invalid_jwt_http_status": 401,
+  "rake_invalid_jwt_detail": "Invalid execution credential",
+  "successful_customer_exchange_tested": false,
+  "successful_customer_exchange_note": "Requires an authenticated customer and registered application installation; no customer credentials were used."
+}

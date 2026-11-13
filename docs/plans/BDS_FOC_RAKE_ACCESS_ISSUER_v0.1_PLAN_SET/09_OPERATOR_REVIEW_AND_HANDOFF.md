@@ -75,7 +75,8 @@ This component records the current authority, the decisions this plan needs, and
 ## Handoff
 
 - **Merged:** WP-01 (forgecustomer #53), WP-02 (forgecustomer #55) and WP-03 (rake #188, with forge #424), each on the operator's word. G1 and G3 PASS.
-- **Next action:** G2 needs the AC-04 deletion row. That means a forgecustomer test that runs a customer deletion and checks that the Rake pseudonyms are revoked. No work is authorized for it. The alternative is an operator ruling that accepts G2 without that row.
-- **Your actions later, at G4:** create the active and standby Rake access keys, set the ForgeCustomer and Rake variables, deploy both. No agent does these.
+- **G4 (2026-11-12):** the operator created the keys, set the variables and deployed both services, before G2 passed. Recorded as executed out of order, not PASS (`evidence/G4/RESULT.md`).
+- **Next action:** G2 = A (operator, 2026-11-12). The deletion test is forgecustomer #57. It needs the operator's word to merge, then a pass on `main`.
+- **Your open items:** show that the standby seed `rake-access-0` is in a secret manager; no standby rotation before that. Confirm which database deployed Rake's `DATABASE_URL` names (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`).
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.

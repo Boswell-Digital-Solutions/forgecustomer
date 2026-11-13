@@ -1,0 +1,19 @@
+{
+  "project_id": "embvfponjxejbtrkryzs",
+  "project_name": "DataForgedb",
+  "table": "public.consumed_approve_tokens",
+  "migration_name": "rake_consumed_approve_tokens",
+  "columns": [
+    {"name": "jti", "type": "varchar(64)", "nullable": false},
+    {"name": "exp", "type": "bigint", "nullable": false}
+  ],
+  "primary_key": ["jti"],
+  "row_level_security": true,
+  "anon_access": false,
+  "authenticated_access": false,
+  "duplicate_jti_rejected": true,
+  "test_rows_rolled_back": true,
+  "shared_alembic_version_before": "20261101_01",
+  "shared_alembic_version_after": "20261101_01",
+  "note": "Applied the table definition from Rake revision 004_consumed_approve_tokens through the Supabase migration tool, with backend-only access. The shared DataForge Alembic history was left unchanged."
+}

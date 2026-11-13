@@ -7,7 +7,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Plan ID | BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 |
 | Title | ForgeCustomer Rake access-token issuer — token exchange for BDS applications |
 | Lifecycle | authorized |
-| Authority | Operator ruling 2026-11-11 ("do it"): DEC-1 to DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 ("check and yes"): WP-02 and WP-03 authorized; DEC-6 ruled A. WP-01, WP-02 and WP-03 merged on the operator's word. No key, configuration or deployment is authorized; that is G4, the operator's. Before that: the D-JWTI rulings fixed the design and authorized no work. |
+| Authority | Operator ruling 2026-11-11 ("do it"): DEC-1 to DEC-5 accepted as recommended; WP-00 and WP-01 authorized. Operator 2026-11-11 ("check and yes"): WP-02 and WP-03 authorized; DEC-6 ruled A. WP-01, WP-02 and WP-03 merged on the operator's word. The operator ran G4 (keys, variables, deploys) on 2026-11-12, before G2 passed. Operator 2026-11-12: G2 = A (a deletion test); a G4 records PR may open, not merge. Before that: the D-JWTI rulings fixed the design and authorized no work. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-11 America/New_York |
 | Parent / extension target | rake `docs/reviews/RAKE_JWT_ISSUER_ARCHITECTURE_REVIEW_2026-11-10.md` and `docs/evidence/D-JWTI/2026-11-11_OPERATOR_RULINGS.md` (rake `caac54c1a`). Findings: rake `RAKE-EXECUTION-JWT-NO-ISSUER-20261109`; Author-Forge `KI-AUF-20261106-003`. Authority row: forge `CLAUDE.md` "ForgeCustomer (application-token issuer; ruled 2026-11-11, not built)" (forge #411). Companion: forge `docs/architecture/rake_credential_authority_review.md`. |
@@ -52,11 +52,12 @@ It writes new code only where nothing exists: the exchange route, a dedicated si
 
 ## Status
 
-Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization.
+Authorized 2026-11-11 (receipts in `evidence/RULINGS/`). Records updated 2026-11-12 on the operator's authorization, twice.
 
 - Merged: WP-01 (forgecustomer #53, `6d21e62`), WP-02 (forgecustomer #55, `8e0cf28`), WP-03 (rake #188, `9b7af47`, with forge #424, `27efccb`).
 - AC-00, AC-01, AC-02, AC-03, AC-05 and AC-06 PASS. AC-04 PASS except its deletion row, which is UNVERIFIED. AC-07 to AC-09 NOT_RUN.
-- G0, G1 and G3 PASS. G2 is open on the AC-04 deletion row. G4 waits on G2 and on the operator.
+- G0, G1 and G3 PASS. G2 is open on the AC-04 deletion row. The deletion test is forgecustomer #57, not merged.
+- G4 was executed by the operator on 2026-11-12, before G2 passed. It is recorded as executed out of order, not PASS (`evidence/G4/`). Standby seed custody and the approve-table database are unresolved.
 
 ## Read order and components
 

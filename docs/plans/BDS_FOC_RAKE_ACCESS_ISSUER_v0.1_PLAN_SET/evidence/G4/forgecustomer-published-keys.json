@@ -1,0 +1,17 @@
+{
+  "keys": [
+    {
+      "alg": "EdDSA",
+      "kid": "rake-access-1",
+      "public_key": "tTTfrh6sLyzHe9FTYO/H3pCPqw11/3KkMtQmR68u0Ss=",
+      "status": "active"
+    },
+    {
+      "alg": "EdDSA",
+      "kid": "rake-access-0",
+      "public_key": "FvLN7rvXL98ryEZv+C0LvVhI3pU574bYbK98O4LtYo4=",
+      "status": "verify_only"
+    }
+  ],
+  "schema": "forge.app-tokens.keys.v1"
+}

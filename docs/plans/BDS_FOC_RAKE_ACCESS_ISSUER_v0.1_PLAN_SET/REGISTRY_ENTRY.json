@@ -12,8 +12,8 @@
     "total_slices": 6,
     "evidence_status": "partial"
   },
-  "next_action": "WP-01 (forgecustomer #53), WP-02 (forgecustomer #55) and WP-03 (rake #188, with forge #424) merged 2026-11-11. AC-05 and AC-06 PASS. G1 and G3 PASS. G2 waits on the AC-04 deletion row (no test runs a deletion). Then G4: the operator creates the Rake access keys, sets the variables and deploys.",
-  "blocker": "G2: the AC-04 deletion row is UNVERIFIED, and no work for it is authorized. G4 keys and deployment are the operator's. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
+  "next_action": "WP-01 to WP-03 merged 2026-11-11. G1 and G3 PASS. Operator 2026-11-12: G2 = A; the deletion test is forgecustomer #57, which needs the operator's word to merge. G4 was executed by the operator 2026-11-12 before G2 passed; recorded as executed, not PASS.",
+  "blocker": "G2: open until forgecustomer #57 merges and passes on main. G4 open items: standby seed custody unverified; the database that deployed Rake uses for the approve-token table is unverified. AuthorForge activation also needs AUTHORITY_GAP-01 closed by its own plans.",
   "doc_system_paths": [
     "doc/system/03-api-contract.md",
     "doc/system/10-authority-boundaries.md",
@@ -21,7 +21,7 @@
     "doc/system/12-configuration-operations.md"
   ],
   "last_verified": {
-    "commit": "8e0cf284736f1dd1b9fc0e195dce172cf79135fa",
+    "commit": "071000dc3be54ec06773afd94d95521942515a91",
     "date": "2026-11-12"
   },
   "archive": null,
