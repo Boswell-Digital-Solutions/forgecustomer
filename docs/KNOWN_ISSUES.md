@@ -6,6 +6,28 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261113-001 — the deployed ForgeCustomer database lacks migration 0017, so the Rake exchange and account deletion cannot work there
+
+**Date found:** 2026-11-13
+**Status:** OPEN. Found while preparing AC-08 of plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`. Source read at `origin/main` `9eb2561`.
+
+**What is wrong:** Supabase project `sffgcltrwewnjzvrzjak` (forgecustomer) records migrations `0001` to `0016`. The repository has `0001` to `0017`. `0017_rake_access_issuer.sql` creates `app_clients` (with the `authorforge` row), `rake_tenant_pseudonyms` and `app_token_mints`. A read-only catalog query on 2026-11-13 found none of the three tables in any schema.
+
+**Which database deployed ForgeCustomer uses:** a timing match, not proof. The project's pooler log shows `Connection authenticated` within seconds of each of the last three ForgeCustomer deploys: 01:14:45 → 01:14:54, 01:19:40 → 01:19:51 and 08:11:10 → 08:11:55 UTC on 2026-11-13. Deployed `/v1/ready` returns `ready`. No environment variable was read.
+
+**Effect:**
+- `POST /v1/app-tokens/rake` reads `app_clients` after the MFA check. On the deployed service that query fails, so no Rake token can be minted. AC-08 step 2 cannot pass.
+- Account deletion: `repositories::privacy::execute_deletion` updates `rake_tenant_pseudonyms` inside the deletion transaction. On the deployed service the execute step fails and the transaction rolls back. It fails closed: no partial deletion. No deletion can complete. On 2026-11-13 `account_deletion_requests` held no rows, so no request is waiting.
+- `GET /v1/app-tokens/keys` does not use the database, so it works. That is why the G4 HTTP check passed.
+
+**Root cause:** no deploy step applies migrations. They are applied to the deployed project by hand. G4 (2026-11-12) set keys and variables and deployed the code. Its records do not name `0017`. The G4 database check covered DataForgedb only (`evidence/G4/g4-database-verification.json`).
+
+**Fix:** none yet. Apply `0017_rake_access_issuer.sql` to the deployed project, then check the three tables and the `authorforge` row. That changes a deployed database, so it needs the operator's authorization.
+
+**Scope:** open until `0017` is recorded in the deployed project and a read-only check shows the three tables.
+
+---
+
 ## KI-FOC-20261112-002 — the Rake issuer plan's `plan_set.yaml` gave stale acceptance statuses
 
 **Date found:** 2026-11-12
