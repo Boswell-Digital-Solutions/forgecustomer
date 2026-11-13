@@ -6,6 +6,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261112-002 — the Rake issuer plan's `plan_set.yaml` gave stale acceptance statuses
+
+**Date found:** 2026-11-12
+**Status:** CLOSED in the same change as this entry. Found by the operator's review of forgecustomer #58. Source read at the #58 branch, based on `origin/main` `071000d`.
+
+**What is wrong:** `docs/plans/BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET/plan_set.yaml` listed AC-05 and AC-06 as `NOT_RUN`, and AC-01 to AC-04 as `PASS_pre_merge`. Components 00 and 07 and the evidence records give AC-01 to AC-03, AC-05 and AC-06 as PASS, with after-merge evidence on `main`. They give AC-04 as PASS except its deletion row, which is UNVERIFIED. The same file gave G3 as PASS, which needs AC-05 and AC-06.
+
+**Effect:** records only. A reader of the YAML alone saw an earlier plan state.
+
+**Root cause:** forgecustomer #56 updated the work-package and gate lines of `plan_set.yaml`, and did not update the `acceptance_criteria` line.
+
+**Fix:** the line now reads `AC-01: PASS`, `AC-02: PASS`, `AC-03: PASS`, `AC-04: PASS_except_deletion_row_unverified`, `AC-05: PASS` and `AC-06: PASS`. AC-07 to AC-09 stay `NOT_RUN`. AC-04 changes again only when the deletion test (forgecustomer #57) passes on `main`.
+
+**Scope:** closed when the change that adds this entry merges.
+
+---
+
 ## KI-FOC-20261111-001 — doc/system §4 listed migrations only through 0011
 
 **Date found:** 2026-11-11
