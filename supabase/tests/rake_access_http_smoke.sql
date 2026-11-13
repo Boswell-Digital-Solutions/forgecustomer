@@ -2,13 +2,14 @@
 -- Fixture rows for the HTTP/live-PostgreSQL Rake access-token exchange smoke
 -- (BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 WP-02, AC-02 to AC-04).
 --
--- Four customers. Device keys are the public halves of fixed test seeds
--- (0x11, 0x22, 0x33, 0x44 repeated 32 times); scripts/rake_access_http_smoke.sh signs the
--- client proofs with the same seeds. No real key is involved.
+-- Five customers. Device keys are the public halves of fixed test seeds
+-- (0x11, 0x22, 0x33, 0x44, 0x55 repeated 32 times); scripts/rake_access_http_smoke.sh signs
+-- the client proofs with the same seeds. No real key is involved.
 --   A entitled  - active installation, device, license; active Pro subscription
 --   B denied    - same shape, no cloud entitlement
 --   C mfa       - mfa_required with no grace window; an aal1 token must be refused
 --   D revoked   - entitled, but its device is revoked
+--   E deleted   - entitled like A; the smoke runs an account deletion for it (AC-04)
 
 begin;
 
@@ -44,7 +45,11 @@ begin
       ('d', '00000000-0000-4000-8000-00000000d001'::uuid, '00000000-0000-4000-8000-00000000d011'::uuid,
             '00000000-0000-4000-8000-00000000d002'::uuid, '00000000-0000-4000-8000-00000000d003'::uuid,
             '00000000-0000-4000-8000-00000000d004'::uuid, '11l5O7wTooGagnx2rbb7qKSa7gB/SfLQmS2ZuCWtLEg=',
-            false, true, 'revoked')
+            false, true, 'revoked'),
+      ('e', '00000000-0000-4000-8000-00000000e001'::uuid, '00000000-0000-4000-8000-00000000e011'::uuid,
+            '00000000-0000-4000-8000-00000000e002'::uuid, '00000000-0000-4000-8000-00000000e003'::uuid,
+            '00000000-0000-4000-8000-00000000e004'::uuid, 'xoImN8fTEOxXYnvgC6JZ0lN0n0qvZERwz/vlOjX3MkI=',
+            false, true, 'active')
     ) as t(tag, customer_id, auth_user_id, device_id, installation_id, license_id, public_key,
            mfa_required, entitled, device_status)
   loop
