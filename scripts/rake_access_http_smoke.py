@@ -27,7 +27,10 @@ CUSTOMERS = {
     "b": ("00000000-0000-4000-8000-00000000b001", "00000000-0000-4000-8000-00000000b011", "00000000-0000-4000-8000-00000000b003", 0x22),
     "c": ("00000000-0000-4000-8000-00000000c001", "00000000-0000-4000-8000-00000000c011", "00000000-0000-4000-8000-00000000c003", 0x33),
     "d": ("00000000-0000-4000-8000-00000000d001", "00000000-0000-4000-8000-00000000d011", "00000000-0000-4000-8000-00000000d003", 0x44),
+    "e": ("00000000-0000-4000-8000-00000000e001", "00000000-0000-4000-8000-00000000e011", "00000000-0000-4000-8000-00000000e003", 0x55),
 }
+# Operator (admin) tokens are EdDSA. The smoke derives the admin public key from this test seed.
+OPERATOR_SEED = 0x07
 PROOF_DOMAIN = "forgecustomer.rake-access-exchange.v1"
 CONTRACT_CLAIMS = {"iss", "aud", "sub", "tenant_id", "user_id", "app_id", "scopes", "type", "iat", "exp", "jti"}
 
@@ -47,6 +50,16 @@ def supabase_token(tag, aal="aal2"):
     head = b64u(json.dumps(header, separators=(",", ":")).encode())
     body = b64u(json.dumps(claims, separators=(",", ":")).encode())
     sig = hmac.new(os.environ["JWT_SECRET"].encode(), f"{head}.{body}".encode(), hashlib.sha256).digest()
+    return f"{head}.{body}.{b64u(sig)}"
+
+
+def operator_token():
+    header = {"alg": "EdDSA", "typ": "JWT"}
+    claims = {"sub": "rake-access-smoke-operator", "iss": os.environ["ADMIN_JWT_ISSUER"],
+              "aud": os.environ["ADMIN_JWT_AUDIENCE"], "exp": int(time.time()) + 600, "roles": ["admin"]}
+    head = b64u(json.dumps(header, separators=(",", ":")).encode())
+    body = b64u(json.dumps(claims, separators=(",", ":")).encode())
+    sig = base64.b64decode(ed25519_sign(OPERATOR_SEED, f"{head}.{body}".encode()))
     return f"{head}.{body}.{b64u(sig)}"
 
 
@@ -239,6 +252,67 @@ def keyed():
     finally:
         sql("drop trigger if exists smoke_fail_mint on public.app_token_mints; "
             "drop function if exists public.smoke_fail_mint();")
+
+    deletion(published)
+
+
+def pseudonym_rows(customer_id):
+    """active|revoked|tenant pseudonyms, for one customer."""
+    return sql("select count(*) filter (where revoked_at is null) || '|' || "
+               "count(*) filter (where revoked_at is not null) || '|' || "
+               "coalesce(string_agg(tenant_pseudonym::text, ',' order by created_at), '') "
+               f"from public.rake_tenant_pseudonyms where customer_id = '{customer_id}'")
+
+
+def deletion(published):
+    """AC-04 deletion row: an account deletion revokes the customer's Rake pseudonyms.
+
+    The run goes through the real routes: the customer opens the request, an operator
+    advances it and executes it. Two steps are set in SQL, because the smoke has no clock
+    or Stripe: the cooling-off window is moved into the past, and the subscription is set
+    to canceled (the state a Stripe resync projects). Each guard is checked before that.
+    """
+    customer_id, auth_user_id = CUSTOMERS["e"][0], CUSTOMERS["e"][1]
+    status, _, minted = exchange("e")
+    assert status == 200, (status, minted)
+    _, claims = check_token(minted["access_token"], published)
+    assert customer_id not in json.dumps(claims) and auth_user_id not in json.dumps(claims), "token leaks an id"
+    assert pseudonym_rows(customer_id) == f"1|0|{claims['tenant_id']}", pseudonym_rows(customer_id)
+    mints_before = sql(f"select count(*) from public.app_token_mints where customer_id = '{customer_id}'")
+
+    status, _, body = request("POST", "/v1/account/deletion-request", {"reason": "rake access smoke"}, supabase_token("e"))
+    assert status == 200 and body["request"]["status"] == "requested", (status, body)
+    request_id = body["request"]["id"]
+    operator = operator_token()
+
+    def operator_call(action):
+        return request("POST", f"/v1/admin/deletion-requests/{request_id}/{action}", {"reason": "rake access smoke"}, operator)
+
+    for want in ("verified", "cooling_off"):
+        status, _, body = operator_call("advance")
+        assert status == 200 and body["request"]["status"] == want, (status, body)
+    expect("advance inside the cooling-off window", *operator_call("advance")[::2], 409, "CONFLICT")
+    sql(f"update public.account_deletion_requests set cooling_off_until = now() - interval '1 second' where id = '{request_id}'")
+    status, _, body = operator_call("advance")
+    assert status == 200 and body["request"]["status"] == "processing", (status, body)
+
+    expect("execute with an active subscription", *operator_call("execute")[::2], 409, "CONFLICT")
+    assert pseudonym_rows(customer_id) == f"1|0|{claims['tenant_id']}", "a refused deletion changed the pseudonym"
+    print("PASS a refused deletion leaves the pseudonym active")
+
+    sql(f"update public.subscriptions set status = 'canceled' where customer_id = '{customer_id}'")
+    status, _, body = operator_call("execute")
+    assert status == 200 and body["request"]["status"] == "completed", (status, body)
+    assert pseudonym_rows(customer_id) == f"0|1|{claims['tenant_id']}", pseudonym_rows(customer_id)
+    print("PASS AC-04 deletion: the executed deletion revoked the customer's Rake pseudonym")
+
+    status, _, body = exchange("e")
+    expect("exchange after deletion", status, body, 403, "FORBIDDEN")
+    assert "access_token" not in (body or {}), body
+    assert pseudonym_rows(customer_id) == f"0|1|{claims['tenant_id']}", "a mint after deletion created a pseudonym"
+    mints_after = sql(f"select count(*) from public.app_token_mints where customer_id = '{customer_id}'")
+    assert mints_after == mints_before, (mints_before, mints_after)
+    print("PASS after deletion: no new pseudonym and no new mint row")
 
 
 def unkeyed():

@@ -23,6 +23,23 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261112-001 — doc/system §13 did not list the Rake access HTTP smoke job
+
+**Date found:** 2026-11-12
+**Status:** CLOSED in the same change as this entry. Found while adding the account-deletion check to `scripts/rake_access_http_smoke.py` for plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1` gate G2. Source read at `origin/main` `071000d`.
+
+**What is wrong:** `.github/workflows/ci.yml` has the job `rake-access-http-smoke` since WP-02. `doc/system/13-verification-status.md` did not name it in the CI class table or in the list of DB-backed checks.
+
+**Effect:** documentation only. A reader of §13 could not see that the Rake token exchange has a live-PostgreSQL check, or that a documentation-only change skips it.
+
+**Root cause:** not established. WP-02 added the job and did not update §13.
+
+**Fix:** §13 now names the job in the class table and describes what it checks, including the deletion run. `bash doc/system/BUILD.sh` rebuilt `doc/FOCSYSTEM.md`.
+
+**Scope:** closed when the change that adds this entry merges.
+
+---
+
 ## KI-FOC-20261111-001 — doc/system §4 listed migrations only through 0011
 
 **Date found:** 2026-11-11

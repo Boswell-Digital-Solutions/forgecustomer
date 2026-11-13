@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Live-PostgreSQL HTTP smoke for the Rake access-token exchange
-# (BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 WP-02: AC-02, AC-03, AC-04).
+# (BDS-FOC-RAKE-ACCESS-ISSUER-v0.1 WP-02: AC-02, AC-03, AC-04, including the deletion row).
 #
 # Needs: psql, cargo, curl, python3 (standard library only) and openssl 3 (Ed25519).
 # Every key here is a fixed test seed. Nothing here is a deployed secret.
@@ -39,7 +39,7 @@ fi
 
 export HOST="$SMOKE_HOST" PORT="$SMOKE_PORT"
 export SUPABASE_JWT_ISSUER="$JWT_ISSUER" SUPABASE_JWT_AUDIENCE="authenticated" SUPABASE_JWT_SECRET="$JWT_SECRET"
-export ADMIN_JWT_ISSUER="https://operators.local" ADMIN_JWT_AUDIENCE="forgecustomer-admin" ADMIN_JWT_PUBLIC_KEY=""
+export ADMIN_JWT_ISSUER="https://operators.local" ADMIN_JWT_AUDIENCE="forgecustomer-admin"
 # Test seeds: entitlement key = 0x03 x32, Rake access key = 0x05 x32, standby = public half of 0x06 x32.
 export ENTITLEMENT_SIGNING_PRIVATE_KEY="AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM="
 export ENTITLEMENT_SIGNING_KEY_ID="rake-smoke-entitlement-key"
@@ -58,6 +58,17 @@ public_key_of_seed() {
   } > "$pem"
   openssl pkey -in "$pem" -pubout -outform DER | tail -c 32 | base64 -w0
 }
+
+# PEM public key of a test seed, for the operator (admin) token validator.
+public_pem_of_seed() {
+  local byte="$1" pem="$tmp_dir/seed-$1.pem"
+  public_key_of_seed "$byte" >/dev/null
+  openssl pkey -in "$pem" -pubout
+}
+
+# Operator tokens are signed with test seed 0x07 (scripts/rake_access_http_smoke.py).
+ADMIN_JWT_PUBLIC_KEY="$(public_pem_of_seed 07)"
+export ADMIN_JWT_PUBLIC_KEY
 
 start_api() {
   local label="$1"
@@ -90,6 +101,7 @@ run_checks() {
   PHASE="$phase" BASE="http://$SMOKE_HOST:$SMOKE_PORT" TMP="$tmp_dir" \
   JWT_SECRET="$JWT_SECRET" JWT_ISSUER="$JWT_ISSUER" \
   PSQL_CMD="$PSQL_CMD" DB_NAME="$DB_NAME" \
+  ADMIN_JWT_ISSUER="$ADMIN_JWT_ISSUER" ADMIN_JWT_AUDIENCE="$ADMIN_JWT_AUDIENCE" \
     python3 -I scripts/rake_access_http_smoke.py
 }
 
