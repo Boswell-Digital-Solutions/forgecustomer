@@ -80,4 +80,5 @@ This component records the current authority, the decisions this plan needs, and
 - **Next action:** AC-08 (WP-05), a live test against the deployed services with a test account. It needs the operator.
 - **Your open items:** show that the standby seed `rake-access-0` is in a secret manager; no standby rotation before that. The database question is closed: deployed Rake uses DataForgedb, and its tables exist there (rake `RAKE-APPROVE-TOKEN-TABLE-OUTSIDE-MIGRATIONS-20261112`, closed 2026-11-13).
 - **Open outside this plan:** AUTHORITY_GAP-01 (excerpt approval, no local path, no raw project id, Rake no-persistence). It blocks AuthorForge activation (G6), not the issuer or the verifier.
+- **Open outside this plan:** deployed Rake connects to DataForgedb as the owner role `postgres`, which bypasses row-level security (rake `RAKE-DB-ROLE-OWNS-SHARED-DATABASE-20261113`). A fix changes a deployed secret and needs the operator.
 - **Drive copy:** uploaded 2026-11-11 at the `3448007` state (see 00). Drive reported the same byte size for each file. No hash readback was done.
