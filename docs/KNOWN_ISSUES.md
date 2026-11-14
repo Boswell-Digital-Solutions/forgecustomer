@@ -6,6 +6,36 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261114-001 — the action-scope names and the `target` claim are defined here; the rebuild's signer must emit them
+
+**Date found:** 2026-11-14
+**Status:** OPEN. Found while implementing P3 gate G5 (`BDS-FCO-P3-TOKEN-ISSUER-001`, request section 11).
+
+**What is open:** DEC-G5-2 (b) rules "a scope per action, for example `customers:suspend`, and a target claim". It names neither the scope of each route nor the target claim. The G5 implementation defines both in `api/src/auth/binding.rs`, `ROUTES`: one `<resource>:<verb>` action per operator route (37 routes, the five T-13 stop routes among them), and a claim named `target` that holds the route's path parameters joined with `/`. The name `target` matches the field forge-command's approval and presence code already uses (`crates/fc-authority/src/approval.rs`). The rebuild issues no token yet, so nothing emits these names.
+
+**Effect:** none today. At P3 gate G6, a token from the rebuild that does not use these exact names is refused on every route (fail closed).
+
+**Fix:** none needed in this repository. The rebuild's signer must emit `scope` = the route's action from `ROUTES` and `target` as defined above. The operator confirms the names, or changes them in this table, before G6.
+
+**Scope:** open until the operator confirms the names, or G6 lands with a signer test against this table.
+
+---
+
+## KI-FOC-20261114-002 — the Rake HTTP smoke reused one operator token for several admin calls
+
+**Date found:** 2026-11-14
+**Status:** CLOSED 2026-11-14, in the same change.
+
+**What was wrong:** `scripts/rake_access_http_smoke.py` minted one operator token and sent it on five or more `POST /v1/admin/deletion-requests/...` calls. SC-2 (P3 G5) accepts an operator token once, so the second call would get `401`.
+
+**Root cause:** the script predates SC-2. P-1 measured the predecessor's own commands, which mint one token per request; this test client was outside P-1.
+
+**Fix:** the script mints a fresh token for each call, with the header `kid`, `sub` equal to the issuer, and a fresh `jti`. The full smoke passed on 2026-11-14 against a disposable PostgreSQL with every migration applied (`rake access HTTP smoke: PASS`).
+
+**Scope:** closed.
+
+---
+
 ## KI-FOC-20261113-001 — the deployed ForgeCustomer database lacked migration 0017, so the Rake exchange and account deletion could not work there
 
 **Date found:** 2026-11-13
@@ -136,9 +166,9 @@ is reported as new, and written in the same session it is found.
 
 **Root cause:** the `roles` path exists for a token form that no current operator issuer sends. `scope` was added beside it as a bridge and does not replace it.
 
-**Fix:** none applied. The G5 request proposes that an operator token carrying `roles` is refused for a key that SC-1 binds, and that each route checks its own action scope rather than the `admin` role alone.
+**Fix (2026-11-14, P3 G5 implementation, authorized by the operator 2026-11-14 "Authorize G5 only"):** for a route-bound key, a token that carries a `roles` claim at all is refused, on the admin and the posture validator, and the admin role is granted only after the token's `scope` matches the route's action and its `target` matches the route (`api/src/auth/binding.rs`, `check_bound`; tests `sc1r_scope_admin_fails_a_bound_route_and_any_roles_claim_fails_every_route` and `auth::binding::tests::any_roles_claim_fails`). `roles` becomes `Option<Vec<String>>` so that an empty array is still a claim that is present.
 
-**Scope:** open. The entry closes when an operator token cannot get a wider role than its `scope` proves, on both the admin and the posture validator.
+**Scope:** closed for route-bound keys. **Open for the predecessor's key** (issuer `forge_command_local`), which DEC-G5-2 (b) leaves unbound until P3 gate G7: for that key `roles` still overrides `scope`. It closes in full when G7 removes the predecessor's key.
 
 ---
 

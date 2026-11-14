@@ -54,9 +54,12 @@ def supabase_token(tag, aal="aal2"):
 
 
 def operator_token():
-    header = {"alg": "EdDSA", "typ": "JWT"}
-    claims = {"sub": "rake-access-smoke-operator", "iss": os.environ["ADMIN_JWT_ISSUER"],
-              "aud": os.environ["ADMIN_JWT_AUDIENCE"], "exp": int(time.time()) + 600, "roles": ["admin"]}
+    # P3 G5: the header kid selects the trusted key, sub equals the issuer, and a fresh jti
+    # makes each token single-use.
+    header = {"alg": "EdDSA", "typ": "JWT", "kid": os.environ["ADMIN_KID"]}
+    claims = {"sub": os.environ["ADMIN_JWT_ISSUER"], "iss": os.environ["ADMIN_JWT_ISSUER"],
+              "aud": os.environ["ADMIN_JWT_AUDIENCE"], "exp": int(time.time()) + 600, "roles": ["admin"],
+              "jti": str(uuid.uuid4())}
     head = b64u(json.dumps(header, separators=(",", ":")).encode())
     body = b64u(json.dumps(claims, separators=(",", ":")).encode())
     sig = base64.b64decode(ed25519_sign(OPERATOR_SEED, f"{head}.{body}".encode()))
@@ -283,10 +286,9 @@ def deletion(published):
     status, _, body = request("POST", "/v1/account/deletion-request", {"reason": "rake access smoke"}, supabase_token("e"))
     assert status == 200 and body["request"]["status"] == "requested", (status, body)
     request_id = body["request"]["id"]
-    operator = operator_token()
-
     def operator_call(action):
-        return request("POST", f"/v1/admin/deletion-requests/{request_id}/{action}", {"reason": "rake access smoke"}, operator)
+        # One token for one call: ForgeCustomer accepts an operator token once (P3 G5, SC-2).
+        return request("POST", f"/v1/admin/deletion-requests/{request_id}/{action}", {"reason": "rake access smoke"}, operator_token())
 
     for want in ("verified", "cooling_off"):
         status, _, body = operator_call("advance")

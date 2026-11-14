@@ -24,8 +24,8 @@ ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 - A Rake access token (`aud` `rake.application`) is valid only at Rake. ForgeCustomer issues
   it and never accepts it. It carries pseudonyms, never `customer_id` or identity.
 - Customer JWTs are valid only for customer routes. Admin routes use a separate issuer
-  and audience. Admin tokens are EdDSA and are verified against an Ed25519 public key
-  (`ADMIN_JWT_PUBLIC_KEY`). There is no shared admin secret.
+  and audience. Admin tokens are EdDSA and are verified against a trusted-key set
+  (`ADMIN_JWT_TRUSTED_KEYS`), each key bound to one issuer. There is no shared admin secret.
 - Customer clients may read their own commercial state but may not directly write
   subscriptions, Stripe mappings, licenses, entitlement grants, usage totals, audit
   records, or outbox events.

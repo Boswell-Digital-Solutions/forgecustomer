@@ -154,12 +154,21 @@ environment (see `docs/STRIPE.md`).
 
 ### Admin routes
 
-Admin routes require an **EdDSA** operator JWT minted by **Forge Command's Token Authority**
-(issuer `ADMIN_JWT_ISSUER`, e.g. `forge_command_local`; audience `ADMIN_JWT_AUDIENCE`, e.g.
-`forgecustomer-admin`), verified against Forge Command's published Ed25519 **public key**
-(`ADMIN_JWT_PUBLIC_KEY`) — there is no shared admin secret. The admin role is carried as
-`roles=["admin"]` or the capability `scope` (e.g. `admin`). A valid customer token (Supabase
-HS256) must never satisfy an admin extractor.
+Admin routes require an **EdDSA** operator JWT, audience `ADMIN_JWT_AUDIENCE` (e.g.
+`forgecustomer-admin`), verified against the trusted-key set `ADMIN_JWT_TRUSTED_KEYS` — there is
+no shared admin secret. The header `kid` selects one entry; `iss` and `sub` must equal that
+entry's issuer; the token must carry a `jti`, and it is accepted once (`401` on a second use).
+A valid customer token (Supabase) must never satisfy an admin extractor.
+
+Authorization depends on the key (P3 gate G5, DEC-G5-2 (b)):
+
+- **The predecessor's key** (issuer `forge_command_local`): unchanged until P3 gate G7. The admin
+  role is carried as `roles=["admin"]` or the `scope` `admin`.
+- **Every other key is route-bound (SC-1).** The token's `scope` must be exactly the route's action
+  (for example `customers:suspend`), and its `target` claim must equal the route's path parameters
+  joined with `/` (for example `<campaign_id>/<fleet_id>`); a route without a path parameter refuses
+  a `target`. A `roles` claim is refused. The table is `api/src/auth/binding.rs`, `ROUTES`. A bound
+  token on another route, action or target gets `403`.
 
 Current route surface:
 
@@ -286,9 +295,10 @@ responses still carry the correlation and security headers.
 
 ## Read-only customer posture projection (2026-10-12)
 
-`GET /v1/posture/customers?offset=0` accepts only an EdDSA operator credential with
-issuer `ADMIN_JWT_ISSUER`, the existing trusted `ADMIN_JWT_PUBLIC_KEY`, fixed audience
-`forgecustomer-posture`, and exact scope `posture:read`. A customer JWT or ordinary admin
+`GET /v1/posture/customers?offset=0` accepts only an EdDSA operator credential verified
+against the trusted-key set `ADMIN_JWT_TRUSTED_KEYS` (the same `kid`, issuer, `sub` and
+single-use `jti` rules as the admin routes), fixed audience `forgecustomer-posture`, and exact
+scope `posture:read`. A bound key's posture token carries no `target` and no `roles`. A customer JWT or ordinary admin
 audience cannot satisfy this route; posture credentials cannot satisfy existing admin routes.
 This does not introduce a shared Supabase credential or new database role.
 

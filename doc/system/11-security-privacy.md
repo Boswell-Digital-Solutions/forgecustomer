@@ -38,11 +38,31 @@ Customer tokens:
   self-service caller already has a verified factor by construction, and an
   operator-forced requirement is deliberate incident response.
 
-Admin tokens:
+Admin tokens (operator tokens; P3 gate G5 of `BDS-FCO-P3-TOKEN-ISSUER-001`):
 
-- Separate operator issuer and audience.
-- Ed25519 public-key verification against Forge Command's Token Authority key; no shared
-  admin secret.
+- Separate operator audiences: `forgecustomer-admin` for admin routes, `forgecustomer-posture`
+  for the posture read. A token for one audience fails on the other.
+- Ed25519 public-key verification against a trusted-key set, `ADMIN_JWT_TRUSTED_KEYS`
+  (`api/src/auth/operator.rs`). No shared admin secret, and no private material in the set.
+- **Key selection.** The header `kid` selects exactly one entry. An absent or unknown `kid` is
+  refused and never defaults. Each entry's `kid` must be a published derivation of its key.
+  The algorithm must be `EdDSA`; a `crit` header member or a duplicate header member is refused.
+- **SC-3 and DEC-G5-4.** `iss` must equal the selected entry's issuer, and so must `sub`.
+- **K-1.** One invalid entry, a duplicate `kid`, or one key under two `kid`s refuses the whole
+  set. An unset or refused set refuses every operator token. The log names a fixed reason and the
+  `kid`s, never key material.
+- **SC-1, for bound keys only.** Every key except the predecessor's (issuer
+  `forge_command_local`) is route-bound: the token's `scope` must be exactly the route's action,
+  its `target` must equal the route's path parameters, and a `roles` claim is refused. The
+  admin role is granted only after this check, so a role can never bypass it. **SC-1 is not met
+  for the predecessor's key.** That exemption is DEC-G5-2 (b), a named, open state that ends at
+  P3 gate G7, when the predecessor's key and `UNBOUND_PREDECESSOR_ISSUER` are removed.
+- **SC-2, for every key.** Each operator token must carry a `jti` and is accepted once. The
+  identity is the issuer and the `jti` together. The claim is one atomic insert into
+  `public.operator_token_replay` (migration 0018), after every other check and before the
+  handler runs, so a refused token claims nothing. A second use gets `401`. An unavailable store
+  refuses the token with `503`. The predecessor's key is covered because no predecessor command
+  sends more than one request per token (P-1, measured at `Forge_Command@e8382cc`).
 - A customer token cannot authorize an admin route.
 
 Rake access tokens (issued by `POST /v1/app-tokens/rake`):

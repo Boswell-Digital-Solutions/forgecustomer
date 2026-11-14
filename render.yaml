@@ -48,11 +48,10 @@ services:
       # Optional legacy HS256 secret. ES256 uses the issuer's public JWKS; no secret needed.
       - key: SUPABASE_JWT_SECRET
         sync: false
-      # Forge Command Token Authority issuer (e.g. forge_command_local).
-      - key: ADMIN_JWT_ISSUER
-        sync: false
-      # FC's SPKI public-key PEM. Empty = admin surface fails closed.
-      - key: ADMIN_JWT_PUBLIC_KEY
+      # Operator trusted-key set (P3 G5, DEC-G5-1): {kid: {"key": <Ed25519 SPKI PEM>,
+      # "issuer": <issuer>}}. Public material only. Unset or invalid = every operator token
+      # is refused. Set it in the same deploy that ships G5, under the deploy gate DG-1 to DG-4.
+      - key: ADMIN_JWT_TRUSTED_KEYS
         sync: false
       # Base64-encoded 32-byte Ed25519 seed.
       - key: ENTITLEMENT_SIGNING_PRIVATE_KEY

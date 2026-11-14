@@ -9,8 +9,10 @@ use jsonwebtoken::{decode, errors::ErrorKind, Algorithm, DecodingKey, Validation
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub mod binding;
 pub mod customer;
 pub mod extract;
+pub mod operator;
 
 use crate::error::{AppError, ErrorCode};
 
@@ -31,14 +33,21 @@ pub struct Claims {
     /// or token shapes. Never treat a missing value as "aal2" — see [`Claims::is_aal2`].
     #[serde(default)]
     pub aal: Option<String>,
-    /// Operator roles/capabilities (admin tokens).
+    /// Operator roles/capabilities (admin tokens). `None` when the token carries no `roles`
+    /// claim; a bound key's token that carries one at all is refused (SC-1R).
     #[serde(default)]
-    pub roles: Vec<String>,
+    pub roles: Option<Vec<String>>,
     /// Operator capability scope. Forge Command's Token Authority issues a `scope` string
     /// (e.g. "admin") rather than a `roles` array; [`Claims::operator_roles`] bridges them.
     #[serde(default)]
     pub scope: Option<String>,
     pub exp: usize,
+    /// Token identifier. Operator tokens must carry one: it is the replay identity (SC-2).
+    #[serde(default)]
+    pub jti: Option<String>,
+    /// The path parameters the token is bound to, joined with `/` (SC-1). Bound keys only.
+    #[serde(default)]
+    pub target: Option<String>,
 }
 
 impl Claims {
@@ -57,8 +66,8 @@ impl Claims {
     /// mapping the full scope `*` to the `admin` role and otherwise treating each
     /// whitespace-separated scope token as a role of the same name.
     pub fn operator_roles(&self) -> Vec<String> {
-        if !self.roles.is_empty() {
-            return self.roles.clone();
+        if let Some(roles) = self.roles.as_ref().filter(|r| !r.is_empty()) {
+            return roles.clone();
         }
         match self.scope.as_deref() {
             Some(scope) => scope
@@ -70,7 +79,8 @@ impl Claims {
     }
 }
 
-/// Validates JWTs for a particular issuer/audience using an HS256 secret.
+/// Validates customer legacy HS256 JWTs for one issuer and audience. Operator tokens use
+/// [`operator::OperatorVerifier`].
 #[derive(Clone)]
 pub struct JwtValidator {
     key: DecodingKey,
@@ -93,32 +103,6 @@ impl JwtValidator {
         }
     }
 
-    /// Build a validator for EdDSA (Ed25519) tokens verified against a PEM-encoded public
-    /// key. Forge Command's Token Authority signs operator tokens with Ed25519 and publishes
-    /// the SPKI public key; ForgeCustomer verifies admin tokens against it — no shared
-    /// secret. An empty or unparseable key fails closed (never accepts a token).
-    pub fn eddsa(public_key_pem: &str, issuer: &str, audience: &str) -> Self {
-        let mut validation = Validation::new(Algorithm::EdDSA);
-        validation.set_issuer(&[issuer]);
-        validation.set_audience(&[audience]);
-        validation.set_required_spec_claims(&["exp", "aud", "iss"]);
-        // Fail closed on expiry: no clock-skew leeway for operator tokens.
-        validation.leeway = 0;
-        match DecodingKey::from_ed_pem(public_key_pem.as_bytes()) {
-            Ok(key) => Self {
-                key,
-                validation,
-                configured: true,
-            },
-            Err(_) => Self {
-                // Fail closed: an unconfigured/unparseable key can never verify a token.
-                key: DecodingKey::from_secret(&[]),
-                validation,
-                configured: false,
-            },
-        }
-    }
-
     /// Validate a bearer token, returning claims or a fail-closed [`AppError`].
     pub fn validate(&self, token: &str) -> Result<Claims, AppError> {
         if !self.configured {
@@ -135,7 +119,7 @@ impl JwtValidator {
     }
 }
 
-fn map_jwt_error(e: &jsonwebtoken::errors::Error) -> AppError {
+pub(crate) fn map_jwt_error(e: &jsonwebtoken::errors::Error) -> AppError {
     match e.kind() {
         ErrorKind::ExpiredSignature => {
             AppError::new(ErrorCode::TokenExpired, "The access token has expired.")
@@ -352,9 +336,11 @@ mod tests {
             email: None,
             role: None,
             aal: None,
-            roles: roles.into_iter().map(String::from).collect(),
+            roles: Some(roles.into_iter().map(String::from).collect()),
             scope: scope.map(String::from),
             exp: 0,
+            jti: None,
+            target: None,
         }
     }
 
@@ -381,21 +367,17 @@ mod tests {
         assert!(claims_with(vec![], None).operator_roles().is_empty());
     }
 
-    #[test]
-    fn eddsa_unconfigured_key_fails_closed() {
-        let v = JwtValidator::eddsa("", "forge_command_local", "forgecustomer-admin");
-        assert!(v.validate("any.token.here").is_err());
-    }
-
     fn claims_with_aal(aal: Option<&str>) -> Claims {
         Claims {
             sub: "user-1".into(),
             email: None,
             role: None,
             aal: aal.map(String::from),
-            roles: Vec::new(),
+            roles: None,
             scope: None,
             exp: 0,
+            jti: None,
+            target: None,
         }
     }
 

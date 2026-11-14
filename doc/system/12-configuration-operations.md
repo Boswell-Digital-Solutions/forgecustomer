@@ -16,9 +16,8 @@ ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 | `SUPABASE_JWT_ISSUER` | yes | none | Exact customer JWT issuer; HTTPS URL also determines the public JWKS location. |
 | `SUPABASE_JWT_AUDIENCE` | no | `authenticated` | Customer JWT audience. |
 | `SUPABASE_JWT_SECRET` | only for legacy HS256 tokens | empty | Optional legacy customer HS256 verification secret; ES256 needs no secret. |
-| `ADMIN_JWT_ISSUER` | yes | none | Operator token issuer (Forge Command Token Authority, e.g. `forge_command_local`). |
-| `ADMIN_JWT_AUDIENCE` | yes | none | Operator token audience (e.g. `forgecustomer-admin`). |
-| `ADMIN_JWT_PUBLIC_KEY` | required to accept admin tokens | empty | PEM-encoded Ed25519 (SPKI) **public** key that verifies operator JWTs minted by Forge Command. No shared secret. |
+| `ADMIN_JWT_AUDIENCE` | yes | none | Operator token audience for the admin routes (e.g. `forgecustomer-admin`). The posture audience is fixed: `forgecustomer-posture`. |
+| `ADMIN_JWT_TRUSTED_KEYS` | required to accept operator tokens | empty | The operator trusted-key set (P3 gate G5, DEC-G5-1): a JSON object `{kid: {"key": <Ed25519 SPKI PEM>, "issuer": <issuer>}}`. **Public** material only; no shared secret. Each `kid` must be a published derivation of its key: `base64url(SHA-256(raw))[:8]` or the first 8 bytes of `SHA-256(raw)` in lower-case hex. One invalid entry, a duplicate `kid` or one key under two `kid`s refuses the whole set. An unset or refused set refuses every operator token; the service still starts. It replaced `ADMIN_JWT_PUBLIC_KEY` and `ADMIN_JWT_ISSUER`. |
 | `STRIPE_SECRET_KEY` | required for checkout/webhook work | empty | Stripe API secret. |
 | `STRIPE_WEBHOOK_SECRET` | required for webhook work | empty | Stripe webhook verification secret. |
 | `STRIPE_API_BASE` | no | `https://api.stripe.com` | Stripe REST API base URL; override to target a mock or test gateway. |

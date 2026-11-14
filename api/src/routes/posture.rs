@@ -25,13 +25,29 @@ impl FromRequestParts<AppState> for PostureReader {
                 .get(header::AUTHORIZATION)
                 .and_then(|v| v.to_str().ok()),
         )?;
-        let claims = state.posture_validator.validate(token)?;
-        if claims.sub.trim().is_empty() || claims.scope.as_deref() != Some("posture:read") {
+        // Steps 1 and 2 (P3 G5): the trusted-key set, for the POSTURE audience only.
+        let verified = state.posture_verifier.verify(token)?;
+        if verified.claims.scope.as_deref() != Some("posture:read") {
             return Err(AppError::new(
                 ErrorCode::Forbidden,
                 "Customer posture read scope required.",
             ));
         }
+        if verified.bound {
+            // SC-1 for a bound key: this one route, no target, no roles claim.
+            let matched = parts
+                .extensions
+                .get::<axum::extract::MatchedPath>()
+                .map(|m| m.as_str().to_string());
+            crate::auth::binding::check_bound(
+                &parts.method,
+                matched.as_deref(),
+                &[],
+                &verified.claims,
+            )?;
+        }
+        // Step 3, SC-2.
+        crate::auth::extract::claim_once(state, &verified).await?;
         Ok(Self)
     }
 }

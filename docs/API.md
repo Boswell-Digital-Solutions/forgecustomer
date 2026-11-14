@@ -310,17 +310,21 @@ See `docs/USAGE.md` for the full rules. Summary of the live endpoints:
 ## Admin API (Forge Command)
 
 The `/v1/admin/*` surface is the integration point for **Forge Command**, the operator
-console. Forge Command mints operator JWTs from the dedicated issuer
-(`ADMIN_JWT_ISSUER`/`ADMIN_JWT_AUDIENCE`) and works exclusively through these endpoints —
+console. Forge Command mints operator JWTs that ForgeCustomer verifies against its trusted-key
+set (`ADMIN_JWT_TRUSTED_KEYS`, audience `ADMIN_JWT_AUDIENCE`; doc/system/11 states the rules) and
+works exclusively through these endpoints —
 it never bypasses ForgeCustomer's mutation paths or touches the database directly.
 
 Authorization is two-tier and fails closed:
 
 - **Reads** (`GET /v1/admin/customers`, fleet/release/campaign/failure reads, and
-  `GET /v1/admin/audit`) require any valid operator token.
-- **Mutations** additionally require the `admin` role in the token's `roles` claim and a
+  `GET /v1/admin/audit`) require a valid operator token. A route-bound key's token must also
+  name the read's action scope.
+- **Mutations** additionally require the `admin` role (for the predecessor's key: `roles`
+  or scope `admin`; for a route-bound key: the route's exact action scope and target) and a
   written `reason` (3–500 chars) that lands in the commercial audit trail with the
   operator id as the actor.
+- Every operator token is accepted once.
 
 Live endpoints:
 

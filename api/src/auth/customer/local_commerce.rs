@@ -45,7 +45,7 @@ async fn serve_isolated_local_commerce() {
     );
     assert!(sandbox_key(&config.stripe_secret_key));
     assert_eq!(config.stripe_api_base, "https://api.stripe.com");
-    assert!(config.admin_jwt_public_key.is_empty());
+    assert!(config.admin_jwt_trusted_keys.is_empty());
     assert!(config.dataforge_api_url.is_empty());
     assert!(config.dataforge_service_token.is_empty());
     // Public fixture seed already used by the security suite; never use it outside tests.
