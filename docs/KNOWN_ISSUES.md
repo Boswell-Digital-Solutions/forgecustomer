@@ -6,6 +6,37 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261114-003 — the API reaches the database as `postgres`, which bypasses RLS, so RLS does not protect the server-only tables
+
+**Date found:** 2026-11-14
+**Status:** OPEN. Raised in review of forgecustomer#63 (review 5904396183, P2-1), carried over from forgecustomer#62. Source reading only.
+
+**What is wrong:** server-only tables enable and force RLS with no policy (for example `0017_rake_access_issuer.sql` and `0018_operator_token_replay.sql`). The API can insert and delete in them only because it connects through the pooler as `postgres`, which bypasses RLS (`KI-FOC-20261113-001`, "The pooler role `postgres` bypasses RLS"). The CI step "Assert RLS enabled on customer-facing tables" checks that RLS is enabled. It does not check which role the API uses.
+
+**Effect:** RLS protects these tables from a customer JWT through PostgREST. It does not limit the API itself. A defect or injection in the API reaches every table with full rights.
+
+**Root cause:** no restricted database role exists for the API.
+
+**Fix:** none in this change. A fix is a restricted API role with explicit grants and policies per table, and a CI check that the API's role is not a superuser and does not have `BYPASSRLS`. That changes the deployed database credential, so it needs an operator decision.
+
+**Scope:** open.
+
+---
+
+## KI-FOC-20261114-004 — G5 review residuals: no lifetime limit, multi-audience tokens accepted, the exemption keyed on an issuer string
+
+**Date found:** 2026-11-14
+**Status:** OPEN. Raised in review of forgecustomer#63 (review 5904396183, P3-1, P3-2 and P3-4). Recorded, not changed: each is a security behaviour change, so it waits on the operator.
+
+**What is open:**
+- **P3-1, lifetime.** The operator verifier checks `exp` but sets no maximum for `exp` minus `iat`. A token with a 10-year expiry is accepted. The predecessor mints 1-hour tokens (Forge_Command `token_authority.rs`), and the execution-authority path 120 seconds. A per-issuer maximum lifetime would limit an unused stolen token.
+- **P3-2, audience.** A token whose `aud` is an array that holds `forgecustomer-admin` verifies on the admin verifier. The exact scope match and the single-use rule (issuer and `jti`) keep the risk low. The verifier could require `aud` to be one string.
+- **P3-4, exemption.** `bound` is false only when an entry's issuer is `forge_command_local`. Any key entered with that issuer is unbound until G7. Whoever builds `ADMIN_JWT_TRUSTED_KEYS` (deploy gate DG-2) must check each entry's issuer.
+
+**Scope:** open until the operator rules on P3-1 and P3-2. P3-4 closes at G7.
+
+---
+
 ## KI-FOC-20261114-001 — the action-scope names and the `target` claim are defined here; the rebuild's signer must emit them
 
 **Date found:** 2026-11-14
@@ -17,7 +48,9 @@ is reported as new, and written in the same session it is found.
 
 **Fix:** none needed in this repository. The rebuild's signer must emit `scope` = the route's action from `ROUTES` and `target` as defined above. The operator confirms the names, or changes them in this table, before G6.
 
-**Scope:** open until the operator confirms the names, or G6 lands with a signer test against this table.
+**Limit found in review (forgecustomer#63, review 5904396183, P2-2).** The `target` binds path parameters only. Six mutating routes have none, and carry their target in the request body: `POST /v1/admin/licenses`, `/v1/admin/entitlements/override`, `/v1/admin/usage/adjust`, `/v1/admin/products/authorforge/commercial-policy/versions`, `/v1/admin/releases` and `/v1/admin/update-campaigns`. On these routes a bound token is bound to its **action only**. A bound `entitlements:override` token authorizes an override for any customer and any value. SC-2 stops a replay, but a token taken before its first use can be redirected. The G6 signer contract must decide how to bind these: a digest of the request body, or the key body fields as claims.
+
+**Scope:** open until the operator confirms the names and the body-target binding, or G6 lands with a signer test against this table.
 
 ---
 

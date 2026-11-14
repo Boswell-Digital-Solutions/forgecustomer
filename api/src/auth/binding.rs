@@ -173,6 +173,10 @@ pub fn route_binding(method: &Method, path: &str) -> Option<&'static RouteBindin
 }
 
 /// The path parameter names of a template, in order (`:id` and `:campaign_id` style).
+///
+/// The target joins parameter values with `/`. A percent-encoded `%2F` decodes into a value, so
+/// on a two-parameter route `("a/b", "c")` and `("a", "b/c")` give the same target. That is
+/// harmless while both parameters are UUIDs, which every current two-parameter route uses.
 fn param_names(path: &str) -> impl Iterator<Item = &str> {
     path.split('/').filter_map(|seg| seg.strip_prefix(':'))
 }

@@ -1241,7 +1241,10 @@ Admin tokens (operator tokens; P3 gate G5 of `BDS-FCO-P3-TOKEN-ISSUER-001`):
 - **SC-1, for bound keys only.** Every key except the predecessor's (issuer
   `forge_command_local`) is route-bound: the token's `scope` must be exactly the route's action,
   its `target` must equal the route's path parameters, and a `roles` claim is refused. The
-  admin role is granted only after this check, so a role can never bypass it. **SC-1 is not met
+  admin role is granted only after this check, so a role can never bypass it. The `target` binds
+  path parameters only: on the six mutating routes with no path parameter (licenses, entitlement
+  override, usage adjust, commercial-policy publish, release create, campaign create) a bound
+  token is bound to its action, not to the body's target (`KI-FOC-20261114-001`). **SC-1 is not met
   for the predecessor's key.** That exemption is DEC-G5-2 (b), a named, open state that ends at
   P3 gate G7, when the predecessor's key and `UNBOUND_PREDECESSOR_ISSUER` are removed.
 - **SC-2, for every key.** Each operator token must carry a `jti` and is accepted once. The
