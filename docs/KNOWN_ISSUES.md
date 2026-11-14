@@ -9,8 +9,9 @@ is reported as new, and written in the same session it is found.
 ## KI-FOC-20261114-005 — the operator plane failed while readiness stayed green, and the deployed service had no health-check path
 
 **Date found:** 2026-11-14
-**Status:** OPEN for the deployed incident and the dashboard setting. The code part is fixed on
-forgecustomer#63 and is not merged.
+**Status:** OPEN for the dashboard setting only. The code part merged and deployed:
+forgecustomer#63 merged as `3791b2f`, deployed on Render as `dep-dbs6ve2jnfac73bue4j0`, live
+14:29:43 UTC. It stays open until the operator sets the Render health-check path.
 
 **What is wrong:** During G5 preparation, the trusted-key JSON was saved into
 `ADMIN_JWT_PUBLIC_KEY` instead of into `ADMIN_JWT_TRUSTED_KEYS`. The code on `main` reads
@@ -48,8 +49,18 @@ readiness.
 3. The operator sets **Settings → Health Check Path** to `/v1/ready` in the Render dashboard.
    Only the operator changes Render settings.
 
-**Scope:** open until the dashboard shows `/v1/ready` and #63 merges. The deployed operator
-routes return 401 to a dummy token since 13:38 UTC (measured 13:47 UTC).
+**Update, 2026-11-14 (post-deploy):** forgecustomer#63 merged (`3791b2f`) and deployed
+(`dep-dbs6ve2jnfac73bue4j0`, live 14:29:43 UTC). Post-deploy probes: `/v1/ready` returns 200; a
+dummy token on `/v1/admin/customers` returns 401; the Render log shows "operator trusted-key set
+loaded" with `kid` `98Ue0PgZ`. The runbook's DG-4 check then passed from Forge Command against the
+deployed service: the Commerce screen's customer list loaded, and the Business workspace's
+Customer details → Load customers loaded a snapshot — neither read failed. This confirms the
+operator plane itself works end to end on the new deploy. It does not confirm the health-check
+path; that field is set by the operator only, in the Render dashboard, and is not yet done.
+
+**Scope:** open until the dashboard shows `/v1/ready` as the health-check path. The deployed
+operator routes return 401 to a dummy token since 13:38 UTC (measured 13:47 UTC), and again after
+the #63 deploy at 14:29:43 UTC.
 
 ---
 
