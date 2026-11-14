@@ -210,7 +210,10 @@ Outbox worker -> DataForge sanitized events
 - Reqwest HTTP client with a 10 second client timeout.
 
 The lazy pool means `/v1/health` can report the process is up before the database is
-available. `/v1/ready` is the deploy/load-balancer gate because it executes `select 1`.
+available. `/v1/ready` is the deploy/load-balancer gate. It checks three things: the database
+answers `select 1`, the table `operator_token_replay` (migration 0018) exists, and the operator
+trusted-key set (`ADMIN_JWT_TRUSTED_KEYS`) loaded. A failed check returns 503 and names the
+check in `failed`. The body never contains a value.
 
 ### Request lifecycle
 
@@ -261,7 +264,7 @@ issues (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
 | Route | Status | Purpose |
 | --- | --- | --- |
 | `GET /v1/health` | implemented | Process liveness: `{ "status": "ok" }`. |
-| `GET /v1/ready` | implemented | Database readiness; returns 503 when DB is unreachable. |
+| `GET /v1/ready` | implemented | Readiness: database, `operator_token_replay` table, operator trusted-key set. Returns 503 with failed check names. |
 | `GET /v1/version` | implemented | Service name, crate version, `GIT_SHA`, and `APP_ENV`. |
 | `GET /v1/products` | implemented | Active product catalog rows. |
 | `GET /v1/plans` | implemented | Active plan rows. |
@@ -1421,7 +1424,14 @@ supabase db push
 ### Operational probes
 
 - `/v1/health` means the process is running.
-- `/v1/ready` means the database can answer `select 1`.
+- `/v1/ready` means the database answers `select 1`, the table `operator_token_replay` exists,
+  and the operator trusted-key set loaded. A failure returns 503 with
+  `{"status":"not_ready","failed":[...]}`. The list holds check names only: `database`,
+  `operator_token_replay`, `ADMIN_JWT_TRUSTED_KEYS`.
+- After every change to the Render service (environment, settings, deploy), run the
+  credential-free probe in `docs/operations/render_probe.json`. A dummy bearer token on an
+  operator route must return 401. A 500 that says "not configured" means the operator plane is
+  down while readiness may still pass on the old code.
 - `/v1/version` identifies service, crate version, git SHA if injected, and environment.
 
 Load balancers should gate on readiness, not liveness.

@@ -123,3 +123,14 @@ async fn an_unreachable_database_is_undecided_never_a_pass() {
     let s = PgReplayStore::new(pool);
     assert!(s.claim("fcn_local", "x", exp_in(120)).await.is_err());
 }
+
+#[tokio::test]
+#[ignore = "needs a disposable migrated PostgreSQL (OPERATOR_REPLAY_TEST_DATABASE_URL)"]
+async fn readiness_passes_with_migration_0018_and_fails_without_a_database() {
+    assert!(store().await.ready().await.is_ok());
+    let pool = PgPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(1))
+        .connect_lazy("postgres://user@127.0.0.1:1/none")
+        .unwrap();
+    assert!(PgReplayStore::new(pool).ready().await.is_err());
+}

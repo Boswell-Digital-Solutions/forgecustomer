@@ -203,6 +203,12 @@ impl OperatorVerifier {
         }
     }
 
+    /// True when the trusted-key set loaded. Readiness reports false as not ready, so a
+    /// refused or unset `ADMIN_JWT_TRUSTED_KEYS` cannot pass a deploy health check.
+    pub fn is_configured(&self) -> bool {
+        self.keys.is_ok()
+    }
+
     /// Steps 1 and 2 of the G5 order: signature and registered claims, then issuer, `sub`
     /// and audience. Binding (SC-1) and the replay claim (SC-2) are the caller's next steps.
     pub fn verify(&self, token: &str) -> Result<VerifiedOperator, AppError> {

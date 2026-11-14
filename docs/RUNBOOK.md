@@ -17,7 +17,10 @@
   `failed to read dockerfile: open Dockerfile: no such file or directory`.
 - The app binds `0.0.0.0:$PORT`; the Blueprint pins `PORT=8080` to match the image's
   `EXPOSE`, and the image sets the same value. Outside the image, `PORT` defaults to 8090,
-  the registered local port. Health check path is `/v1/ready` so rollouts gate on DB reachability.
+  the registered local port. Health check path is `/v1/ready` so rollouts gate on readiness (database, replay table,
+  operator trusted keys). **Check that the Render dashboard shows it.** A service created by
+  hand does not read `render.yaml`, and on 2026-11-14 the deployed service had no health-check
+  path (`KI-FOC-20261114-005`).
 - Postgres is the Supabase project, not a Render database: point `DATABASE_URL` at
   Supabase's pooled connection string. Migrations still ship via `supabase db push`
   (step 2) — the API container never applies migrations.

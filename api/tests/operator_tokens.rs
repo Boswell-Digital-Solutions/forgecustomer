@@ -911,3 +911,90 @@ fn n1_the_key_set_is_public_material_and_no_secret_variable_is_added() {
     assert!(!source.contains("admin_jwt_private"));
     assert!(!source.contains("REPLAY_DATABASE"));
 }
+
+// ---------------------------------------------------------------------------------------
+// Readiness (READY-1..READY-4): `/v1/ready` gates the Render deploy. It must fail when the operator
+// plane cannot work, and name the failed check without any value. The test database is
+// unreachable, so `database` always fails here; the other checks are what these tests prove.
+// ---------------------------------------------------------------------------------------
+
+async fn ready_body(state: AppState) -> (StatusCode, Value, String) {
+    let req = Request::builder()
+        .uri("/v1/ready")
+        .body(Body::empty())
+        .unwrap();
+    let res = build_router(state).oneshot(req).await.unwrap();
+    let status = res.status();
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let text = String::from_utf8(bytes.to_vec()).unwrap();
+    (status, serde_json::from_str(&text).unwrap(), text)
+}
+
+fn failed(body: &Value) -> Vec<String> {
+    body["failed"]
+        .as_array()
+        .map(|a| a.iter().map(|v| v.as_str().unwrap().to_string()).collect())
+        .unwrap_or_default()
+}
+
+#[tokio::test]
+async fn ready1_a_loaded_key_set_and_store_are_not_reported() {
+    let (status, body, _) = ready_body(state()).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(failed(&body), vec!["database".to_string()]);
+}
+
+#[tokio::test]
+async fn ready2_an_unset_or_refused_key_set_fails_readiness() {
+    for keys in [
+        "",
+        "not json",
+        r#"{"98Ue0PgZ": {"key": "-----BEGIN PUBLIC KEY-----\nAAAA\n-----END PUBLIC KEY-----\n", "issuer": "forge_command_local"}}"#,
+    ] {
+        let (status, body, _) =
+            ready_body(state_with(keys, Arc::new(MemoryReplayStore::default()))).await;
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE, "keys {keys:?}");
+        assert!(
+            failed(&body).contains(&"ADMIN_JWT_TRUSTED_KEYS".to_string()),
+            "keys {keys:?}: {body}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn ready3_an_unavailable_replay_store_fails_readiness() {
+    let (status, body, _) = ready_body(state_with(
+        &key_set(&[PRED, BOUND]),
+        Arc::new(UnavailableReplayStore),
+    ))
+    .await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert!(failed(&body).contains(&"operator_token_replay".to_string()));
+    assert!(!failed(&body).contains(&"ADMIN_JWT_TRUSTED_KEYS".to_string()));
+}
+
+#[tokio::test]
+async fn ready4_the_body_names_checks_and_never_carries_key_material() {
+    let (_, body, text) = ready_body(state_with(
+        "{\"x\": \"MCowBQYDK2VwAyEA-secret-looking\"}",
+        Arc::new(UnavailableReplayStore),
+    ))
+    .await;
+    assert_eq!(body["status"], "not_ready");
+    for f in failed(&body) {
+        assert!(
+            [
+                "database",
+                "operator_token_replay",
+                "ADMIN_JWT_TRUSTED_KEYS"
+            ]
+            .contains(&f.as_str()),
+            "unexpected check name {f}"
+        );
+    }
+    assert!(
+        !text.contains("MCowBQ"),
+        "readiness body leaked key material"
+    );
+    assert!(!text.contains("BEGIN PUBLIC KEY"));
+}

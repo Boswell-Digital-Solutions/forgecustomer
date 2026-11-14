@@ -1,0 +1,65 @@
+{
+  "service": "Forge Customer",
+  "render_service_id": "srv-d8l5pjm47okc73bffotg",
+  "base_url": "https://forge-customer.onrender.com",
+  "health_path": "/v1/ready",
+  "note": "Credential-free. Every header is a dummy. Run after every Render change. A 401 on an operator route proves the verifier is configured; it does not prove a real operator token works (DG-4 does that).",
+  "probes": [
+    {
+      "name": "readiness",
+      "method": "GET",
+      "path": "/v1/ready",
+      "headers": {},
+      "expect_status": [
+        200
+      ],
+      "misconfigured_signature": "not_ready"
+    },
+    {
+      "name": "Rake access public keys",
+      "method": "GET",
+      "path": "/v1/app-tokens/keys",
+      "headers": {},
+      "expect_status": [
+        200
+      ],
+      "misconfigured_signature": "not configured"
+    },
+    {
+      "name": "admin operator route",
+      "method": "GET",
+      "path": "/v1/admin/customers",
+      "headers": {
+        "Authorization": "Bearer x.y.z"
+      },
+      "expect_status": [
+        401
+      ],
+      "misconfigured_signature": "not configured"
+    },
+    {
+      "name": "posture operator route",
+      "method": "GET",
+      "path": "/v1/posture/customers",
+      "headers": {
+        "Authorization": "Bearer x.y.z"
+      },
+      "expect_status": [
+        401
+      ],
+      "misconfigured_signature": "not configured"
+    },
+    {
+      "name": "customer route",
+      "method": "GET",
+      "path": "/v1/account",
+      "headers": {
+        "Authorization": "Bearer x.y.z"
+      },
+      "expect_status": [
+        401
+      ],
+      "misconfigured_signature": "not configured"
+    }
+  ]
+}

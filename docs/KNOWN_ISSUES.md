@@ -6,6 +6,49 @@ is reported as new, and written in the same session it is found.
 
 ---
 
+## KI-FOC-20261114-005 — the operator plane failed while readiness stayed green, and the deployed service had no health-check path
+
+**Date found:** 2026-11-14
+**Status:** OPEN for the deployed incident and the dashboard setting. The code part is fixed on
+forgecustomer#63 and is not merged.
+
+**What is wrong:** During G5 preparation, the trusted-key JSON was saved into
+`ADMIN_JWT_PUBLIC_KEY` instead of into `ADMIN_JWT_TRUSTED_KEYS`. The code on `main` reads
+`ADMIN_JWT_PUBLIC_KEY` as a PEM key. It could not parse the value, so every operator route
+returned 500 "token verification is not configured". That includes the five emergency stop
+routes. `/v1/ready` still returned 200. The operator corrected the value and Render restarted the
+service at 13:25 UTC. At 13:35 UTC the operator routes still returned 500, so the stored value
+still did not parse. The cause of that second failure is not known: the agent cannot read the
+stored value.
+
+The Render service also has no health-check path. `render.yaml` names `/v1/ready`, but the
+service was created by hand and does not read the Blueprint. Render read the service settings
+through its API on 2026-11-14: `healthCheckPath` is empty. So no deploy was ever gated on
+readiness.
+
+**Root cause:**
+1. Readiness checked only the database. A missing or unparseable operator key was a logged
+   state, not a readiness state.
+2. No step after a Render change checked the operator plane. The fault was found only because
+   the operator shared an environment export.
+3. The dashboard setting drifted from `render.yaml`.
+
+**Fix:**
+1. forgecustomer#63: `/v1/ready` also checks that the operator trusted-key set loaded and that
+   the table `operator_token_replay` exists. A failure returns 503 and names the check only.
+   Tests: `ready1`..`ready4` in `api/tests/operator_tokens.rs` and
+   `readiness_passes_with_migration_0018_and_fails_without_a_database` in
+   `api/tests/operator_replay_pg.rs`.
+2. `docs/operations/render_probe.json` holds a credential-free probe. Run it after every Render
+   change. The forge workspace holds a runner for every Render service.
+3. The operator sets **Settings → Health Check Path** to `/v1/ready` in the Render dashboard.
+   Only the operator changes Render settings.
+
+**Scope:** open until the deployed operator routes return 401 to a dummy token, the dashboard
+shows `/v1/ready`, and #63 merges.
+
+---
+
 ## KI-FOC-20261114-003 — the API reaches the database as `postgres`, which bypasses RLS, so RLS does not protect the server-only tables
 
 **Date found:** 2026-11-14

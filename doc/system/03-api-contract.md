@@ -12,7 +12,7 @@ issues (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
 | Route | Status | Purpose |
 | --- | --- | --- |
 | `GET /v1/health` | implemented | Process liveness: `{ "status": "ok" }`. |
-| `GET /v1/ready` | implemented | Database readiness; returns 503 when DB is unreachable. |
+| `GET /v1/ready` | implemented | Readiness: database, `operator_token_replay` table, operator trusted-key set. Returns 503 with failed check names. |
 | `GET /v1/version` | implemented | Service name, crate version, `GIT_SHA`, and `APP_ENV`. |
 | `GET /v1/products` | implemented | Active product catalog rows. |
 | `GET /v1/plans` | implemented | Active plan rows. |

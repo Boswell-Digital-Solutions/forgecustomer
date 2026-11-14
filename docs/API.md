@@ -39,7 +39,7 @@ Representative codes: `UNAUTHENTICATED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`,
 | Group                  | Purpose                                             | Auth      |
 | ---------------------- | --------------------------------------------------- | --------- |
 | `GET /v1/health`       | liveness                                            | none      |
-| `GET /v1/ready`        | readiness (DB reachable)                            | none      |
+| `GET /v1/ready`        | readiness (DB, replay table, operator keys)         | none      |
 | `GET /v1/version`      | build/version info                                  | none      |
 | `/v1/account`          | provision/read own profile, MFA status, deletion requests | customer  |
 | `/v1/products`         | public product catalog                              | optional  |
@@ -75,7 +75,9 @@ and are not silently rewritten by a global policy version.
 ## Health, ready, version
 
 - `GET /v1/health` → `{ "status": "ok" }` (process is up).
-- `GET /v1/ready` → `200` when the database is reachable, else `503`.
+- `GET /v1/ready` → `200` when the database is reachable, the table `operator_token_replay`
+  exists and the operator trusted-key set loaded. Else `503` with
+  `{"status":"not_ready","failed":[...]}`, which names the checks only.
 - `GET /v1/version` → `{ "service", "version", "git_sha", "app_env" }`.
 
 ## Public release distribution

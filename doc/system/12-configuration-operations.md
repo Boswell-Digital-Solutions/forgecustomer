@@ -80,7 +80,14 @@ supabase db push
 ### Operational probes
 
 - `/v1/health` means the process is running.
-- `/v1/ready` means the database can answer `select 1`.
+- `/v1/ready` means the database answers `select 1`, the table `operator_token_replay` exists,
+  and the operator trusted-key set loaded. A failure returns 503 with
+  `{"status":"not_ready","failed":[...]}`. The list holds check names only: `database`,
+  `operator_token_replay`, `ADMIN_JWT_TRUSTED_KEYS`.
+- After every change to the Render service (environment, settings, deploy), run the
+  credential-free probe in `docs/operations/render_probe.json`. A dummy bearer token on an
+  operator route must return 401. A 500 that says "not configured" means the operator plane is
+  down while readiness may still pass on the old code.
 - `/v1/version` identifies service, crate version, git SHA if injected, and environment.
 
 Load balancers should gate on readiness, not liveness.

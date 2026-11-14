@@ -36,6 +36,9 @@ Source: forge-command `docs/plans/BDS_FCO_P3_TOKEN_ISSUER_v0.1/07_G5_AUTHORIZATI
 
    Expected: `200`. If not, stop: the service already has a problem, and this runbook does not
    fix it.
+4. In Render, open **forgecustomer-api → Settings → Health Checks**. **Health Check Path** must
+   be `/v1/ready`. If it is empty, set it to `/v1/ready` and click **Save**. Without it, Render
+   does not stop a broken deploy (`KI-FOC-20261114-005`).
 
 ---
 
@@ -164,8 +167,19 @@ The code that runs today ignores this variable. Setting it before the merge chan
    curl -s -o /dev/null -w "%{http_code}\n" "$FC_URL/v1/ready"
    ```
 
-   Expected: `200`.
-4. In Render, open **Logs**. Search for `operator trusted-key set loaded`. It must be there, with
+   Expected: `200`. After this merge, `/v1/ready` also checks the operator keys and the replay
+   table. A `503` body names the failed check, for example
+   `{"status":"not_ready","failed":["ADMIN_JWT_TRUSTED_KEYS"]}`. If the dashboard has the health
+   check path `/v1/ready` (Part 0), Render does not make a failed deploy live.
+4. Run the credential-free probe. It sends a dummy token, never a real one:
+
+   ```bash
+   curl -s -H 'Authorization: Bearer x.y.z' -w ' [%{http_code}]\n' "$FC_URL/v1/admin/customers"
+   ```
+
+   Expected: `[401]`. If you see "token verification is not configured" and `[500]`, roll back
+   now (DG-3).
+5. In Render, open **Logs**. Search for `operator trusted-key set loaded`. It must be there, with
    the `kid` from DG-1. If you see `ADMIN_JWT_TRUSTED_KEYS refused` instead, roll back now
    (DG-3), and check the value you pasted.
 

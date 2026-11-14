@@ -25,6 +25,9 @@ pub trait ReplayStore: Send + Sync {
         jti: &str,
         expires_at_unix: i64,
     ) -> Result<bool, ReplayStoreUnavailable>;
+
+    /// Readiness: the store can accept claims. `Err` makes `/v1/ready` report not ready.
+    async fn ready(&self) -> Result<(), ReplayStoreUnavailable>;
 }
 
 /// The production store: `public.operator_token_replay` (migration 0018).
@@ -69,6 +72,19 @@ impl ReplayStore for PgReplayStore {
         })?;
         Ok(row.is_some())
     }
+
+    async fn ready(&self) -> Result<(), ReplayStoreUnavailable> {
+        // The table from migration 0018 must exist. Without it every operator call is 503.
+        let present: Option<bool> =
+            sqlx::query_scalar("select to_regclass('public.operator_token_replay') is not null")
+                .fetch_one(&self.pool)
+                .await
+                .map_err(|_| ReplayStoreUnavailable)?;
+        match present {
+            Some(true) => Ok(()),
+            _ => Err(ReplayStoreUnavailable),
+        }
+    }
 }
 
 /// An in-process store with the same contract, for tests. Share one value between two
@@ -94,6 +110,10 @@ impl ReplayStore for MemoryReplayStore {
         claimed.insert(key, expires_at_unix);
         Ok(true)
     }
+
+    async fn ready(&self) -> Result<(), ReplayStoreUnavailable> {
+        Ok(())
+    }
 }
 
 impl MemoryReplayStore {
@@ -113,6 +133,10 @@ pub struct UnavailableReplayStore;
 #[async_trait]
 impl ReplayStore for UnavailableReplayStore {
     async fn claim(&self, _: &str, _: &str, _: i64) -> Result<bool, ReplayStoreUnavailable> {
+        Err(ReplayStoreUnavailable)
+    }
+
+    async fn ready(&self) -> Result<(), ReplayStoreUnavailable> {
         Err(ReplayStoreUnavailable)
     }
 }
