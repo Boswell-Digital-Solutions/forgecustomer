@@ -41,6 +41,13 @@ Source: forge-command `docs/plans/BDS_FCO_P3_TOKEN_ISSUER_v0.1/07_G5_AUTHORIZATI
 
 ## Part 1 — Apply migration 0018 to the deployed database (5 minutes)
 
+> **Done 2026-11-14**, on the operator's instruction ("Do that", in session). The agent applied the
+> file unchanged (SHA-256 `5fcbd7fe…84ceb7`) through the Supabase migration tool. Supabase recorded
+> it as version `20261114130359`, name `operator_token_replay` (like 0017, a timestamp version, not
+> `0018`). Verified after: RLS enabled and forced, 0 policies, 0 rows, indexes
+> `operator_token_replay_pkey` and `idx_operator_token_replay_expires`, and 0 public tables without
+> RLS. **Skip to Part 2.**
+
 This adds one empty table, `operator_token_replay`. The code that runs today never reads it, so
 this is safe before the merge.
 
