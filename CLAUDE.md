@@ -6,7 +6,7 @@ repository.
 Authority for customer identity, commerce, licensing, entitlements, installations, devices, usage,
 and commercial audit for BDS products (first: AuthorForge). Rust + Axum, entry `api/src/main.rs`.
 
-Canonical reference: `doc/FOCSYSTEM.md` (build: `bash doc/system/BUILD.sh`).
+Canonical reference: `doc/focSYSTEM.md` (build: `bash doc/system/BUILD.sh`).
 Ownership matrix: [docs/DATA_AUTHORITY.md](docs/DATA_AUTHORITY.md).
 Contracts: [contracts/](contracts/) — `openapi.yaml`, `entitlement-v1.schema.json`,
 `lease-v1.schema.json`, `events/`.

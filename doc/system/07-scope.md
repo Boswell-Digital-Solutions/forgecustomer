@@ -4,7 +4,7 @@
 
 This `doc/system/` tree is the modular source of the **ForgeCustomer compiled
 system reference**, assembled into the designation-bound artifact
-`doc/FOCSYSTEM.md` (designation `FOC`) via `bash doc/system/BUILD.sh`. This chapter
+`doc/focSYSTEM.md` (designation `foc`) via `bash doc/system/BUILD.sh`. This chapter
 defines ForgeCustomer's service authority and where it ends. ForgeCustomer is an
 internal Forge ecosystem service — single-operator, governed — not a public
 product and not externally release-certified.

@@ -6,7 +6,7 @@
 
 | Term | Meaning |
 |------|---------|
-| FOC | ForgeCustomer designation (names `doc/FOCSYSTEM.md`) |
+| foc | ForgeCustomer designation (names `doc/focSYSTEM.md`) |
 | Entitlement | A granted capability/quota attached to a customer/license |
 | Permanent license | One-time-purchase, non-expiring license model |
 | Operator admin client | Forge_Command, consuming `/v1/admin/*` (does not own this truth) |

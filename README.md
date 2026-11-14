@@ -51,7 +51,7 @@ supabase/    config, migrations, seed
 contracts/   OpenAPI, entitlement schema, event schemas
 tests/       integration / security / stripe / licensing / entitlement
 doc/system/  canonical system source tree
-doc/         generated FOCSYSTEM.md
+doc/         generated focSYSTEM.md
 docs/        supporting data authority, security, API, domain docs
 deploy/      deployment assets
 ```
@@ -73,7 +73,7 @@ supabase db reset             # local dev: applies migrations + seed
 
 ## Documentation
 
-Start with the generated canonical reference [`doc/FOCSYSTEM.md`](doc/FOCSYSTEM.md).
+Start with the generated canonical reference [`doc/focSYSTEM.md`](doc/focSYSTEM.md).
 Edit its source parts under [`doc/system/`](doc/system/) and rebuild with
 `bash doc/system/BUILD.sh`.
 
