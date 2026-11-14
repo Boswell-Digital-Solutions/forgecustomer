@@ -1,13 +1,13 @@
 # ForgeCustomer — Compiled System Reference
 
-**Designation:** FOC
+**Designation:** foc
 **Document role:** Canonical compiled technical reference for the ForgeCustomer customer/commercial authority
 **Source:** `doc/system/`
 **Build command:** `bash doc/system/BUILD.sh`
 **Document version:** 2.0 (2026-06-19) — BDS canonical-compliance migration (7-group class-aware structure, truth classes, designation-bound fail-closed assembly, governance trio)
 **Protocol:** BDS Documentation Protocol v2.0; BDS Repo Documentation System Canonical Compliance Standard
 
-> **Generated artifact warning:** `doc/FOCSYSTEM.md` is assembled output. Edit the
+> **Generated artifact warning:** `doc/focSYSTEM.md` is assembled output. Edit the
 > source modules under `doc/system/` and rebuild. Hand edits to the compiled
 > artifact are overwritten by the next build.
 
@@ -15,7 +15,7 @@ Assembly contract:
 
 - Command: `bash doc/system/BUILD.sh`
 - Validation: `bash doc/system/validate_snapshots.sh` runs during assembly
-- Primary output: `doc/FOCSYSTEM.md`
+- Primary output: `doc/focSYSTEM.md`
 
 This `doc/system/` tree is the canonical source of truth for ForgeCustomer. It uses
 explicit **truth classes**: *canonical facts* define the customer/commercial

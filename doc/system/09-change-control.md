@@ -8,16 +8,16 @@ contract files in the same change.
 
 1. Edit the relevant file under `doc/system/`.
 2. Rebuild with `bash doc/system/BUILD.sh`.
-3. Review `doc/FOCSYSTEM.md`.
+3. Review `doc/focSYSTEM.md`.
 4. Run the relevant Rust, migration, and contract checks.
 
-Do not edit `doc/FOCSYSTEM.md` directly except as a generated output from the build
+Do not edit `doc/focSYSTEM.md` directly except as a generated output from the build
 script.
 
 ### Supporting docs
 
 The existing `docs/` tree remains useful for domain detail. It is not the generated
-canonical artifact. When domain docs and `doc/FOCSYSTEM.md` diverge, update both or
+canonical artifact. When domain docs and `doc/focSYSTEM.md` diverge, update both or
 record why the domain doc is stale.
 
 ### Change boundaries

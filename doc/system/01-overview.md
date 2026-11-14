@@ -96,7 +96,7 @@ supabase/migrations/    Ordered SQL migrations
 supabase/seed.sql       Deterministic seed data
 docs/                   Supporting domain docs and runbooks
 doc/system/             Canonical system source tree
-doc/FOCSYSTEM.md        Generated canonical system artifact
+doc/focSYSTEM.md        Generated canonical system artifact
 ```
 
 ### Primary doctrine

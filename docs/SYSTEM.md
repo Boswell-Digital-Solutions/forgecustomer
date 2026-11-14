@@ -1,6 +1,6 @@
 # SYSTEM.md — ForgeCustomer system overview
 
-> Canonical generated system reference now lives at `doc/FOCSYSTEM.md`. Edit
+> Canonical generated system reference now lives at `doc/focSYSTEM.md`. Edit
 > `doc/system/*.md` and run `bash doc/system/BUILD.sh` for canonical updates.
 
 ## Mission
