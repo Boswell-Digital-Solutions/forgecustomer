@@ -39,7 +39,9 @@ fi
 
 export HOST="$SMOKE_HOST" PORT="$SMOKE_PORT"
 export SUPABASE_JWT_ISSUER="$JWT_ISSUER" SUPABASE_JWT_AUDIENCE="authenticated" SUPABASE_JWT_SECRET="$JWT_SECRET"
-export ADMIN_JWT_ISSUER="https://operators.local" ADMIN_JWT_AUDIENCE="forgecustomer-admin"
+# The operator test key models the predecessor issuer, which is not route-bound until P3 G7.
+ADMIN_JWT_ISSUER="forge_command_local"
+export ADMIN_JWT_AUDIENCE="forgecustomer-admin"
 # Test seeds: entitlement key = 0x03 x32, Rake access key = 0x05 x32, standby = public half of 0x06 x32.
 export ENTITLEMENT_SIGNING_PRIVATE_KEY="AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM="
 export ENTITLEMENT_SIGNING_KEY_ID="rake-smoke-entitlement-key"
@@ -66,9 +68,12 @@ public_pem_of_seed() {
   openssl pkey -in "$pem" -pubout
 }
 
-# Operator tokens are signed with test seed 0x07 (scripts/rake_access_http_smoke.py).
-ADMIN_JWT_PUBLIC_KEY="$(public_pem_of_seed 07)"
-export ADMIN_JWT_PUBLIC_KEY
+# Operator tokens are signed with test seed 0x07 (scripts/rake_access_http_smoke.py). The
+# trusted-key set names that key under its derived kid, base64url(SHA-256(raw key))[:8].
+ADMIN_KID="$(public_key_of_seed 07 | python3 -I -c "import base64,hashlib,sys; raw=base64.b64decode(sys.stdin.read()); print(base64.urlsafe_b64encode(hashlib.sha256(raw).digest()).decode()[:8])")"
+ADMIN_JWT_TRUSTED_KEYS="$(ADMIN_KID="$ADMIN_KID" ADMIN_PEM="$(public_pem_of_seed 07)" ADMIN_JWT_ISSUER="$ADMIN_JWT_ISSUER" \
+  python3 -I -c "import json,os; print(json.dumps({os.environ['ADMIN_KID']: {'key': os.environ['ADMIN_PEM'] + '\\n', 'issuer': os.environ['ADMIN_JWT_ISSUER']}}))")"
+export ADMIN_JWT_TRUSTED_KEYS
 
 start_api() {
   local label="$1"
@@ -101,7 +106,7 @@ run_checks() {
   PHASE="$phase" BASE="http://$SMOKE_HOST:$SMOKE_PORT" TMP="$tmp_dir" \
   JWT_SECRET="$JWT_SECRET" JWT_ISSUER="$JWT_ISSUER" \
   PSQL_CMD="$PSQL_CMD" DB_NAME="$DB_NAME" \
-  ADMIN_JWT_ISSUER="$ADMIN_JWT_ISSUER" ADMIN_JWT_AUDIENCE="$ADMIN_JWT_AUDIENCE" \
+  ADMIN_JWT_ISSUER="$ADMIN_JWT_ISSUER" ADMIN_JWT_AUDIENCE="$ADMIN_JWT_AUDIENCE" ADMIN_KID="$ADMIN_KID" \
     python3 -I scripts/rake_access_http_smoke.py
 }
 

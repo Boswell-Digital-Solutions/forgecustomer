@@ -44,7 +44,10 @@ Outbox worker -> DataForge sanitized events
 - Reqwest HTTP client with a 10 second client timeout.
 
 The lazy pool means `/v1/health` can report the process is up before the database is
-available. `/v1/ready` is the deploy/load-balancer gate because it executes `select 1`.
+available. `/v1/ready` is the deploy/load-balancer gate. It checks three things: the database
+answers `select 1`, the table `operator_token_replay` (migration 0018) exists, and the operator
+trusted-key set (`ADMIN_JWT_TRUSTED_KEYS`) loaded. A failed check returns 503 and names the
+check in `failed`. The body never contains a value.
 
 ### Request lifecycle
 

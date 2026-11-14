@@ -5,7 +5,7 @@
 //! a customer token can never satisfy it.
 
 use axum::async_trait;
-use axum::extract::FromRequestParts;
+use axum::extract::{FromRequestParts, MatchedPath, RawPathParams};
 use axum::http::header::AUTHORIZATION;
 use axum::http::request::Parts;
 use uuid::Uuid;
@@ -147,13 +147,71 @@ impl FromRequestParts<AppState> for AdminContext {
         };
 
         let token = bearer_token(auth_header(parts)).map_err(attach)?;
-        // Validated against the ADMIN issuer/audience only.
-        let claims = state.admin_validator.validate(token).map_err(attach)?;
+        // Step 1 and 2 (P3 G5): signature, registered claims, issuer, `sub` and audience,
+        // against the trusted-key set for the ADMIN audience only.
+        let verified = state.admin_verifier.verify(token).map_err(attach)?;
 
-        let roles = claims.operator_roles();
+        let roles = if verified.bound {
+            // Step 2, SC-1: the token names this route's action and target. Only then does it
+            // carry the admin role, so a role can never bypass the route check.
+            let matched = parts
+                .extensions
+                .get::<MatchedPath>()
+                .map(|m| m.as_str().to_string());
+            let params = path_params(parts, state).await;
+            crate::auth::binding::check_bound(
+                &parts.method,
+                matched.as_deref(),
+                &params,
+                &verified.claims,
+            )
+            .map_err(attach)?;
+            vec!["admin".to_string()]
+        } else {
+            // The predecessor's key: unchanged behaviour until P3 G7 (DEC-G5-2 (b)).
+            verified.claims.operator_roles()
+        };
+
+        // Step 3, SC-2: claim the replay identity. A failure claims nothing.
+        claim_once(state, &verified).await.map_err(attach)?;
+
         Ok(AdminContext {
-            operator_id: claims.sub,
+            operator_id: verified.claims.sub,
             roles,
         })
+    }
+}
+
+/// The request's path parameters as the router matched them, in no particular order.
+async fn path_params(parts: &mut Parts, state: &AppState) -> Vec<(String, String)> {
+    match RawPathParams::from_request_parts(parts, state).await {
+        Ok(raw) => raw
+            .iter()
+            .map(|(name, value)| (name.to_string(), value.to_string()))
+            .collect(),
+        Err(_) => Vec::new(),
+    }
+}
+
+/// SC-2: accept an operator token once. Runs after every other check, so a token that
+/// fails a check claims no identity (SC-2O). An unavailable store refuses the token.
+pub(crate) async fn claim_once(
+    state: &AppState,
+    verified: &crate::auth::operator::VerifiedOperator,
+) -> Result<(), AppError> {
+    match state
+        .replay
+        .claim(&verified.issuer, &verified.jti, verified.claims.exp as i64)
+        .await
+    {
+        Ok(true) => Ok(()),
+        Ok(false) => Err(AppError::new(
+            ErrorCode::InvalidToken,
+            "The access token was already used.",
+        )),
+        Err(_) => Err(AppError::new(
+            ErrorCode::ServiceUnavailable,
+            "Operator token checks are unavailable. Try again.",
+        )),
     }
 }

@@ -26,7 +26,6 @@ fn base_config() -> Config {
     std::env::set_var("DATABASE_ACQUIRE_TIMEOUT_SECS", "1");
     std::env::set_var("SUPABASE_JWT_ISSUER", "https://proj.supabase.co/auth/v1");
     std::env::set_var("SUPABASE_JWT_SECRET", "supabase-secret");
-    std::env::set_var("ADMIN_JWT_ISSUER", "https://operators.local");
     std::env::set_var("ADMIN_JWT_AUDIENCE", "forgecustomer-admin");
     std::env::set_var(
         "ENTITLEMENT_SIGNING_PRIVATE_KEY",

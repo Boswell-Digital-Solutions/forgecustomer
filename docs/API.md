@@ -39,7 +39,7 @@ Representative codes: `UNAUTHENTICATED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`,
 | Group                  | Purpose                                             | Auth      |
 | ---------------------- | --------------------------------------------------- | --------- |
 | `GET /v1/health`       | liveness                                            | none      |
-| `GET /v1/ready`        | readiness (DB reachable)                            | none      |
+| `GET /v1/ready`        | readiness (DB, replay table, operator keys)         | none      |
 | `GET /v1/version`      | build/version info                                  | none      |
 | `/v1/account`          | provision/read own profile, MFA status, deletion requests | customer  |
 | `/v1/products`         | public product catalog                              | optional  |
@@ -75,7 +75,9 @@ and are not silently rewritten by a global policy version.
 ## Health, ready, version
 
 - `GET /v1/health` → `{ "status": "ok" }` (process is up).
-- `GET /v1/ready` → `200` when the database is reachable, else `503`.
+- `GET /v1/ready` → `200` when the database is reachable, the table `operator_token_replay`
+  exists and the operator trusted-key set loaded. Else `503` with
+  `{"status":"not_ready","failed":[...]}`, which names the checks only.
 - `GET /v1/version` → `{ "service", "version", "git_sha", "app_env" }`.
 
 ## Public release distribution
@@ -310,17 +312,21 @@ See `docs/USAGE.md` for the full rules. Summary of the live endpoints:
 ## Admin API (Forge Command)
 
 The `/v1/admin/*` surface is the integration point for **Forge Command**, the operator
-console. Forge Command mints operator JWTs from the dedicated issuer
-(`ADMIN_JWT_ISSUER`/`ADMIN_JWT_AUDIENCE`) and works exclusively through these endpoints —
+console. Forge Command mints operator JWTs that ForgeCustomer verifies against its trusted-key
+set (`ADMIN_JWT_TRUSTED_KEYS`, audience `ADMIN_JWT_AUDIENCE`; doc/system/11 states the rules) and
+works exclusively through these endpoints —
 it never bypasses ForgeCustomer's mutation paths or touches the database directly.
 
 Authorization is two-tier and fails closed:
 
 - **Reads** (`GET /v1/admin/customers`, fleet/release/campaign/failure reads, and
-  `GET /v1/admin/audit`) require any valid operator token.
-- **Mutations** additionally require the `admin` role in the token's `roles` claim and a
+  `GET /v1/admin/audit`) require a valid operator token. A route-bound key's token must also
+  name the read's action scope.
+- **Mutations** additionally require the `admin` role (for the predecessor's key: `roles`
+  or scope `admin`; for a route-bound key: the route's exact action scope and target) and a
   written `reason` (3–500 chars) that lands in the commercial audit trail with the
   operator id as the actor.
+- Every operator token is accepted once.
 
 Live endpoints:
 

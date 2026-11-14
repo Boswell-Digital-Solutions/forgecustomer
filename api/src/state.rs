@@ -5,9 +5,11 @@ use std::sync::Arc;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
-use crate::auth::{customer::CustomerJwtValidator, JwtValidator};
+use crate::auth::customer::CustomerJwtValidator;
+use crate::auth::operator::{OperatorVerifier, TrustedKeySet};
 use crate::config::Config;
 use crate::middleware::rate_limit::RateLimiter;
+use crate::services::operator_replay::{PgReplayStore, ReplayStore};
 use crate::services::rake_access::{RakeAccessIssuer, RakeAccessKeyError};
 use crate::services::signing::{Signer25519, VerifyingKeyRing};
 
@@ -21,8 +23,12 @@ pub struct AppState {
     /// exchange then fails closed with 503.
     pub rake_access: Option<Arc<RakeAccessIssuer>>,
     pub customer_validator: CustomerJwtValidator,
-    pub admin_validator: JwtValidator,
-    pub posture_validator: JwtValidator,
+    /// Operator tokens for the admin audience, over the trusted-key set (P3 G5).
+    pub admin_verifier: OperatorVerifier,
+    /// Operator tokens for the posture audience, over the same set.
+    pub posture_verifier: OperatorVerifier,
+    /// SC-2 replay store: an operator token is accepted once.
+    pub replay: Arc<dyn ReplayStore>,
     pub http: reqwest::Client,
     pub rate_limiter: Arc<RateLimiter>,
 }
@@ -114,17 +120,21 @@ impl AppState {
             &config.supabase_jwt_issuer,
             &config.supabase_jwt_audience,
         )?;
-        let admin_validator = JwtValidator::eddsa(
-            &config.admin_jwt_public_key,
-            &config.admin_jwt_issuer,
-            &config.admin_jwt_audience,
-        );
-
-        let posture_validator = JwtValidator::eddsa(
-            &config.admin_jwt_public_key,
-            &config.admin_jwt_issuer,
-            "forgecustomer-posture",
-        );
+        // One invalid entry refuses the whole set, and a refused or unset set refuses every
+        // operator token (K-1). The service still starts: customer routes do not depend on it.
+        // The log names a fixed reason and the kids, never key material.
+        let trusted_keys = TrustedKeySet::parse(&config.admin_jwt_trusted_keys);
+        match &trusted_keys {
+            Ok(set) => tracing::info!(kids = ?set.kids(), "operator trusted-key set loaded"),
+            Err(reason) => tracing::error!(
+                %reason,
+                "{} refused, so every operator token is refused",
+                crate::auth::operator::TRUSTED_KEYS_VAR
+            ),
+        }
+        let admin_verifier =
+            OperatorVerifier::new(trusted_keys.clone(), &config.admin_jwt_audience);
+        let posture_verifier = OperatorVerifier::new(trusted_keys, "forgecustomer-posture");
 
         // `DATABASE_URL` points at Supabase's pooled connection string (RUNBOOK.md), which
         // may be the transaction-mode pooler (PgBouncer): connections are handed out per
@@ -150,13 +160,14 @@ impl AppState {
 
         Ok(Self {
             config: Arc::new(config),
-            pool,
+            pool: pool.clone(),
             signer: Arc::new(signer),
             key_ring: Arc::new(key_ring),
             rake_access,
             customer_validator,
-            admin_validator,
-            posture_validator,
+            admin_verifier,
+            posture_verifier,
+            replay: Arc::new(PgReplayStore::new(pool.clone())),
             http,
             rate_limiter: Arc::new(RateLimiter::default()),
         })

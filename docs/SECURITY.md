@@ -21,8 +21,10 @@
   secret; it never treats a public key as an HMAC secret. Admin/posture verification
   remains separate. See `doc/system/11-security-privacy.md` for cache and fetch limits.
 - Refresh-token rotation is handled by Supabase Auth.
-- Admin/operator tokens use a **separate** trusted issuer and audience
-  (`ADMIN_JWT_ISSUER` / `ADMIN_JWT_AUDIENCE`). A customer token can **never** authorize an
+- Admin/operator tokens use **separate** audiences and a trusted-key set
+  (`ADMIN_JWT_TRUSTED_KEYS` / `ADMIN_JWT_AUDIENCE`), each key bound to one issuer; every
+  operator token is accepted once, and a route-bound key's token names its route's action and
+  target (`doc/system/11-security-privacy.md`). A customer token can **never** authorize an
   admin route. Admin authorization validates trusted issuer, operator identity, role /
   capability, expiration, audience, and optional device trust. No client-provided claim
   promotes a customer to admin.

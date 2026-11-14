@@ -210,7 +210,10 @@ Outbox worker -> DataForge sanitized events
 - Reqwest HTTP client with a 10 second client timeout.
 
 The lazy pool means `/v1/health` can report the process is up before the database is
-available. `/v1/ready` is the deploy/load-balancer gate because it executes `select 1`.
+available. `/v1/ready` is the deploy/load-balancer gate. It checks three things: the database
+answers `select 1`, the table `operator_token_replay` (migration 0018) exists, and the operator
+trusted-key set (`ADMIN_JWT_TRUSTED_KEYS`) loaded. A failed check returns 503 and names the
+check in `failed`. The body never contains a value.
 
 ### Request lifecycle
 
@@ -261,7 +264,7 @@ issues (plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1`). Its vectors are in
 | Route | Status | Purpose |
 | --- | --- | --- |
 | `GET /v1/health` | implemented | Process liveness: `{ "status": "ok" }`. |
-| `GET /v1/ready` | implemented | Database readiness; returns 503 when DB is unreachable. |
+| `GET /v1/ready` | implemented | Readiness: database, `operator_token_replay` table, operator trusted-key set. Returns 503 with failed check names. |
 | `GET /v1/version` | implemented | Service name, crate version, `GIT_SHA`, and `APP_ENV`. |
 | `GET /v1/products` | implemented | Active product catalog rows. |
 | `GET /v1/plans` | implemented | Active plan rows. |
@@ -403,12 +406,21 @@ environment (see `docs/STRIPE.md`).
 
 ### Admin routes
 
-Admin routes require an **EdDSA** operator JWT minted by **Forge Command's Token Authority**
-(issuer `ADMIN_JWT_ISSUER`, e.g. `forge_command_local`; audience `ADMIN_JWT_AUDIENCE`, e.g.
-`forgecustomer-admin`), verified against Forge Command's published Ed25519 **public key**
-(`ADMIN_JWT_PUBLIC_KEY`) — there is no shared admin secret. The admin role is carried as
-`roles=["admin"]` or the capability `scope` (e.g. `admin`). A valid customer token (Supabase
-HS256) must never satisfy an admin extractor.
+Admin routes require an **EdDSA** operator JWT, audience `ADMIN_JWT_AUDIENCE` (e.g.
+`forgecustomer-admin`), verified against the trusted-key set `ADMIN_JWT_TRUSTED_KEYS` — there is
+no shared admin secret. The header `kid` selects one entry; `iss` and `sub` must equal that
+entry's issuer; the token must carry a `jti`, and it is accepted once (`401` on a second use).
+A valid customer token (Supabase) must never satisfy an admin extractor.
+
+Authorization depends on the key (P3 gate G5, DEC-G5-2 (b)):
+
+- **The predecessor's key** (issuer `forge_command_local`): unchanged until P3 gate G7. The admin
+  role is carried as `roles=["admin"]` or the `scope` `admin`.
+- **Every other key is route-bound (SC-1).** The token's `scope` must be exactly the route's action
+  (for example `customers:suspend`), and its `target` claim must equal the route's path parameters
+  joined with `/` (for example `<campaign_id>/<fleet_id>`); a route without a path parameter refuses
+  a `target`. A `roles` claim is refused. The table is `api/src/auth/binding.rs`, `ROUTES`. A bound
+  token on another route, action or target gets `403`.
 
 Current route surface:
 
@@ -535,9 +547,10 @@ responses still carry the correlation and security headers.
 
 ## Read-only customer posture projection (2026-10-12)
 
-`GET /v1/posture/customers?offset=0` accepts only an EdDSA operator credential with
-issuer `ADMIN_JWT_ISSUER`, the existing trusted `ADMIN_JWT_PUBLIC_KEY`, fixed audience
-`forgecustomer-posture`, and exact scope `posture:read`. A customer JWT or ordinary admin
+`GET /v1/posture/customers?offset=0` accepts only an EdDSA operator credential verified
+against the trusted-key set `ADMIN_JWT_TRUSTED_KEYS` (the same `kid`, issuer, `sub` and
+single-use `jti` rules as the admin routes), fixed audience `forgecustomer-posture`, and exact
+scope `posture:read`. A bound key's posture token carries no `target` and no `roles`. A customer JWT or ordinary admin
 audience cannot satisfy this route; posture credentials cannot satisfy existing admin routes.
 This does not introduce a shared Supabase credential or new database role.
 
@@ -1143,8 +1156,8 @@ ForgeCustomer PostgreSQL is the customer and commercial source of truth.
 - A Rake access token (`aud` `rake.application`) is valid only at Rake. ForgeCustomer issues
   it and never accepts it. It carries pseudonyms, never `customer_id` or identity.
 - Customer JWTs are valid only for customer routes. Admin routes use a separate issuer
-  and audience. Admin tokens are EdDSA and are verified against an Ed25519 public key
-  (`ADMIN_JWT_PUBLIC_KEY`). There is no shared admin secret.
+  and audience. Admin tokens are EdDSA and are verified against a trusted-key set
+  (`ADMIN_JWT_TRUSTED_KEYS`), each key bound to one issuer. There is no shared admin secret.
 - Customer clients may read their own commercial state but may not directly write
   subscriptions, Stripe mappings, licenses, entitlement grants, usage totals, audit
   records, or outbox events.
@@ -1215,11 +1228,34 @@ Customer tokens:
   self-service caller already has a verified factor by construction, and an
   operator-forced requirement is deliberate incident response.
 
-Admin tokens:
+Admin tokens (operator tokens; P3 gate G5 of `BDS-FCO-P3-TOKEN-ISSUER-001`):
 
-- Separate operator issuer and audience.
-- Ed25519 public-key verification against Forge Command's Token Authority key; no shared
-  admin secret.
+- Separate operator audiences: `forgecustomer-admin` for admin routes, `forgecustomer-posture`
+  for the posture read. A token for one audience fails on the other.
+- Ed25519 public-key verification against a trusted-key set, `ADMIN_JWT_TRUSTED_KEYS`
+  (`api/src/auth/operator.rs`). No shared admin secret, and no private material in the set.
+- **Key selection.** The header `kid` selects exactly one entry. An absent or unknown `kid` is
+  refused and never defaults. Each entry's `kid` must be a published derivation of its key.
+  The algorithm must be `EdDSA`; a `crit` header member or a duplicate header member is refused.
+- **SC-3 and DEC-G5-4.** `iss` must equal the selected entry's issuer, and so must `sub`.
+- **K-1.** One invalid entry, a duplicate `kid`, or one key under two `kid`s refuses the whole
+  set. An unset or refused set refuses every operator token. The log names a fixed reason and the
+  `kid`s, never key material.
+- **SC-1, for bound keys only.** Every key except the predecessor's (issuer
+  `forge_command_local`) is route-bound: the token's `scope` must be exactly the route's action,
+  its `target` must equal the route's path parameters, and a `roles` claim is refused. The
+  admin role is granted only after this check, so a role can never bypass it. The `target` binds
+  path parameters only: on the six mutating routes with no path parameter (licenses, entitlement
+  override, usage adjust, commercial-policy publish, release create, campaign create) a bound
+  token is bound to its action, not to the body's target (`KI-FOC-20261114-001`). **SC-1 is not met
+  for the predecessor's key.** That exemption is DEC-G5-2 (b), a named, open state that ends at
+  P3 gate G7, when the predecessor's key and `UNBOUND_PREDECESSOR_ISSUER` are removed.
+- **SC-2, for every key.** Each operator token must carry a `jti` and is accepted once. The
+  identity is the issuer and the `jti` together. The claim is one atomic insert into
+  `public.operator_token_replay` (migration 0018), after every other check and before the
+  handler runs, so a refused token claims nothing. A second use gets `401`. An unavailable store
+  refuses the token with `503`. The predecessor's key is covered because no predecessor command
+  sends more than one request per token (P-1, measured at `Forge_Command@e8382cc`).
 - A customer token cannot authorize an admin route.
 
 Rake access tokens (issued by `POST /v1/app-tokens/rake`):
@@ -1324,9 +1360,8 @@ ES256 customer validation uses the configured HTTPS issuer's public JWKS.
 | `SUPABASE_JWT_ISSUER` | yes | none | Exact customer JWT issuer; HTTPS URL also determines the public JWKS location. |
 | `SUPABASE_JWT_AUDIENCE` | no | `authenticated` | Customer JWT audience. |
 | `SUPABASE_JWT_SECRET` | only for legacy HS256 tokens | empty | Optional legacy customer HS256 verification secret; ES256 needs no secret. |
-| `ADMIN_JWT_ISSUER` | yes | none | Operator token issuer (Forge Command Token Authority, e.g. `forge_command_local`). |
-| `ADMIN_JWT_AUDIENCE` | yes | none | Operator token audience (e.g. `forgecustomer-admin`). |
-| `ADMIN_JWT_PUBLIC_KEY` | required to accept admin tokens | empty | PEM-encoded Ed25519 (SPKI) **public** key that verifies operator JWTs minted by Forge Command. No shared secret. |
+| `ADMIN_JWT_AUDIENCE` | yes | none | Operator token audience for the admin routes (e.g. `forgecustomer-admin`). The posture audience is fixed: `forgecustomer-posture`. |
+| `ADMIN_JWT_TRUSTED_KEYS` | required to accept operator tokens | empty | The operator trusted-key set (P3 gate G5, DEC-G5-1): a JSON object `{kid: {"key": <Ed25519 SPKI PEM>, "issuer": <issuer>}}`. **Public** material only; no shared secret. Each `kid` must be a published derivation of its key: `base64url(SHA-256(raw))[:8]` or the first 8 bytes of `SHA-256(raw)` in lower-case hex. One invalid entry, a duplicate `kid` or one key under two `kid`s refuses the whole set. An unset or refused set refuses every operator token; the service still starts. It replaced `ADMIN_JWT_PUBLIC_KEY` and `ADMIN_JWT_ISSUER`. |
 | `STRIPE_SECRET_KEY` | required for checkout/webhook work | empty | Stripe API secret. |
 | `STRIPE_WEBHOOK_SECRET` | required for webhook work | empty | Stripe webhook verification secret. |
 | `STRIPE_API_BASE` | no | `https://api.stripe.com` | Stripe REST API base URL; override to target a mock or test gateway. |
@@ -1389,7 +1424,14 @@ supabase db push
 ### Operational probes
 
 - `/v1/health` means the process is running.
-- `/v1/ready` means the database can answer `select 1`.
+- `/v1/ready` means the database answers `select 1`, the table `operator_token_replay` exists,
+  and the operator trusted-key set loaded. A failure returns 503 with
+  `{"status":"not_ready","failed":[...]}`. The list holds check names only: `database`,
+  `operator_token_replay`, `ADMIN_JWT_TRUSTED_KEYS`.
+- After every change to the Render service (environment, settings, deploy), run the
+  credential-free probe in `docs/operations/render_probe.json`. A dummy bearer token on an
+  operator route must return 401. A 500 that says "not configured" means the operator plane is
+  down while readiness may still pass on the old code.
 - `/v1/version` identifies service, crate version, git SHA if injected, and environment.
 
 Load balancers should gate on readiness, not liveness.
