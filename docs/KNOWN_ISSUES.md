@@ -17,9 +17,13 @@ forgecustomer#63 and is not merged.
 `ADMIN_JWT_PUBLIC_KEY` as a PEM key. It could not parse the value, so every operator route
 returned 500 "token verification is not configured". That includes the five emergency stop
 routes. `/v1/ready` still returned 200. The operator corrected the value and Render restarted the
-service at 13:25 UTC. At 13:35 UTC the operator routes still returned 500, so the stored value
-still did not parse. The cause of that second failure is not known: the agent cannot read the
-stored value.
+service at 13:25 UTC. At 13:35 UTC the operator routes still returned 500. The operator then
+started a manual deploy at 13:38 UTC with no environment change (Render event
+`dep-dbs68gbl550s73fikbe0`, `envUpdated: false`). After it, a dummy token returned 401 on
+`/v1/admin/customers` and `/v1/posture/customers`. So the corrected value was stored before
+13:38, but the running process started before it was saved. A value saved with "Save only" does
+not reach a running service. The redacted export of the corrected environment
+(`render_env_redact.py` in the forge workspace) showed a well-formed key, which agrees.
 
 The Render service also has no health-check path. `render.yaml` names `/v1/ready`, but the
 service was created by hand and does not read the Blueprint. Render read the service settings
@@ -44,8 +48,8 @@ readiness.
 3. The operator sets **Settings → Health Check Path** to `/v1/ready` in the Render dashboard.
    Only the operator changes Render settings.
 
-**Scope:** open until the deployed operator routes return 401 to a dummy token, the dashboard
-shows `/v1/ready`, and #63 merges.
+**Scope:** open until the dashboard shows `/v1/ready` and #63 merges. The deployed operator
+routes return 401 to a dummy token since 13:38 UTC (measured 13:47 UTC).
 
 ---
 
