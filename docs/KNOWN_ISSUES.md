@@ -16,8 +16,9 @@ explicitly unproven G5 condition". It is "an accepted evidence boundary, not acc
 equivalence". The ruling asked for this entry, with an owner and closure criteria.
 
 **What is wrong:** a test of the source does not prove what the deployed binary is. Render builds
-`deploy/Dockerfile` on each deploy, with the build cache off. Four inputs can change between two
-builds of one commit:
+`deploy/Dockerfile` for each deploy of a new commit, with the build cache off. A deploy started by a
+settings save starts no build: the 18:10 UTC deploy of `KI-FOC-20261117-002` has no build event.
+Four inputs can change between two builds of one commit:
 
 1. `FROM rust:1-bookworm` (line 2) is a floating tag. The Rust toolchain can change to any 1.x
    release.
@@ -68,8 +69,8 @@ commit is needed. The save of `healthCheckPath` started `dep-dbu9gtrrjlhs73a13ba
 path". It redeployed `5a1a96d` with no new build and went live at 18:10:12 UTC.
 
 **Effect:** each settings change on this service is also a deploy. The service restarts, and its
-startup state is set again from the environment. A build filter or a docs-only rule does not stop
-it, because no commit starts it.
+startup state is set again from the environment. A build filter or a docs-only rule probably does
+not stop it, because no commit starts it. That is an inference. It was not tested.
 
 **Root cause:** Render behavior on a setting change. It is not a defect in this repository. Which
 settings start a deploy was not tested. Only the health-check path is observed.
@@ -158,7 +159,9 @@ path; that field is set by the operator only, in the Render dashboard, and is no
 
 **Scope:** open until the dashboard shows `/v1/ready` as the health-check path. The deployed
 operator routes return 401 to a dummy token since 13:38 UTC (measured 13:47 UTC), and again after
-the #63 deploy at 14:29:43 UTC.
+the #63 deploy at 14:29:43 UTC. **Update 2026-11-17:** the dashboard condition is met, because
+the Render API reads back `/v1/ready`. The scope is now: open until a deploy is seen to be gated on
+`/v1/ready`. The P3 G5 ruling of 2026-11-17 assigns that proof to G7.
 
 **Observed 2026-11-17 (read-only Render API, about 14:00 UTC).** `healthCheckPath` on
 `srv-d8l5pjm47okc73bffotg` is still empty, so no deploy is gated on `/v1/ready`. The endpoint works:
