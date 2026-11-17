@@ -31,6 +31,9 @@ exits 0, so the dependency audit passes. It is not a vulnerability.
 **Status:** OPEN for the dashboard setting only. The code part merged and deployed:
 forgecustomer#63 merged as `3791b2f`, deployed on Render as `dep-dbs6ve2jnfac73bue4j0`, live
 14:29:43 UTC. It stays open until the operator sets the Render health-check path.
+**Update 2026-11-17:** the operator set the path to `/v1/ready`, and the Render API read it back.
+The entry stays open until a deploy is seen to be gated on `/v1/ready`. See "Observed 2026-11-17,
+18:10 UTC" below.
 
 **What is wrong:** During G5 preparation, the trusted-key JSON was saved into
 `ADMIN_JWT_PUBLIC_KEY` instead of into `ADMIN_JWT_TRUSTED_KEYS`. The code on `main` reads
@@ -90,6 +93,18 @@ log shows "operator trusted-key set loaded" with `kids ["98Ue0PgZ"]`. A dummy to
 Render service setting. The dashboard step 3 above is still the fix. Evidence: forge-command
 `docs/plans/BDS_FCO_P3_TOKEN_ISSUER_v0.1/evidence/G5/ACCEPTANCE_MATRIX.md`, section "Evidence
 refresh — 2026-11-17".
+
+**Observed 2026-11-17, 18:10 UTC (read-only Render API).** The operator saved `/v1/ready` as the
+health-check path in the dashboard. `get_service` returns `healthCheckPath: "/v1/ready"`, with
+`updatedAt` 18:10:12 UTC. The save started a deploy on its own: `dep-dbu9gtrrjlhs73a13bag`, trigger
+`service_updated`, event property "health check path". It redeployed commit `5a1a96d` with no new
+build, and went live at 18:10:12 UTC. The startup log shows `kids ["98Ue0PgZ"]` again. At 18:10:47
+UTC, `GET /v1/ready` returned 200 `{"status":"ready"}` in 0.43 s.
+
+**Not verified:** the request log for the deploy window shows no Render health-check call to
+`/v1/ready`. The only `/v1/ready` request is the probe above. Render can send its health checks
+outside the request log. So this deploy does not show that Render gated it on `/v1/ready`. That
+needs a deploy that fails the check, or a Render record of the check.
 
 ---
 
@@ -458,6 +473,11 @@ changes only `docs/KNOWN_ISSUES.md`, and it deployed as `dep-dbtvv2dckfvc73c11pv
 "Forge Customer" (`forge-customer`), not `render.yaml`'s `forgecustomer-api`, and its plan and
 health-check path differ from `render.yaml` too. That supports the inference that the Blueprint does
 not manage this service; it does not prove it.
+
+**Observed 2026-11-17, 18:10 UTC (read-only Render API).** A change to a service setting also
+redeploys. Saving the health-check path started `dep-dbu9gtrrjlhs73a13bag` (trigger
+`service_updated`) with no new commit. So, before
+you change any dashboard setting on this service, plan for a redeploy.
 
 ---
 
