@@ -8,6 +8,23 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
+## KI-FOC-20261117-001 — `chrono` 0.4.45 is flagged unmaintained (RUSTSEC-2026-0543)
+
+**Found:** 2026-11-17, by `cargo audit` at `3791b2f` with the advisory database fetched that day
+(1527 advisories), during the P3 G5 evidence refresh run from forge-command.
+
+**What is wrong:** RustSec advisory RUSTSEC-2026-0543 (2026-09-14) marks `chrono` as
+unmaintained. `Cargo.lock` pins `chrono` 0.4.45. `cargo audit` reports it as an allowed warning and
+exits 0, so the dependency audit passes. It is not a vulnerability.
+
+**Root cause:** an upstream maintenance status, not a defect in this repository.
+
+**Fix:** none made. A replacement crate or a decision to keep `chrono` is an owner choice.
+
+**Scope:** open.
+
+---
+
 ## KI-FOC-20261114-005 — the operator plane failed while readiness stayed green, and the deployed service had no health-check path
 
 **Date found:** 2026-11-14
@@ -63,6 +80,16 @@ path; that field is set by the operator only, in the Render dashboard, and is no
 **Scope:** open until the dashboard shows `/v1/ready` as the health-check path. The deployed
 operator routes return 401 to a dummy token since 13:38 UTC (measured 13:47 UTC), and again after
 the #63 deploy at 14:29:43 UTC.
+
+**Observed 2026-11-17 (read-only Render API, about 14:00 UTC).** `healthCheckPath` on
+`srv-d8l5pjm47okc73bffotg` is still empty, so no deploy is gated on `/v1/ready`. The endpoint works:
+`GET /v1/ready` returned 200 `{"status":"ready"}` at 14:01:29 UTC after a 12.5 s cold start, and the
+log shows "operator trusted-key set loaded" with `kids ["98Ue0PgZ"]`. A dummy token on
+`/v1/admin/customers` returned 401 `INVALID_TOKEN`. The owner authorized setting the path on
+2026-11-17 (chat, unsigned). It is not set: the Claude Code session had no tool that changes a
+Render service setting. The dashboard step 3 above is still the fix. Evidence: forge-command
+`docs/plans/BDS_FCO_P3_TOKEN_ISSUER_v0.1/evidence/G5/ACCEPTANCE_MATRIX.md`, section "Evidence
+refresh — 2026-11-17".
 
 ---
 
@@ -320,6 +347,11 @@ the #63 deploy at 14:29:43 UTC.
 
 **Scope:** open. Before the release, clients must handle a cold start (Author-Forge checklist O-04a). The entry closes when the instance type changes at the inaugural release (checklist O-04b).
 
+**Observed 2026-11-17 (read-only Render API).** The service is still on instance type `free`, build
+plan `starter`, as the 2026-11-06 ruling keeps it. The first request after idle took 12.5 s
+(`GET /v1/ready`, 14:01:29 UTC). `render.yaml` says `plan: starter`; the running service does not
+follow it (see `KI-FOC-20261002-001`).
+
 ---
 
 ## KI-FOC-20261105-001 — the entitlement key ring holds only the active key, so the documented rotation overlap does not exist
@@ -419,6 +451,13 @@ this service. Do not call the fix proven until a real documentation-only push sk
 **Fix needed (operator, in the Render dashboard):** set a build filter on the running service that ignores `*.md`, `doc/**` and `docs/**`, or turn off auto-deploy for it. Then re-test with a documentation-only merge and confirm that no deploy starts. The `render.yaml` change alone is not enough.
 
 **Scope:** open until a documentation-only merge is seen to skip the Render build on the running service. Merging a documentation change to `main` before then redeploys it.
+
+**Observed 2026-11-17 (read-only Render API).** The fault still occurs. Commit `5a1a96d` (#66)
+changes only `docs/KNOWN_ISSUES.md`, and it deployed as `dep-dbtvv2dckfvc73c11pv0` (trigger
+`new_commit`, live 07:17:57 UTC). The service has `autoDeploy: yes` on every commit. Its name is
+"Forge Customer" (`forge-customer`), not `render.yaml`'s `forgecustomer-api`, and its plan and
+health-check path differ from `render.yaml` too. That supports the inference that the Blueprint does
+not manage this service; it does not prove it.
 
 ---
 
