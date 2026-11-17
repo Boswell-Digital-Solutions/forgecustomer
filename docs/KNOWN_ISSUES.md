@@ -1,10 +1,12 @@
 # Known Issues
 
-Findings tracked here per the Forge workspace-wide protocol (`/home/charlie/Forge/CLAUDE.md`):
+Findings tracked here per the Forge workspace-wide protocol (`~/Forge/CLAUDE.md`):
 a bug, a root cause, a gap, or an open tracking state goes here, checked first before a finding
 is reported as new, and written in the same session it is found.
 
 ---
+
+> **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
 ## KI-FOC-20261114-005 — the operator plane failed while readiness stayed green, and the deployed service had no health-check path
 
