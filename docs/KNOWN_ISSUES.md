@@ -8,6 +8,54 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
+## KI-FOC-20261117-003 — a deployed binary cannot be shown to equal a build of the tested source
+
+**Found:** 2026-11-17, in the P3 G5 evidence refresh run from forge-command (Part C of the G5
+acceptance matrix). Operator ruling the same day (chat, unsigned): G5 accepts this as "an
+explicitly unproven G5 condition". It is "an accepted evidence boundary, not acceptance of binary
+equivalence". The ruling asked for this entry, with an owner and closure criteria.
+
+**What is wrong:** a test of the source does not prove what the deployed binary is. Render builds
+`deploy/Dockerfile` on each deploy, with the build cache off. Four inputs can change between two
+builds of one commit:
+
+1. `FROM rust:1-bookworm` (line 2) is a floating tag. The Rust toolchain can change to any 1.x
+   release.
+2. `FROM debian:bookworm-slim` (line 8) is a floating tag. The runtime image can change.
+3. `apt-get install -y --no-install-recommends ca-certificates` (lines 9–10) installs whatever
+   version the archive serves on that day.
+4. `cargo build --release --bin forgecustomer-api` (line 6) has no `--locked`. `Cargo.lock` is
+   copied, but the build does not fail if the lockfile and `Cargo.toml` disagree.
+
+No digest of the built image or binary is recorded, so nothing compares a deployed build with a
+tested build.
+
+**Root cause:** the Dockerfile was written for a working build, not a reproducible one.
+
+**Effect:** the G5 evidence covers the source at `3791b2f`, not the binary that Render runs. A
+local test used rustc 1.97.1. The toolchain in the deployed build is not known.
+
+**Proposed fix (not made):** pin both base images by digest (`rust:<version>-bookworm@sha256:…`,
+`debian:bookworm-slim@sha256:…`), add `--locked` to `cargo build`, and pin or record the
+`ca-certificates` version. Record the image digest of each deploy. Build the test binary from the
+same pinned image.
+
+**Owner:** the operator (forgecustomer). The fix changes the Dockerfile, which every deploy builds.
+So it needs its own authorization, and its merge redeploys Render.
+
+**Closure criteria:** all of these, each with evidence:
+
+1. The Dockerfile names no floating tag. Each `FROM` has a digest.
+2. `cargo build` runs with `--locked`.
+3. Two builds of one commit from the pinned Dockerfile give the same binary hash, or a recorded
+   difference that has an explanation.
+4. A deploy records its image digest, and that digest matches the image that was tested.
+
+**Scope:** open. It does not block G5 by ruling. It blocks any claim that a deployed binary equals
+a tested one.
+
+---
+
 ## KI-FOC-20261117-002 — saving a Render dashboard setting redeploys the service
 
 **Found:** 2026-11-17, 18:10 UTC, with the Render API, read only, after the operator saved the
