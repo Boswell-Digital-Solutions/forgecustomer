@@ -105,12 +105,12 @@ exits 0, so the dependency audit passes. It is not a vulnerability.
 ## KI-FOC-20261114-005 — the operator plane failed while readiness stayed green, and the deployed service had no health-check path
 
 **Date found:** 2026-11-14
-**Status:** OPEN for the dashboard setting only. The code part merged and deployed:
-forgecustomer#63 merged as `3791b2f`, deployed on Render as `dep-dbs6ve2jnfac73bue4j0`, live
-14:29:43 UTC. It stays open until the operator sets the Render health-check path.
-**Update 2026-11-17:** the operator set the path to `/v1/ready`, and the Render API read it back.
-The entry stays open until a deploy is seen to be gated on `/v1/ready`. See "Observed 2026-11-17,
-18:10 UTC" below.
+**Status:** OPEN for deploy gating only. The code part merged and deployed: forgecustomer#63
+merged as `3791b2f`, deployed on Render as `dep-dbs6ve2jnfac73bue4j0`, live 14:29:43 UTC. The
+health-check path is set: on 2026-11-17 the operator saved `/v1/ready`, and the Render API read it
+back. Not verified: that Render gates a deploy on `/v1/ready`. The P3 G5 ruling of 2026-11-17
+assigns that proof to G7. See "Observed 2026-11-17, 18:10 UTC" below. Until 2026-11-17 this status
+read "OPEN for the dashboard setting only".
 
 **What is wrong:** During G5 preparation, the trusted-key JSON was saved into
 `ADMIN_JWT_PUBLIC_KEY` instead of into `ADMIN_JWT_TRUSTED_KEYS`. The code on `main` reads
