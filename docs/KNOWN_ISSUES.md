@@ -8,6 +8,34 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
+## KI-FOC-20261117-002 — saving a Render dashboard setting redeploys the service
+
+**Found:** 2026-11-17, 18:10 UTC, with the Render API, read only, after the operator saved the
+health-check path. Operator ruling the same day (chat, unsigned): "Verified", and to be recorded as
+an operational hazard.
+
+**What is wrong:** a save of a service setting starts a deploy. Nobody starts it by hand, and no new
+commit is needed. The save of `healthCheckPath` started `dep-dbu9gtrrjlhs73a13bag` on
+`srv-d8l5pjm47okc73bffotg`. Its trigger is `service_updated`, with the event property "health check
+path". It redeployed `5a1a96d` with no new build and went live at 18:10:12 UTC.
+
+**Effect:** each settings change on this service is also a deploy. The service restarts, and its
+startup state is set again from the environment. A build filter or a docs-only rule does not stop
+it, because no commit starts it.
+
+**Root cause:** Render behavior on a setting change. It is not a defect in this repository. Which
+settings start a deploy was not tested. Only the health-check path is observed.
+
+**Fix:** none. Rule for operators and agents: a dashboard setting change on this service needs the
+same authorization as a deploy. Ask for both in one request. Plan the restart.
+
+**Related:** `KI-FOC-20261002-001` (a docs-only commit redeploys) and `KI-FOC-20261114-005` (the
+health-check path).
+
+**Scope:** open while the service redeploys on a settings save.
+
+---
+
 ## KI-FOC-20261117-001 — `chrono` 0.4.45 is flagged unmaintained (RUSTSEC-2026-0543)
 
 **Found:** 2026-11-17, by `cargo audit` at `3791b2f` with the advisory database fetched that day
