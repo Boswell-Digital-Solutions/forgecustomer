@@ -15,8 +15,9 @@ read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
 was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
 2026-11-18 00:27 America/New_York (05:27Z), `65d6f26b` as of 2026-11-18 00:38
-America/New_York (05:38Z), and `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z). This entry was checked against the trace at `13079833`; the trace's
-gap 6 row at `65d6f26b` and at `09ad0984` describes the same harness. The source was read at forgecustomer
+America/New_York (05:38Z), `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z), and
+`db0134b0` as of 2026-11-18 00:59 America/New_York (05:59Z). This entry was checked against the trace at `13079833`; the trace's
+gap 6 row at `65d6f26b`, at `09ad0984` and at `db0134b0` describes the same harness. The source was read at forgecustomer
 `ae62638` and Author-Forge `c539ac800`. This entry ran nothing.
 
 **Source classes:**
@@ -28,10 +29,11 @@ gap 6 row at `65d6f26b` and at `09ad0984` describes the same harness. The source
   `docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/RESULT.md`
   (2026-11-06, forgecustomer `c2b30f5`, Author-Forge `d0eacbf`), read from the record and not
   rerun by this entry.
-- Proposed plan or unmerged PR: forge #523 (open draft, head `09ad0984` as of 2026-11-18 00:48
-  America/New_York, 05:48Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`,
-  where this finding was found; and forgecustomer #69 (open draft, head `5366b11a` as of the same
+- Proposed plan or unmerged PR: forge #523 (open draft, head `db0134b0` as of 2026-11-18 00:59
+  America/New_York, 05:59Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`,
+  where this finding was found; and forgecustomer #69 (open draft, head `1a0c44c3` as of the same
   time), the AC-02 recheck on `main`, which this entry does not rely on until #69 merges.
+- Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt): the operator dispositions below.
 - AI research or review summary: the request to record this entry, and the bullet marked "From
   the pasted AI review", both from an AI review that the operator pasted into the session.
 
@@ -69,8 +71,8 @@ One test runs both sides together. It is the AC-02 harness of plan
 - Negative control: with `ENTITLEMENT_VERIFY_PUBLIC_KEYS` blank, the standby snapshot gives
   `UnknownKeyId`.
 - Result: AC-02 PASS on the candidate (`evidence/AC-02/RESULT.md`).
-- As of 2026-11-18 00:48 America/New_York (05:48Z), forgecustomer #69 (an open
-  draft, head `5366b11a`) records a recheck of this harness on `main` `ae62638`, with Author-Forge
+- As of 2026-11-18 00:59 America/New_York (05:59Z), forgecustomer #69 (an open
+  draft, head `1a0c44c3`) records a recheck of this harness on `main` `ae62638`, with Author-Forge
   `c539ac800`, in `evidence/AC-02/RECHECK_MAIN.md`: PASS, with the same negative control. This
   entry does not rely on it until #69 merges.
 
@@ -129,19 +131,20 @@ runs both sides on one build pair". That was wrong. The recording session (Claud
 AC-02 harness above, and found it while reading the key lifecycle plan. The title, the evidence,
 the root cause, the effect and the closure criteria now describe the harness and its limits.
 
-**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session on 2026-11-18 (relayed by that
-session, unsigned). Source class: local note (operator chat; no receipt).
+**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session
+on 2026-11-18 00:46 America/New_York (05:46Z), in answer to the coordinator's three questions at
+00:43 America/New_York (05:43:59Z) (relayed by that session, unsigned). Source class: Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt).
 
 - "API entitlement mechanism: Record direct verification of the existing ForgeCustomer-signed
-  forge.entitlements.v1 snapshot as the preferred architecture, pending explicit operator
+  `forge.entitlements.v1` snapshot as the preferred architecture, pending explicit operator
   approval of the detailed contract. Do not implement or treat this recommendation as an approved
   ruling."
 - "AuthorForge trust-set approval: WITHHELD pending independently verified public-key fingerprint
   evidence and an explicit operator approval. Do not install, embed, or publish a key."
-- "Preserve ForgeCustomer as the entitlement-signing authority and the new forge-command as the
-  operator-governance plane. Do not inherit signing authority from legacy Forge_Command."
+- "Preserve ForgeCustomer as the entitlement-signing authority and the new `forge-command` as the
+  operator-governance plane. Do not inherit signing authority from legacy `Forge_Command`."
 
-Recording session's note, not a ruling: if the preferred architecture is approved, the AuthorForge
+Proposed, not ruled: (From the recording session.) If the preferred architecture is approved, the AuthorForge
 API becomes a second consumer of the same snapshot. The cross-repository test would then need to
 cover both the shell verifier and the API verifier. Until a key is approved, such a test can use
 test keys only.
@@ -158,18 +161,20 @@ read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md` (gap 5). PR #523 is an open draft. Its
 head was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
 2026-11-18 00:27 America/New_York (05:27Z), `65d6f26b` as of 2026-11-18 00:38
-America/New_York (05:38Z), and `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z). This entry was checked against the trace at `13079833`. The refund
-and dispute facts below were read from forgecustomer source; the trace at `65d6f26b` and at
-`09ad0984` covers them too. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was run.
+America/New_York (05:38Z), `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z), and
+`db0134b0` as of 2026-11-18 00:59 America/New_York (05:59Z). This entry was checked against the trace at `13079833`. The refund
+and dispute facts below were read from forgecustomer source; the trace at `65d6f26b`, at
+`09ad0984` and at `db0134b0` covers them too. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was run.
 
 **Source classes:**
 
 - Canonical implemented reference and owned source modules: every code fact below, read from
   source.
-- Proposed plan or unmerged PR: forge #523 (open draft, head `09ad0984` as of 2026-11-18 00:48
-  America/New_York, 05:48Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`
+- Proposed plan or unmerged PR: forge #523 (open draft, head `db0134b0` as of 2026-11-18 00:59
+  America/New_York, 05:59Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`
   (gap 5, and "Consumer 1: the desktop shell" for the session paths), where this finding was
   found.
+- Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt): the operator dispositions below.
 - AI research or review summary: the request to record this entry, and the bullets marked "From
   the pasted AI review" and "From a second pasted AI review". The operator pasted both reviews
   into the session. The second one reviewed this PR (#68) at `19ef195`.
@@ -258,7 +263,7 @@ from Author-Forge source at `c539ac800` (`fleet_updates.rs` `refresh_session_if_
 session refresh asks the user to sign in again, the shell removes the session (lines 395-398).
 The verdict then refuses for lack of a session (lines 1211-1214), although the snapshot stays in
 the vault. The fuller list of session paths that remove or replace the linked session is in the
-#523 trace at `09ad0984`, section "Consumer 1: the desktop shell". The AuthorForge API does not
+#523 trace at `db0134b0`, section "Consumer 1: the desktop shell". The AuthorForge API does not
 verify a ForgeCustomer snapshot (Author-Forge `KI-AUF-20261105-001`).
 
 The lease is a separate matter. `POST /v1/entitlements/offline-lease` returns a lease valid for
@@ -285,6 +290,13 @@ records the same: "No normalized orders, order items, payment settlement, refund
 
 **Effect (inference):**
 
+- At Author-Forge `c539ac800` the shell's compiled trust set (`src-tauri/entitlement_trust_set.json`)
+  has no key, so the verifier refuses every snapshot with `NoKey`
+  (`src-tauri/src/infrastructure/forgecustomer_entitlement.rs` lines 216-218), and only the 0.x
+  pre-release switch opens cloud (`src-tauri/src/infrastructure/connection_mode.rs` line 105).
+  Trust-set approval is withheld (the operator's 2026-11-18 disposition, quoted under
+  `KI-FOC-20261118-002`; see also the dispositions below). Cases (a) and (b) are therefore
+  latent; they apply once a key is trusted.
 - Case (a): after an installation is deactivated, the shell can keep fetching new snapshots for
   it that grant cloud, with no time bound, as long as the subscription gate passes and the
   evaluation layers grant it. The same holds for the narrower cases above: a license-wide
@@ -358,19 +370,22 @@ forgecustomer, with Author-Forge as consumer.
 3. A test shows that after a revocation event, a commercially sensitive operation is refused
    within that latency.
 
-**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session on 2026-11-18 (relayed by that
-session, unsigned). Source class: local note (operator chat; no receipt).
+**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session
+on 2026-11-18 00:46 America/New_York (05:46Z), in answer to the coordinator's three questions at
+00:43 America/New_York (05:43:59Z) (relayed by that session, unsigned). Source class: Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt).
 
 - "Keep CP0 at STOP. No CP1 implementation, commercial deployment, Stripe changes, trust-set
   modification, or paid launch is authorized by this response."
 - The API entitlement mechanism: direct verification of the ForgeCustomer-signed snapshot is
   recorded as the preferred architecture, pending explicit operator approval of the detailed
-  contract (quoted in full under `KI-FOC-20261118-002`). It does not choose a revocation
-  mechanism. The revocation latency and offline-lease policy stay open.
+  contract (quoted in full under `KI-FOC-20261118-002`).
+
+Proposed, not ruled: (From the recording session.) The dispositions do not choose a revocation
+mechanism. The revocation latency and offline-lease policy stay open.
 
 **Scope:** open. CP1 is stopped (CP0 disposition `STOP`), so this blocks no current release. It
 blocks any claim that commercial revocation is enforced. Related: `KI-FOC-20261105-002`,
-`KI-FOC-20261118-002`; Author-Forge `KI-AUF-20261105-001`.
+`KI-FOC-20261118-002`; Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`.
 
 ---
 
