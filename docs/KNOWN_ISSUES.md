@@ -8,6 +8,387 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
+## KI-FOC-20261118-002 — the only test that signs an entitlement snapshot here and verifies it with the AuthorForge shell is a manual harness that no CI runs; nothing detects drift
+
+**Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
+read-only entitlement contract trace, forge PR #523,
+`docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
+was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
+2026-11-18 00:27 America/New_York (05:27Z), `65d6f26b` as of 2026-11-18 00:38
+America/New_York (05:38Z), `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z), and
+`db0134b0` as of 2026-11-18 00:59 America/New_York (05:59Z). This entry was checked against the trace at `13079833`; the trace's
+gap 6 row at `65d6f26b`, at `09ad0984` and at `db0134b0` describes the same harness. The source was read at forgecustomer
+`ae62638` and Author-Forge `c539ac800`. This entry ran nothing.
+
+**Source classes:**
+
+- Canonical implemented reference and owned source modules: the code facts below (the struct
+  contract, the signed bytes, the fixture commit and the unchanged contract files), read from
+  source. This class does not cover the AC-02 results.
+- CI result and installed artifact proof: the AC-02 run recorded in
+  `docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/RESULT.md`
+  (2026-11-06, forgecustomer `c2b30f5`, Author-Forge `d0eacbf`), read from the record and not
+  rerun by this entry.
+- Proposed plan or unmerged PR: forge #523 (open draft, head `db0134b0` as of 2026-11-18 00:59
+  America/New_York, 05:59Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`,
+  where this finding was found; and forgecustomer #69 (open draft, head `1a0c44c3` as of the same
+  time), the AC-02 recheck on `main`, which this entry does not rely on until #69 merges.
+- Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt): the operator dispositions below.
+- AI research or review summary: the request to record this entry, and the bullet marked "From
+  the pasted AI review", both from an AI review that the operator pasted into the session.
+
+**What is wrong:** ForgeCustomer signs `forge.entitlements.v1` snapshots
+(`api/src/domain/snapshot.rs`, `api/src/services/signing.rs`). The AuthorForge desktop shell
+verifies them with its own mirror of the struct
+(`src-tauri/src/infrastructure/forgecustomer_entitlement.rs`). The two must agree byte for byte:
+
+- The signed bytes are `serde_json::to_vec` of the struct with `signature` set to `""`. The field
+  stays in the bytes.
+- Struct fields keep declaration order. Only the `features` and `quotas` maps are sorted.
+
+Both sides rebuild the signed bytes from their own struct. The AuthorForge verifier
+deserializes the received JSON into its struct and serializes that struct again. So the order of
+fields in the transmitted JSON does not matter. What must agree is the struct definition on each
+side: its field set, field order and field types.
+
+The AuthorForge fixtures were signed with this repository's `Signer25519` at `4a55cd5`, as
+recorded in Author-Forge `KI-AUF-20261101-002`. That commit is older than `ae62638`. The contract
+files have not changed since: `git diff --stat 4a55cd5 ae62638` over `api/src/domain/snapshot.rs`,
+`api/src/services/signing.rs` and `api/src/domain/entitlement.rs` is empty. So the two sides agree
+today.
+
+One test runs both sides together. It is the AC-02 harness of plan
+`BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`, in
+`docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/`.
+
+- Its recorded run is on 2026-11-06, against forgecustomer `c2b30f5` (PR #43) and Author-Forge
+  `d0eacbf`.
+- It compiles the AuthorForge verifier unchanged (`forgecustomer_entitlement.rs`, sha256
+  `bae11061…`) with this repository's `AppState` and `Signer25519`.
+- It reads the real `GET /v1/entitlements/keys` answer through the router and parses it with
+  `TrustSet::from_json`. It verifies a snapshot from the active key and one from a standby key:
+  both give `Ok`.
+- Negative control: with `ENTITLEMENT_VERIFY_PUBLIC_KEYS` blank, the standby snapshot gives
+  `UnknownKeyId`.
+- Result: AC-02 PASS on the candidate (`evidence/AC-02/RESULT.md`).
+- As of 2026-11-18 00:59 America/New_York (05:59Z), forgecustomer #69 (an open
+  draft, head `1a0c44c3`) records a recheck of this harness on `main` `ae62638`, with Author-Forge
+  `c539ac800`, in `evidence/AC-02/RECHECK_MAIN.md`: PASS, with the same negative control. This
+  entry does not rely on it until #69 merges.
+
+The harness is plan evidence, not a test in either repository:
+
+- Its manifest is stored as `Cargo.toml.txt`, so no tooling builds it.
+- Its two source paths are placeholders, a forgecustomer checkout and an extracted Author-Forge
+  folder, and they must be filled in by hand.
+- No CI job runs it. Any rerun is by hand: the recheck on `main` that #69 records was a manual
+  run, and #69 is not merged as of this commit.
+- It covers verification and key selection only. It does not test a modified signed field, a
+  transport reorder, a change to the struct contract, expiry, or the wrong installation.
+
+The gap is that the harness is manual, no CI runs it, and so nothing detects drift. A future
+change to `EntitlementSnapshot` here (a field, its order or its type) would pass every test that runs in either repository, and then fail every real
+verification once a key is trusted.
+
+**Root cause:** the contract lives in two copies of one struct, in two repositories. The one
+cross-repository check is a manual harness, run by hand against commits chosen at the time.
+
+**Effect:** compatibility is proved for `c2b30f5` with `d0eacbf` (AC-02, the recorded run), and
+for the commit that signed the AuthorForge fixtures. For `ae62638` this entry relies on the
+contract files being unchanged. As of this commit a test run at `ae62638` is recorded only in
+open draft #69, a manual recheck that this entry does not rely on until #69 merges. Either way,
+nothing would detect a later change, because no CI runs the harness.
+
+**Proposed, not ruled:**
+
+- (From the pasted AI review.) Add a cross-repository sign, tamper, expiry, installation-isolation
+  and revocation test to the proposed CP1-WP09 acceptance in
+  `docs/plans/BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1_CP0_WP00.md`.
+- (From the recording session.) Turn the AC-02 harness into a test that CI runs, with its two
+  pins replaced by the current commits. Then add the closure cases below that it lacks.
+- (From the recording session.) A golden fixture signed by this repository's CI and checked into
+  Author-Forge, refreshed when `snapshot.rs` changes, would catch drift without running both
+  builds together.
+
+**Owner:** unassigned. The change spans forgecustomer and Author-Forge, so it needs each
+repository's authorization.
+
+**Closure criteria:** a test that CI runs, on a recorded forgecustomer commit and a recorded
+Author-Forge commit, signs a snapshot with this repository's code and verifies it with the
+AuthorForge shell verifier. The AC-02 harness already covers case 1 and key selection. The test
+shows each of these:
+
+1. A snapshot signed here verifies there.
+2. The same snapshot with its JSON fields in a different transport order still verifies, because
+   both sides rebuild the same signed bytes.
+3. A change to the serialization contract on one side is detected as incompatible. Examples: a
+   field added, removed, renamed, reordered in the struct, or given another type.
+4. A modified signed field fails signature verification.
+5. An expired snapshot and a snapshot for another installation each fail authorization.
+
+**Correction (2026-11-18 America/New_York; same date UTC).** The first version of this entry, on this pull request, said "No test
+runs both sides on one build pair". That was wrong. The recording session (Claude Code) missed the
+AC-02 harness above, and found it while reading the key lifecycle plan. The title, the evidence,
+the root cause, the effect and the closure criteria now describe the harness and its limits.
+
+**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session
+on 2026-11-18 00:46 America/New_York (05:46Z), in answer to the coordinator's three questions at
+00:43 America/New_York (05:43:59Z) (relayed by that session, unsigned). Source class: Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt).
+
+- "API entitlement mechanism: Record direct verification of the existing ForgeCustomer-signed
+  `forge.entitlements.v1` snapshot as the preferred architecture, pending explicit operator
+  approval of the detailed contract. Do not implement or treat this recommendation as an approved
+  ruling."
+- "AuthorForge trust-set approval: WITHHELD pending independently verified public-key fingerprint
+  evidence and an explicit operator approval. Do not install, embed, or publish a key."
+- "Preserve ForgeCustomer as the entitlement-signing authority and the new `forge-command` as the
+  operator-governance plane. Do not inherit signing authority from legacy `Forge_Command`."
+
+Proposed, not ruled: (From the recording session.) If the preferred architecture is approved, the AuthorForge
+API becomes a second consumer of the same snapshot. The cross-repository test would then need to
+cover both the shell verifier and the API verifier. Until a key is approved, such a test can use
+test keys only.
+
+**Scope:** open. Related: Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`;
+`KI-FOC-20261118-001`; plan `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1` AC-02.
+
+---
+
+## KI-FOC-20261118-001 — revocation does not reach an issued entitlement snapshot before it expires, and some revocations do not reach a new one
+
+**Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
+read-only entitlement contract trace, forge PR #523,
+`docs/audits/bds_entitlement_contract_trace_2026-11-18.md` (gap 5). PR #523 is an open draft. Its
+head was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
+2026-11-18 00:27 America/New_York (05:27Z), `65d6f26b` as of 2026-11-18 00:38
+America/New_York (05:38Z), `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z), and
+`db0134b0` as of 2026-11-18 00:59 America/New_York (05:59Z). This entry was checked against the trace at `13079833`. The refund
+and dispute facts below were read from forgecustomer source; the trace at `65d6f26b`, at
+`09ad0984` and at `db0134b0` covers them too. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was run.
+
+**Source classes:**
+
+- Canonical implemented reference and owned source modules: every code fact below, read from
+  source.
+- Proposed plan or unmerged PR: forge #523 (open draft, head `db0134b0` as of 2026-11-18 00:59
+  America/New_York, 05:59Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`
+  (gap 5, and "Consumer 1: the desktop shell" for the session paths), where this finding was
+  found.
+- Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt): the operator dispositions below.
+- AI research or review summary: the request to record this entry, and the bullets marked "From
+  the pasted AI review" and "From a second pasted AI review". The operator pasted both reviews
+  into the session. The second one reviewed this PR (#68) at `19ef195`.
+
+**What is wrong:** there are two cases.
+
+**(a) A new snapshot ignores device, installation and explicit revocation. This has no time
+bound.** `GET /v1/entitlements/current` with `installation_id` (`api/src/routes/entitlements.rs`
+`current`, lines 65-127) binds the snapshot through `find_owned_installation`
+(`api/src/repositories/entitlements.rs` lines 499-516). That query checks only that the
+installation exists, belongs to the customer and has a product. Neither it nor the snapshot
+inputs read:
+
+- the device status (a revoked device);
+- the installation status (a deactivated installation, already recorded as
+  `KI-FOC-20261105-002`);
+- `license_revocations` rows.
+
+So each refresh in these cases signs a new snapshot. It grants cloud whenever the subscription
+gate and the evaluation layers grant it. Activation does refuse these cases
+(`api/src/repositories/licensing.rs`): a deactivated installation (line 371), a revoked device
+(line 374), a revoked license (line 410), and a matching `license_revocations` record
+(lines 420-439). Offline-lease issuance applies the same checks
+(`repositories/entitlements.rs` lines 576-615). Snapshot issuance does not.
+
+What writes these states narrows (a) in practice. At `ae62638`:
+
+- The only writer that revokes a device is account deletion (`api/src/repositories/privacy.rs`
+  line 411). The same transaction sets the customer to `anonymized` (line 383), so `current`'s
+  `require_active` refuses with HTTP 403 (`auth/extract.rs` lines 93-98), and it revokes every
+  license of the customer (lines 429-452).
+- The only writers of `license_revocations` are the admin license revocation
+  (`api/src/repositories/admin.rs` lines 536-547) and account deletion (`privacy.rs` lines
+  441-452). Both insert license-wide rows (no `device_id`, no `installation_id`), and in the same
+  transaction both set `licenses.status = 'revoked'` (`admin.rs` line 532; `privacy.rs` lines
+  430-440).
+
+So through the API only a deactivated installation reaches (a) (`KI-FOC-20261105-002`). Two
+narrower cases remain. A license-wide revocation of one license, while the customer holds
+another active license for the product, does not deny: the `revoked` hard denial follows the
+effective license, the most recent active one (`repositories/entitlements.rs` lines 338-347).
+And a device-scoped or installation-scoped `license_revocations` row, or a device set to
+`revoked`, written outside the API, is not read by snapshot issuance.
+
+**(b) A snapshot already issued keeps its grant until it expires.** A new snapshot does reflect
+these, because `current` evaluates current commercial state on each call:
+
+- the subscription gate: cloud is off unless the current subscription is `trialing` or `active`
+  (`api/src/domain/entitlement.rs` lines 92-98);
+- the commercial-policy layer: for AuthorForge, when an active policy document exists
+  (`repositories/entitlements.rs` lines 271-275), `apply_commercial_policy` sets
+  `authorforge.cloud.enabled` from the policy's cloud-token limit (lines 207-215), for the
+  included limits and for the `authorforge_included` and `authorforge_pro` plans
+  (`limits_for_plan`, lines 242-248);
+- the license grants, which count only active, unexpired licenses
+  (`repositories/entitlements.rs` lines 313-325);
+- the hard denial for license status `revoked` (`entitlement.rs` line 101;
+  `repositories/entitlements.rs` lines 338-356). It follows the customer's effective license:
+  the most recent active one when any exists, otherwise the most recent of any status
+  (lines 338-347);
+- promotional grants: unexpired `entitlement_grants` rows (`repositories/entitlements.rs`
+  lines 358-374);
+- admin overrides (`repositories/entitlements.rs` lines 376-392);
+- customer suspension: `current` calls `require_active` (`api/src/auth/extract.rs` lines 83-98),
+  which refuses a suspended customer with HTTP 403 and issues no snapshot.
+
+Only snapshots already issued lag. A snapshot is valid for `ENTITLEMENT_SNAPSHOT_TTL_HOURS`, 24 by
+default (`api/src/config.rs` line 202). There is no revocation list and no status endpoint for an
+issued snapshot or lease. `POST /v1/entitlements/check` (`routes/entitlements.rs` lines 139-198)
+gives a live answer for one feature or quota, but it has limits:
+
+- it calls itself "Advisory and read-only";
+- it takes no `installation_id`, so it cannot answer for a device or installation;
+- it is not bound to an issued snapshot;
+- nothing in Author-Forge at `c539ac800` calls it.
+
+A signed artifact cannot be withdrawn cryptographically. That is expected. The gap is the
+authorization decision: no consumer re-checks current commercial state before it acts on a
+snapshot. In the AuthorForge shell, the cloud decision rests on the cached snapshot
+(`src-tauri/src/fleet_updates.rs` `current_entitlement_verdict`, lines 1205-1226), refreshed only
+when `forgecustomer_entitlement_refresh` runs. A refresh that gets no response body leaves the
+cached snapshot in place (`fleet_updates.rs` lines 1245-1274). That covers a missing session, a
+transport error, a non-2xx response and an unreadable body. It includes the HTTP 403 that a
+suspended customer gets. The session paths can end the cached grant sooner. One example, read
+from Author-Forge source at `c539ac800` (`fleet_updates.rs` `refresh_session_if_needed`): if the
+session refresh asks the user to sign in again, the shell removes the session (lines 395-398).
+The verdict then refuses for lack of a session (lines 1211-1214), although the snapshot stays in
+the vault. The fuller list of session paths that remove or replace the linked session is in the
+#523 trace at `db0134b0`, section "Consumer 1: the desktop shell". The AuthorForge API does not
+verify a ForgeCustomer snapshot (Author-Forge `KI-AUF-20261105-001`).
+
+The lease is a separate matter. `POST /v1/entitlements/offline-lease` returns a lease valid for
+`OFFLINE_GRACE_DAYS`, 14 by default (`config.rs` line 203). The AuthorForge shell treats a lease as
+"never a cloud grant" (`forgecustomer_entitlement.rs`), so the 14-day lease is not a
+cloud-authorization path in the code read. The snapshot carries `authorforge.cloud.enabled`, so
+the snapshot is.
+
+**Root cause:** the snapshot was designed as a short-lived bearer artifact, and expiry is its only
+bound. Snapshot issuance and lease issuance check installation and device state differently. The
+commerce launch policy (CP0, section 7) describes these as the target:
+
+- suspension of commercial rights on an open dispute;
+- revocation on a full refund or a lost dispute;
+- restoration on a won dispute.
+
+The snapshot model has no way to deliver those inside its TTL. No refund or dispute event is
+applied: the webhook applies only six event types and keeps any other event only as an ignored
+receipt in `public.stripe_webhook_events` (`api/src/integrations/stripe.rs` lines 273-285,
+marked `Ignored` at lines 448-452; `api/src/repositories/commerce.rs`
+`process_stripe_webhook_event`, lines 171-207, with the row written at lines 265 and 317). None of the
+six is a refund or dispute event, and `api/src` has no refund or dispute handling. CP0 line 106
+records the same: "No normalized orders, order items, payment settlement, refunds, or disputes".
+
+**Effect (inference):**
+
+- At Author-Forge `c539ac800` the shell's compiled trust set (`src-tauri/entitlement_trust_set.json`)
+  has no key, so the verifier refuses every snapshot with `NoKey`
+  (`src-tauri/src/infrastructure/forgecustomer_entitlement.rs` lines 216-218), and only the 0.x
+  pre-release switch opens cloud (`src-tauri/src/infrastructure/connection_mode.rs` line 105).
+  Trust-set approval is withheld (the operator's 2026-11-18 disposition, quoted under
+  `KI-FOC-20261118-002`; see also the dispositions below). Cases (a) and (b) are therefore
+  latent; they apply once a key is trusted.
+- Case (a): after an installation is deactivated, the shell can keep fetching new snapshots for
+  it that grant cloud, with no time bound, as long as the subscription gate passes and the
+  evaluation layers grant it. The same holds for the narrower cases above: a license-wide
+  revocation while another active license exists, and device or installation revocations
+  written outside the API. A device revoked through the API comes with account deletion, which
+  gets HTTP 403 from `current`, so case (b) applies to it instead.
+- Case (b): after a change that the next snapshot does reflect, a snapshot issued before it keeps
+  granting cloud capability until `expires_at`, up to 24 hours with the default TTL. This covers
+  a subscription leaving `trialing` or `active`, a license revoked or no longer active, and a
+  customer suspended. For a suspended customer the 403 leaves the cached snapshot in place, so
+  the same bound applies.
+- A full refund, a lost dispute or an open dispute changes no subscription, license or
+  entitlement row: the webhook applies only six event types and keeps any other event only as an
+  ignored receipt (`stripe.rs` lines 273-285; `commerce.rs` lines 171-207, written at lines 265
+  and 317; CP0 line 106). So no
+  snapshot, new or issued, reflects one, and the 24-hour bound does not apply to them. No handler
+  reacts to the event itself. Only a separate action changes state afterwards. Examples:
+  - the admin license revocation (`admin.rs` lines 532-547);
+  - an admin entitlement override, `set_entitlement_override` (`admin.rs` lines 608-680). The
+    override layer merges last (`domain/entitlement.rs` lines 79-89; loaded at
+    `repositories/entitlements.rs` lines 376-392), so it can set `authorforge.cloud.enabled` to
+    `false`;
+  - a subscription change synced from Stripe, such as a cancellation, which expires an active
+    license through `license_sync_action` (`domain/license.rs` lines 76-80), called from
+    `commerce.rs` lines 524 and 645 through `sync_license_from_subscription_truth` and
+    `licensing.rs` line 840;
+  - an admin customer suspension (`admin.rs` line 244);
+  - account deletion (`privacy.rs`), which revokes every license of the customer (lines 429-452)
+    and deactivates the customer's entitlement overrides (line 479).
+- A license set to `suspended` is not a hard denial. It only drops that license's grants, so
+  cloud turns off only when that license was the only grant. `suspended` is set by subscription
+  sync: `license_sync_action` suspends an active license when the subscription becomes
+  `unpaid`, `paused` or `incomplete` (`api/src/domain/license.rs` lines 65-91; written at
+  `licensing.rs` lines 894-898).
+- This is inferred from the code read: `licensing.rs`, `routes/entitlements.rs`,
+  `repositories/entitlements.rs`, `entitlement.rs`, `extract.rs`, `config.rs`, `privacy.rs`,
+  `admin.rs`, `stripe.rs`, `commerce.rs`, `domain/license.rs`, and the AuthorForge
+  shell and API entitlement paths. It was not measured, and it was not checked route by route
+  across every cloud-gated operation.
+
+**Proposed, not ruled:**
+
+- (From the pasted AI review.) Separate three cases in policy before any implementation:
+  - online cloud operations, which need fresh entitlement state with a defined revocation or
+    status-refresh mechanism;
+  - offline authoring and recovery, which keep access to existing local work whatever the payment
+    state;
+  - offline leases, whose permitted operations must be defined so that a lease cannot become a
+    14-day cloud bypass.
+- (From a second pasted AI review.) For online paid cloud operations, check current entitlement
+  status at the service boundary, with a defined behavior when ForgeCustomer cannot be reached.
+  The check frequency, the tolerated outage window and the failure behavior need an
+  operator-approved policy.
+- (From the recording session.) The revocation latency is a policy number for the operator. A
+  shorter TTL, a status check before a commercially sensitive operation, or both are the obvious
+  options. CP0 section 7's rights table is the target.
+- (From the recording session.) Snapshot issuance could apply the device, installation and
+  `license_revocations` checks that lease issuance applies.
+
+**Owner:** unassigned. Proposed, not ruled: the operator for commercial policy, then
+forgecustomer, with Author-Forge as consumer.
+
+**Closure criteria:**
+
+1. Snapshot issuance refuses, or issues no cloud grant for, a revoked device, a deactivated
+   installation and an installation or device covered by a `license_revocations` row. A route
+   test shows each case. Through the API at `ae62638`, the deactivated installation is the case
+   that reaches (a); the rest of this criterion is hardening against the narrower cases above.
+2. The operator approves the revocation latency for snapshots already issued and the
+   offline-lease policy.
+3. A test shows that after a revocation event, a commercially sensitive operation is refused
+   within that latency.
+
+**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session
+on 2026-11-18 00:46 America/New_York (05:46Z), in answer to the coordinator's three questions at
+00:43 America/New_York (05:43:59Z) (relayed by that session, unsigned). Source class: Local note / imported browser register (operator chat in the forge-command coordinator session, relayed by that session, unsigned; no receipt).
+
+- "Keep CP0 at STOP. No CP1 implementation, commercial deployment, Stripe changes, trust-set
+  modification, or paid launch is authorized by this response."
+- The API entitlement mechanism: direct verification of the ForgeCustomer-signed snapshot is
+  recorded as the preferred architecture, pending explicit operator approval of the detailed
+  contract (quoted in full under `KI-FOC-20261118-002`).
+
+Proposed, not ruled: (From the recording session.) The dispositions do not choose a revocation
+mechanism. The revocation latency and offline-lease policy stay open.
+
+**Scope:** open. CP1 is stopped (CP0 disposition `STOP`), so this blocks no current release. It
+blocks any claim that commercial revocation is enforced. Related: `KI-FOC-20261105-002`,
+`KI-FOC-20261118-002`; Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`.
+
+---
+
 ## KI-FOC-20261117-003 — a deployed binary cannot be shown to equal a build of the tested source
 
 **Found:** 2026-11-17, in the P3 G5 evidence refresh run from forge-command (Part C of the G5
