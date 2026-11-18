@@ -8,20 +8,27 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
-## KI-FOC-20261118-002 — the only test that signs an entitlement snapshot here and verifies it with the AuthorForge shell is a manual, one-time harness; nothing reruns it
+## KI-FOC-20261118-002 — the only test that signs an entitlement snapshot here and verifies it with the AuthorForge shell is a manual harness that no CI runs; nothing detects drift
 
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
-was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), and `13079833` as of
-2026-11-18 00:27 America/New_York (05:27Z). This entry was checked against the trace at
-`13079833`. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`.
-Nothing was run.
+was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
+2026-11-18 00:27 America/New_York (05:27Z), and `65d6f26b` as of 2026-11-18 00:38
+America/New_York (05:38Z). This entry was checked against the trace at `13079833`; the trace's
+gap 6 row at `65d6f26b` describes the same harness. The source was read at forgecustomer
+`ae62638` and Author-Forge `c539ac800`. This entry ran nothing.
 
 **Source classes:**
 
-- Canonical implemented reference and owned source modules: every code fact below, read from
-  source.
+- Canonical implemented reference and owned source modules: the code facts below (the struct
+  contract, the signed bytes, the fixture commit and the unchanged contract files), read from
+  source. This class does not cover the AC-02 results.
+- CI result and installed artifact proof: the AC-02 run recorded in
+  `docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/RESULT.md`
+  (2026-11-06, forgecustomer `c2b30f5`, Author-Forge `d0eacbf`), read from the record and not
+  rerun by this entry. The recheck that forgecustomer #69 records is cited as an open pull
+  request only; this entry does not rely on it.
 - AI research or review summary: the request to record this entry, and the bullet marked "From
   the pasted AI review", both from an AI review that the operator pasted into the session.
 
@@ -45,11 +52,11 @@ files have not changed since: `git diff --stat 4a55cd5 ae62638` over `api/src/do
 `api/src/services/signing.rs` and `api/src/domain/entitlement.rs` is empty. So the two sides agree
 today.
 
-One test has run both sides together. It is the AC-02 harness of plan
+One test runs both sides together. It is the AC-02 harness of plan
 `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`, in
 `docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/`.
 
-- It ran once, on 2026-11-06, against forgecustomer `c2b30f5` (PR #43) and Author-Forge
+- Its recorded run is on 2026-11-06, against forgecustomer `c2b30f5` (PR #43) and Author-Forge
   `d0eacbf`.
 - It compiles the AuthorForge verifier unchanged (`forgecustomer_entitlement.rs`, sha256
   `bae11061…`) with this repository's `AppState` and `Signer25519`.
@@ -59,26 +66,33 @@ One test has run both sides together. It is the AC-02 harness of plan
 - Negative control: with `ENTITLEMENT_VERIFY_PUBLIC_KEYS` blank, the standby snapshot gives
   `UnknownKeyId`.
 - Result: AC-02 PASS on the candidate (`evidence/AC-02/RESULT.md`).
+- As of this commit, 2026-11-18 00:39 America/New_York (05:39Z), forgecustomer #69 (an open
+  draft, head `5366b11a`) records a recheck of this harness on `main` `ae62638`, with Author-Forge
+  `c539ac800`, in `evidence/AC-02/RECHECK_MAIN.md`: PASS, with the same negative control. This
+  entry does not rely on it until #69 merges.
 
 The harness is plan evidence, not a test in either repository:
 
 - Its manifest is stored as `Cargo.toml.txt`, so no tooling builds it.
 - Its two source paths are placeholders, a forgecustomer checkout and an extracted Author-Forge
   folder, and they must be filled in by hand.
-- No CI job runs it, and it was not rerun on `main` after #43 merged.
+- No CI job runs it. Any rerun is by hand: the recheck on `main` that #69 records was a manual
+  run, and #69 is not merged as of this commit.
 - It covers verification and key selection only. It does not test a modified signed field, a
   transport reorder, a change to the struct contract, expiry, or the wrong installation.
 
-The gap is drift detection. A future change to `EntitlementSnapshot` here (a field, its order or
-its type) would pass every test that runs in either repository, and then fail every real
+The gap is that the harness is manual, no CI runs it, and so nothing detects drift. A future
+change to `EntitlementSnapshot` here (a field, its order or its type) would pass every test that runs in either repository, and then fail every real
 verification once a key is trusted.
 
 **Root cause:** the contract lives in two copies of one struct, in two repositories. The one
-cross-repository check is a manual harness pinned to two past commits.
+cross-repository check is a manual harness, run by hand against commits chosen at the time.
 
-**Effect:** compatibility is proved for `c2b30f5` with `d0eacbf` (AC-02), and for the commit that
-signed the AuthorForge fixtures. For `ae62638` it holds because the contract files are unchanged,
-not because a test shows it. Nothing would detect a later change.
+**Effect:** compatibility is proved for `c2b30f5` with `d0eacbf` (AC-02, the recorded run), and
+for the commit that signed the AuthorForge fixtures. For `ae62638` this entry relies on the
+contract files being unchanged. As of this commit a test run at `ae62638` is recorded only in
+open draft #69, a manual recheck that this entry does not rely on until #69 merges. Either way,
+nothing would detect a later change, because no CI runs the harness.
 
 **Proposed, not ruled:**
 
@@ -107,7 +121,7 @@ shows each of these:
 4. A modified signed field fails signature verification.
 5. An expired snapshot and a snapshot for another installation each fail authorization.
 
-**Correction (2026-11-18).** The first version of this entry, on this pull request, said "No test
+**Correction (2026-11-18 America/New_York; same date UTC).** The first version of this entry, on this pull request, said "No test
 runs both sides on one build pair". That was wrong. The recording session (Claude Code) missed the
 AC-02 harness above, and found it while reading the key lifecycle plan. The title, the evidence,
 the root cause, the effect and the closure criteria now describe the harness and its limits.
@@ -122,11 +136,11 @@ the root cause, the effect and the closure criteria now describe the harness and
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md` (gap 5). PR #523 is an open draft. Its
-head was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), and `13079833` as of
-2026-11-18 00:27 America/New_York (05:27Z). This entry was checked against the trace at
-`13079833`. The refund and dispute facts below go further than the trace, which lists them
-as not covered; they were read from forgecustomer source. The source was read at forgecustomer
-`ae62638` and Author-Forge `c539ac800`. Nothing was run.
+head was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
+2026-11-18 00:27 America/New_York (05:27Z), and `65d6f26b` as of 2026-11-18 00:38
+America/New_York (05:38Z). This entry was checked against the trace at `13079833`. The refund and
+dispute facts below were read from forgecustomer source; the trace at `65d6f26b` now covers them
+too. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was run.
 
 **Source classes:**
 
@@ -236,10 +250,11 @@ commerce launch policy (CP0, section 7) later required these:
 - restoration on a won dispute.
 
 The snapshot model has no way to deliver those inside its TTL. No refund or dispute event is
-handled at all: the Stripe webhook accepts six event types and acknowledges and ignores the rest
-(`api/src/integrations/stripe.rs` lines 273-285). None of them is a refund or dispute event, and
-`api/src` has no refund or dispute handling. CP0 line 106 records the same: "No normalized
-orders, order items, payment settlement, refunds, or disputes".
+applied: the webhook applies only six event types and keeps any other event only as an ignored
+receipt in `public.stripe_webhook_events` (`api/src/integrations/stripe.rs` lines 273-285,
+marked `Ignored` at lines 448-452; `api/src/repositories/commerce.rs` lines 171-207). None of the
+six is a refund or dispute event, and `api/src` has no refund or dispute handling. CP0 line 106
+records the same: "No normalized orders, order items, payment settlement, refunds, or disputes".
 
 **Effect (inference):**
 
@@ -254,10 +269,16 @@ orders, order items, payment settlement, refunds, or disputes".
   a subscription leaving `trialing` or `active`, a license revoked or no longer active, and a
   customer suspended. For a suspended customer the 403 leaves the cached snapshot in place, so
   the same bound applies.
-- A full refund, a lost dispute or an open dispute changes no row: no refund or dispute event
-  is handled (`stripe.rs` lines 273-285; CP0 line 106). So no snapshot, new or issued, reflects
-  one, and the 24-hour bound does not apply to them. In the code read, only the admin license
-  revocation (`admin.rs` lines 532-547) would change the license row after such an event.
+- A full refund, a lost dispute or an open dispute changes no subscription, license or
+  entitlement row: the webhook applies only six event types and keeps any other event only as an
+  ignored receipt (`stripe.rs` lines 273-285, `commerce.rs` lines 171-207; CP0 line 106). So no
+  snapshot, new or issued, reflects one, and the 24-hour bound does not apply to them. No handler
+  reacts to the event itself. Only a separate action changes state afterwards: the admin license
+  revocation (`admin.rs` lines 532-547), a subscription change synced from Stripe (such as a
+  cancellation, which expires the license through `license_sync_action`, `domain/license.rs`
+  lines 76-80, called from `commerce.rs` lines 524 and 645 through
+  `sync_license_from_subscription_truth` and `licensing.rs` line 840), or an admin customer
+  suspension (`admin.rs` line 244).
 - A license set to `suspended` is not a hard denial. It only drops that license's grants, so
   cloud turns off only when that license was the only grant. `suspended` is set by subscription
   sync: `license_sync_action` suspends an active license when the subscription becomes
@@ -265,7 +286,7 @@ orders, order items, payment settlement, refunds, or disputes".
   `licensing.rs` lines 894-898).
 - This is inferred from the code read: `licensing.rs`, `routes/entitlements.rs`,
   `repositories/entitlements.rs`, `entitlement.rs`, `extract.rs`, `config.rs`, `privacy.rs`,
-  `admin.rs`, `stripe.rs`, `domain/license.rs`, and the AuthorForge
+  `admin.rs`, `stripe.rs`, `commerce.rs`, `domain/license.rs`, and the AuthorForge
   shell and API entitlement paths. It was not measured, and it was not checked route by route
   across every cloud-gated operation.
 
