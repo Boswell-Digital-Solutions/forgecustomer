@@ -129,6 +129,23 @@ runs both sides on one build pair". That was wrong. The recording session (Claud
 AC-02 harness above, and found it while reading the key lifecycle plan. The title, the evidence,
 the root cause, the effect and the closure criteria now describe the harness and its limits.
 
+**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session on 2026-11-18 (relayed by that
+session, unsigned). Source class: local note (operator chat; no receipt).
+
+- "API entitlement mechanism: Record direct verification of the existing ForgeCustomer-signed
+  forge.entitlements.v1 snapshot as the preferred architecture, pending explicit operator
+  approval of the detailed contract. Do not implement or treat this recommendation as an approved
+  ruling."
+- "AuthorForge trust-set approval: WITHHELD pending independently verified public-key fingerprint
+  evidence and an explicit operator approval. Do not install, embed, or publish a key."
+- "Preserve ForgeCustomer as the entitlement-signing authority and the new forge-command as the
+  operator-governance plane. Do not inherit signing authority from legacy Forge_Command."
+
+Recording session's note, not a ruling: if the preferred architecture is approved, the AuthorForge
+API becomes a second consumer of the same snapshot. The cross-repository test would then need to
+cover both the shell verifier and the API verifier. Until a key is approved, such a test can use
+test keys only.
+
 **Scope:** open. Related: Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`;
 `KI-FOC-20261118-001`; plan `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1` AC-02.
 
@@ -340,6 +357,16 @@ forgecustomer, with Author-Forge as consumer.
    offline-lease policy.
 3. A test shows that after a revocation event, a commercially sensitive operation is refused
    within that latency.
+
+**Operator dispositions (2026-11-18):** the operator said in the forge-command coordinator session on 2026-11-18 (relayed by that
+session, unsigned). Source class: local note (operator chat; no receipt).
+
+- "Keep CP0 at STOP. No CP1 implementation, commercial deployment, Stripe changes, trust-set
+  modification, or paid launch is authorized by this response."
+- The API entitlement mechanism: direct verification of the ForgeCustomer-signed snapshot is
+  recorded as the preferred architecture, pending explicit operator approval of the detailed
+  contract (quoted in full under `KI-FOC-20261118-002`). It does not choose a revocation
+  mechanism. The revocation latency and offline-lease policy stay open.
 
 **Scope:** open. CP1 is stopped (CP0 disposition `STOP`), so this blocks no current release. It
 blocks any claim that commercial revocation is enforced. Related: `KI-FOC-20261105-002`,
