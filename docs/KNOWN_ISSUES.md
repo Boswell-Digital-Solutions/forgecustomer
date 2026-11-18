@@ -8,7 +8,7 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
-## KI-FOC-20261118-002 — no test signs an entitlement snapshot here and verifies it with the AuthorForge shell on one build pair
+## KI-FOC-20261118-002 — the only test that signs an entitlement snapshot here and verifies it with the AuthorForge shell is a manual, one-time harness; nothing reruns it
 
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
@@ -42,22 +42,50 @@ The AuthorForge fixtures were signed with this repository's `Signer25519` at `4a
 recorded in Author-Forge `KI-AUF-20261101-002`. That commit is older than `ae62638`. The contract
 files have not changed since: `git diff --stat 4a55cd5 ae62638` over `api/src/domain/snapshot.rs`,
 `api/src/services/signing.rs` and `api/src/domain/entitlement.rs` is empty. So the two sides agree
-today. The gap is drift detection. No test runs both sides on one build pair, so a future change
-to `EntitlementSnapshot` here (a field, its order, or its type) would pass every test in both
-repositories and then fail every real verification once a key is trusted.
+today.
 
-**Root cause:** the contract lives in two copies of one struct, in two repositories, with no shared
-test.
+One test has run both sides together. It is the AC-02 harness of plan
+`BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`, in
+`docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/`.
 
-**Effect:** compatibility is proved only for the commit that signed the fixtures. For `ae62638`
-it holds because the contract files are unchanged, not because a test shows it. Nothing would
-detect a later change.
+- It ran once, on 2026-11-06, against forgecustomer `c2b30f5` (PR #43) and Author-Forge
+  `d0eacbf`.
+- It compiles the AuthorForge verifier unchanged (`forgecustomer_entitlement.rs`, sha256
+  `bae11061…`) with this repository's `AppState` and `Signer25519`.
+- It reads the real `GET /v1/entitlements/keys` answer through the router and parses it with
+  `TrustSet::from_json`. It verifies a snapshot from the active key and one from a standby key:
+  both give `Ok`.
+- Negative control: with `ENTITLEMENT_VERIFY_PUBLIC_KEYS` blank, the standby snapshot gives
+  `UnknownKeyId`.
+- Result: AC-02 PASS on the candidate (`evidence/AC-02/RESULT.md`).
+
+The harness is plan evidence, not a test in either repository:
+
+- Its manifest is stored as `Cargo.toml.txt`, so no tooling builds it.
+- Its two source paths are placeholders, a forgecustomer checkout and an extracted Author-Forge
+  folder, and they must be filled in by hand.
+- No CI job runs it, and it was not rerun on `main` after #43 merged.
+- It covers verification and key selection only. It does not test a modified signed field, a
+  transport reorder, a change to the struct contract, expiry, or the wrong installation.
+
+The gap is drift detection. A future change to `EntitlementSnapshot` here (a field, its order or
+its type) would pass every test that runs in either repository, and then fail every real
+verification once a key is trusted.
+
+**Root cause:** the contract lives in two copies of one struct, in two repositories. The one
+cross-repository check is a manual harness pinned to two past commits.
+
+**Effect:** compatibility is proved for `c2b30f5` with `d0eacbf` (AC-02), and for the commit that
+signed the AuthorForge fixtures. For `ae62638` it holds because the contract files are unchanged,
+not because a test shows it. Nothing would detect a later change.
 
 **Proposed, not ruled:**
 
 - (From the pasted AI review.) Add a cross-repository sign, tamper, expiry, installation-isolation
   and revocation test to the proposed CP1-WP09 acceptance in
   `docs/plans/BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1_CP0_WP00.md`.
+- (From the recording session.) Turn the AC-02 harness into a test that CI runs, with its two
+  pins replaced by the current commits. Then add the closure cases below that it lacks.
 - (From the recording session.) A golden fixture signed by this repository's CI and checked into
   Author-Forge, refreshed when `snapshot.rs` changes, would catch drift without running both
   builds together.
@@ -65,9 +93,10 @@ detect a later change.
 **Owner:** unassigned. The change spans forgecustomer and Author-Forge, so it needs each
 repository's authorization.
 
-**Closure criteria:** a test, run on a recorded forgecustomer commit and a recorded Author-Forge
-commit, signs a snapshot with this repository's code and verifies it with the AuthorForge shell
-verifier. It shows each of these:
+**Closure criteria:** a test that CI runs, on a recorded forgecustomer commit and a recorded
+Author-Forge commit, signs a snapshot with this repository's code and verifies it with the
+AuthorForge shell verifier. The AC-02 harness already covers case 1 and key selection. The test
+shows each of these:
 
 1. A snapshot signed here verifies there.
 2. The same snapshot with its JSON fields in a different transport order still verifies, because
@@ -77,8 +106,13 @@ verifier. It shows each of these:
 4. A modified signed field fails signature verification.
 5. An expired snapshot and a snapshot for another installation each fail authorization.
 
+**Correction (2026-11-18).** The first version of this entry, on this pull request, said "No test
+runs both sides on one build pair". That was wrong. The recording session (Claude Code) missed the
+AC-02 harness above, and found it while reading the key lifecycle plan. The title, the evidence,
+the root cause, the effect and the closure criteria now describe the harness and its limits.
+
 **Scope:** open. Related: Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`;
-`KI-FOC-20261118-001`.
+`KI-FOC-20261118-001`; plan `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1` AC-02.
 
 ---
 
