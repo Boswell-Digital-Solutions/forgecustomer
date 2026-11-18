@@ -25,6 +25,11 @@ verifies them with its own mirror of the struct
   stays in the bytes.
 - Struct fields keep declaration order. Only the `features` and `quotas` maps are sorted.
 
+Both sides rebuild the signed bytes from their own struct. The AuthorForge verifier
+deserializes the received JSON into its struct and serializes that struct again. So the order of
+fields in the transmitted JSON does not matter. What must agree is the struct definition on each
+side: its field set, field order and field types.
+
 No test runs both sides on one build pair. The AuthorForge fixtures were signed with this
 repository's `Signer25519` at `4a55cd5`, as recorded in Author-Forge `KI-AUF-20261101-002`. That
 commit is older than `ae62638`. A change to `EntitlementSnapshot` here (a field, its order, or
@@ -50,8 +55,15 @@ repository's authorization.
 
 **Closure criteria:** a test, run on a recorded forgecustomer commit and a recorded Author-Forge
 commit, signs a snapshot with this repository's code and verifies it with the AuthorForge shell
-verifier. It shows that a tampered field, a reordered field, an expired snapshot and a wrong
-installation each fail.
+verifier. It shows each of these:
+
+1. A snapshot signed here verifies there.
+2. The same snapshot with its JSON fields in a different transport order still verifies, because
+   both sides rebuild the same signed bytes.
+3. A change to the serialization contract on one side is detected as incompatible. Examples: a
+   field added, removed, renamed, reordered in the struct, or given another type.
+4. A modified signed field fails signature verification.
+5. An expired snapshot and a snapshot for another installation each fail authorization.
 
 **Scope:** open. Related: Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`;
 `KI-FOC-20261118-001`.
@@ -77,8 +89,16 @@ implemented reference and owned source modules (read from source). Nothing was r
   default (line 203).
 - There is no revocation list and no status endpoint for an issued snapshot or lease.
 
-The AuthorForge shell treats a lease as "never a cloud grant"
-(`forgecustomer_entitlement.rs`). The snapshot, though, carries `authorforge.cloud.enabled`.
+A signed artifact cannot be withdrawn cryptographically. That is expected. The gap is the
+authorization decision: an online consumer could check current commercial state and refuse an
+operation before the snapshot expires. The trace found no such check. In the AuthorForge shell,
+the cloud decision rests on the cached snapshot (`fleet_updates.rs`
+`current_entitlement_verdict`), refreshed only when `forgecustomer_entitlement_refresh` runs. The
+AuthorForge API does not consume the snapshot at all (Author-Forge `KI-AUF-20261105-001`).
+
+The lease is a separate matter. The AuthorForge shell treats a lease as "never a cloud grant"
+(`forgecustomer_entitlement.rs`), so the 14-day lease is not a cloud-authorization path in the
+code read. The snapshot carries `authorforge.cloud.enabled`, so the snapshot is.
 
 **Root cause:** the snapshot was designed as a short-lived bearer artifact, and expiry is its only
 bound. The commerce launch policy (CP0, section 7) later required these:
@@ -91,7 +111,9 @@ The snapshot model has no way to deliver those inside its TTL.
 
 **Effect (inference):** after a full refund, a lost dispute or an open dispute, a snapshot issued
 before the event keeps granting cloud capability until `expires_at`, up to 24 hours with the
-default TTL. The trace did not measure this.
+default TTL. This is inferred from the code read: `licensing.rs`, `routes/entitlements.rs`,
+`config.rs`, and the AuthorForge shell and API entitlement paths. It was not measured, and it was
+not checked route by route across every cloud-gated operation.
 
 **Proposed, not ruled:**
 
@@ -102,6 +124,10 @@ default TTL. The trace did not measure this.
     state;
   - offline leases, whose permitted operations must be defined so that a lease cannot become a
     14-day cloud bypass.
+- (From a second pasted AI review.) For online paid cloud operations, check current entitlement
+  status at the service boundary, with a defined behavior when ForgeCustomer cannot be reached.
+  The check frequency, the tolerated outage window and the failure behavior need an
+  operator-approved policy.
 - (From the recording session.) The revocation latency is a policy number for the operator. A
   shorter TTL, a status check before a commercially sensitive operation, or both are the obvious
   options. CP0 section 7's rights table is the target.
