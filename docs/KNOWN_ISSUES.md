@@ -8,6 +8,118 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
+## KI-FOC-20261118-002 — no test signs an entitlement snapshot here and verifies it with the AuthorForge shell on one build pair
+
+**Found:** 2026-11-18, in a read-only entitlement contract trace (forge PR #523,
+`docs/audits/bds_entitlement_contract_trace_2026-11-18.md`), read at forgecustomer `ae62638`
+and Author-Forge `c539ac800`. Recorded at the request of an AI review that the operator pasted
+into the session. Source class: canonical implemented reference and owned source modules (read
+from source). Nothing was run.
+
+**What is wrong:** ForgeCustomer signs `forge.entitlements.v1` snapshots
+(`api/src/domain/snapshot.rs`, `api/src/services/signing.rs`). The AuthorForge desktop shell
+verifies them with its own mirror of the struct
+(`src-tauri/src/infrastructure/forgecustomer_entitlement.rs`). The two must agree byte for byte:
+
+- The signed bytes are `serde_json::to_vec` of the struct with `signature` set to `""`. The field
+  stays in the bytes.
+- Struct fields keep declaration order. Only the `features` and `quotas` maps are sorted.
+
+No test runs both sides on one build pair. The AuthorForge fixtures were signed with this
+repository's `Signer25519` at `4a55cd5`, as recorded in Author-Forge `KI-AUF-20261101-002`. That
+commit is older than `ae62638`. A change to `EntitlementSnapshot` here (a field, its order, or
+its type) would pass every test in both repositories and then fail every real verification.
+
+**Root cause:** the contract lives in two copies of one struct, in two repositories, with no shared
+test.
+
+**Effect:** compatibility is proved only for the commit that signed the fixtures. It is not proved
+for `main`.
+
+**Proposed, not ruled:**
+
+- (From the pasted AI review.) Add a cross-repository sign, tamper, expiry, installation-isolation
+  and revocation test to the proposed CP1-WP09 acceptance in
+  `docs/plans/BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1_CP0_WP00.md`.
+- (From the recording session.) A golden fixture signed by this repository's CI and checked into
+  Author-Forge, refreshed when `snapshot.rs` changes, would catch drift without running both
+  builds together.
+
+**Owner:** unassigned. The change spans forgecustomer and Author-Forge, so it needs each
+repository's authorization.
+
+**Closure criteria:** a test, run on a recorded forgecustomer commit and a recorded Author-Forge
+commit, signs a snapshot with this repository's code and verifies it with the AuthorForge shell
+verifier. It shows that a tampered field, a reordered field, an expired snapshot and a wrong
+installation each fail.
+
+**Scope:** open. Related: Author-Forge `KI-AUF-20261101-002`, `KI-AUF-20261105-001`;
+`KI-FOC-20261118-001`.
+
+---
+
+## KI-FOC-20261118-001 — an issued entitlement snapshot cannot be revoked before it expires
+
+**Found:** 2026-11-18, in a read-only entitlement contract trace (forge PR #523,
+`docs/audits/bds_entitlement_contract_trace_2026-11-18.md`), read at `ae62638`. Recorded at the
+request of an AI review that the operator pasted into the session. Source class: canonical
+implemented reference and owned source modules (read from source). Nothing was run.
+
+**What is wrong:**
+
+- ForgeCustomer enforces revocation when it decides an activation. `api/src/repositories/licensing.rs`
+  refuses a revoked installation (line 374), a revoked license (line 410) and an explicit denial
+  record (lines 420-422).
+- Once a snapshot is signed, nothing here can withdraw it. `GET /v1/entitlements/current` returns a
+  snapshot valid for `ENTITLEMENT_SNAPSHOT_TTL_HOURS`, 24 by default (`api/src/config.rs`
+  line 202).
+- `POST /v1/entitlements/offline-lease` returns a lease valid for `OFFLINE_GRACE_DAYS`, 14 by
+  default (line 203).
+- There is no revocation list and no status endpoint for an issued snapshot or lease.
+
+The AuthorForge shell treats a lease as "never a cloud grant"
+(`forgecustomer_entitlement.rs`). The snapshot, though, carries `authorforge.cloud.enabled`.
+
+**Root cause:** the snapshot was designed as a short-lived bearer artifact, and expiry is its only
+bound. The commerce launch policy (CP0, section 7) later required these:
+
+- suspension of commercial rights on an open dispute;
+- revocation on a full refund or a lost dispute;
+- restoration on a won dispute.
+
+The snapshot model has no way to deliver those inside its TTL.
+
+**Effect (inference):** after a full refund, a lost dispute or an open dispute, a snapshot issued
+before the event keeps granting cloud capability until `expires_at`, up to 24 hours with the
+default TTL. The trace did not measure this.
+
+**Proposed, not ruled:**
+
+- (From the pasted AI review.) Separate three cases in policy before any implementation:
+  - online cloud operations, which need fresh entitlement state with a defined revocation or
+    status-refresh mechanism;
+  - offline authoring and recovery, which keep access to existing local work whatever the payment
+    state;
+  - offline leases, whose permitted operations must be defined so that a lease cannot become a
+    14-day cloud bypass.
+- (From the recording session.) The revocation latency is a policy number for the operator. A
+  shorter TTL, a status check before a commercially sensitive operation, or both are the obvious
+  options. CP0 section 7's rights table is the target.
+
+**Owner:** the operator (commercial policy), then forgecustomer, with Author-Forge as consumer.
+
+**Closure criteria:**
+
+1. The operator approves the revocation latency and the offline-lease policy.
+2. A test shows that after a revocation event, a commercially sensitive operation is refused
+   within that latency.
+
+**Scope:** open. CP1 is stopped (CP0 disposition `STOP`), so this blocks no current release. It
+blocks any claim that commercial revocation is enforced. Related: `KI-FOC-20261118-002`;
+Author-Forge `KI-AUF-20261105-001`.
+
+---
+
 ## KI-FOC-20261117-003 — a deployed binary cannot be shown to equal a build of the tested source
 
 **Found:** 2026-11-17, in the P3 G5 evidence refresh run from forge-command (Part C of the G5
