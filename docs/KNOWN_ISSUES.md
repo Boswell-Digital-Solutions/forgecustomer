@@ -10,11 +10,19 @@ is reported as new, and written in the same session it is found.
 
 ## KI-FOC-20261118-002 — no test signs an entitlement snapshot here and verifies it with the AuthorForge shell on one build pair
 
-**Found:** 2026-11-18, in a read-only entitlement contract trace (forge PR #523,
-`docs/audits/bds_entitlement_contract_trace_2026-11-18.md`), read at forgecustomer `ae62638`
-and Author-Forge `c539ac800`. Recorded at the request of an AI review that the operator pasted
-into the session. Source class: canonical implemented reference and owned source modules (read
-from source). Nothing was run.
+**Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
+read-only entitlement contract trace, forge PR #523,
+`docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
+was `a55a9ef4` as of 2026-11-18T05:17Z, and this entry was checked against the trace at that
+commit. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was
+run.
+
+**Source classes:**
+
+- Canonical implemented reference and owned source modules: every code fact below, read from
+  source.
+- AI research or review summary: the request to record this entry, and the bullet marked "From
+  the pasted AI review", both from an AI review that the operator pasted into the session.
 
 **What is wrong:** ForgeCustomer signs `forge.entitlements.v1` snapshots
 (`api/src/domain/snapshot.rs`, `api/src/services/signing.rs`). The AuthorForge desktop shell
@@ -30,16 +38,20 @@ deserializes the received JSON into its struct and serializes that struct again.
 fields in the transmitted JSON does not matter. What must agree is the struct definition on each
 side: its field set, field order and field types.
 
-No test runs both sides on one build pair. The AuthorForge fixtures were signed with this
-repository's `Signer25519` at `4a55cd5`, as recorded in Author-Forge `KI-AUF-20261101-002`. That
-commit is older than `ae62638`. A change to `EntitlementSnapshot` here (a field, its order, or
-its type) would pass every test in both repositories and then fail every real verification.
+The AuthorForge fixtures were signed with this repository's `Signer25519` at `4a55cd5`, as
+recorded in Author-Forge `KI-AUF-20261101-002`. That commit is older than `ae62638`. The contract
+files have not changed since: `git diff --stat 4a55cd5 ae62638` over `api/src/domain/snapshot.rs`,
+`api/src/services/signing.rs` and `api/src/domain/entitlement.rs` is empty. So the two sides agree
+today. The gap is drift detection. No test runs both sides on one build pair, so a future change
+to `EntitlementSnapshot` here (a field, its order, or its type) would pass every test in both
+repositories and then fail every real verification once a key is trusted.
 
 **Root cause:** the contract lives in two copies of one struct, in two repositories, with no shared
 test.
 
-**Effect:** compatibility is proved only for the commit that signed the fixtures. It is not proved
-for `main`.
+**Effect:** compatibility is proved only for the commit that signed the fixtures. For `ae62638`
+it holds because the contract files are unchanged, not because a test shows it. Nothing would
+detect a later change.
 
 **Proposed, not ruled:**
 
@@ -70,38 +82,88 @@ verifier. It shows each of these:
 
 ---
 
-## KI-FOC-20261118-001 — an issued entitlement snapshot cannot be revoked before it expires
+## KI-FOC-20261118-001 — revocation does not reach an issued entitlement snapshot before it expires, and some revocations do not reach a new one
 
-**Found:** 2026-11-18, in a read-only entitlement contract trace (forge PR #523,
-`docs/audits/bds_entitlement_contract_trace_2026-11-18.md`), read at `ae62638`. Recorded at the
-request of an AI review that the operator pasted into the session. Source class: canonical
-implemented reference and owned source modules (read from source). Nothing was run.
+**Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
+read-only entitlement contract trace, forge PR #523,
+`docs/audits/bds_entitlement_contract_trace_2026-11-18.md` (gap 5). PR #523 is an open draft. Its
+head was `a55a9ef4` as of 2026-11-18T05:17Z, and this entry was checked against the trace at
+that commit. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`.
+Nothing was run.
 
-**What is wrong:**
+**Source classes:**
 
-- ForgeCustomer enforces revocation when it decides an activation. `api/src/repositories/licensing.rs`
-  refuses a revoked installation (line 374), a revoked license (line 410) and an explicit denial
-  record (lines 420-422).
-- Once a snapshot is signed, nothing here can withdraw it. `GET /v1/entitlements/current` returns a
-  snapshot valid for `ENTITLEMENT_SNAPSHOT_TTL_HOURS`, 24 by default (`api/src/config.rs`
-  line 202).
-- `POST /v1/entitlements/offline-lease` returns a lease valid for `OFFLINE_GRACE_DAYS`, 14 by
-  default (line 203).
-- There is no revocation list and no status endpoint for an issued snapshot or lease.
+- Canonical implemented reference and owned source modules: every code fact below, read from
+  source.
+- AI research or review summary: the request to record this entry, and the bullets marked "From
+  the pasted AI review" and "From a second pasted AI review". The operator pasted both reviews
+  into the session. The second one reviewed this PR (#68) at `19ef195`.
+
+**What is wrong:** there are two cases.
+
+**(a) A new snapshot ignores device, installation and explicit revocation. This has no time
+bound.** `GET /v1/entitlements/current` with `installation_id` (`api/src/routes/entitlements.rs`
+`current`, lines 65-127) binds the snapshot through `find_owned_installation`
+(`api/src/repositories/entitlements.rs` lines 499-516). That query checks only that the
+installation exists, belongs to the customer and has a product. Neither it nor the snapshot
+inputs read:
+
+- the device status (a revoked device);
+- the installation status (a deactivated installation, already recorded as
+  `KI-FOC-20261105-002`);
+- `license_revocations` rows.
+
+So each refresh in these cases signs a new snapshot. It grants cloud whenever the subscription
+gate and the evaluation layers grant it. Activation does refuse these cases
+(`api/src/repositories/licensing.rs`): a deactivated installation (line 371), a revoked device
+(line 374), a revoked license (line 410), and a matching `license_revocations` record
+(lines 420-439). Offline-lease issuance applies the same checks
+(`repositories/entitlements.rs` lines 576-615). Snapshot issuance does not.
+
+**(b) A snapshot already issued keeps its grant until it expires.** A new snapshot does reflect
+these, because `current` evaluates current commercial state on each call:
+
+- the subscription gate: cloud is off unless the current subscription is `trialing` or `active`
+  (`api/src/domain/entitlement.rs` lines 92-98);
+- the license grants, which count only active, unexpired licenses
+  (`repositories/entitlements.rs` lines 313-325);
+- the hard denial for license status `revoked` (`entitlement.rs` line 101;
+  `repositories/entitlements.rs` lines 338-356);
+- admin overrides (`repositories/entitlements.rs` lines 376-392);
+- customer suspension: `current` calls `require_active` (`api/src/auth/extract.rs` lines 83-98),
+  which refuses a suspended customer with HTTP 403 and issues no snapshot.
+
+Only snapshots already issued lag. A snapshot is valid for `ENTITLEMENT_SNAPSHOT_TTL_HOURS`, 24 by
+default (`api/src/config.rs` line 202). There is no revocation list and no status endpoint for an
+issued snapshot or lease. `POST /v1/entitlements/check` (`routes/entitlements.rs` lines 139-198)
+gives a live answer for one feature or quota, but it has limits:
+
+- it calls itself "Advisory and read-only";
+- it takes no `installation_id`, so it cannot answer for a device or installation;
+- it is not bound to an issued snapshot;
+- nothing in Author-Forge at `c539ac800` calls it.
 
 A signed artifact cannot be withdrawn cryptographically. That is expected. The gap is the
-authorization decision: an online consumer could check current commercial state and refuse an
-operation before the snapshot expires. The trace found no such check. In the AuthorForge shell,
-the cloud decision rests on the cached snapshot (`fleet_updates.rs`
-`current_entitlement_verdict`), refreshed only when `forgecustomer_entitlement_refresh` runs. The
-AuthorForge API does not consume the snapshot at all (Author-Forge `KI-AUF-20261105-001`).
+authorization decision: no consumer re-checks current commercial state before it acts on a
+snapshot. In the AuthorForge shell, the cloud decision rests on the cached snapshot
+(`src-tauri/src/fleet_updates.rs` `current_entitlement_verdict`, lines 1205-1226), refreshed only
+when `forgecustomer_entitlement_refresh` runs. A refresh that gets no response body leaves the
+cached snapshot in place (`fleet_updates.rs` lines 1245-1274). That covers a missing session, a
+transport error, a non-2xx response and an unreadable body. It includes the HTTP 403 that a
+suspended customer gets. One path differs: if the session refresh asks the user to sign in again,
+the shell removes the session (lines 395-398). The verdict then refuses for lack of a session
+(lines 1211-1214), although the snapshot stays in the vault. The AuthorForge API does not verify
+a ForgeCustomer snapshot (Author-Forge `KI-AUF-20261105-001`).
 
-The lease is a separate matter. The AuthorForge shell treats a lease as "never a cloud grant"
-(`forgecustomer_entitlement.rs`), so the 14-day lease is not a cloud-authorization path in the
-code read. The snapshot carries `authorforge.cloud.enabled`, so the snapshot is.
+The lease is a separate matter. `POST /v1/entitlements/offline-lease` returns a lease valid for
+`OFFLINE_GRACE_DAYS`, 14 by default (`config.rs` line 203). The AuthorForge shell treats a lease as
+"never a cloud grant" (`forgecustomer_entitlement.rs`), so the 14-day lease is not a
+cloud-authorization path in the code read. The snapshot carries `authorforge.cloud.enabled`, so
+the snapshot is.
 
 **Root cause:** the snapshot was designed as a short-lived bearer artifact, and expiry is its only
-bound. The commerce launch policy (CP0, section 7) later required these:
+bound. Snapshot issuance and lease issuance check installation and device state differently. The
+commerce launch policy (CP0, section 7) later required these:
 
 - suspension of commercial rights on an open dispute;
 - revocation on a full refund or a lost dispute;
@@ -109,11 +171,24 @@ bound. The commerce launch policy (CP0, section 7) later required these:
 
 The snapshot model has no way to deliver those inside its TTL.
 
-**Effect (inference):** after a full refund, a lost dispute or an open dispute, a snapshot issued
-before the event keeps granting cloud capability until `expires_at`, up to 24 hours with the
-default TTL. This is inferred from the code read: `licensing.rs`, `routes/entitlements.rs`,
-`config.rs`, and the AuthorForge shell and API entitlement paths. It was not measured, and it was
-not checked route by route across every cloud-gated operation.
+**Effect (inference):**
+
+- Case (a): after a device is revoked, an installation is deactivated or a `license_revocations`
+  row is written, the shell can keep fetching new snapshots that grant cloud, with no time bound,
+  as long as the subscription gate passes and the evaluation layers grant it.
+- Case (b): after a change that the next snapshot does reflect, a snapshot issued before it keeps
+  granting cloud capability until `expires_at`, up to 24 hours with the default TTL. This covers
+  a subscription leaving `trialing` or `active`, a license revoked or no longer active, and a
+  customer suspended. For a suspended customer the 403 leaves the cached snapshot in place, so
+  the same bound applies.
+- Not traced: how a full refund, a lost dispute or an open dispute changes the subscription or
+  license row. The 24-hour bound for those events holds only if they do. A license set to
+  `suspended` is not a hard denial. It only drops that license's grants, so cloud turns off only
+  when that license was the only grant. What sets a license to `suspended` was not traced.
+- This is inferred from the code read: `licensing.rs`, `routes/entitlements.rs`,
+  `repositories/entitlements.rs`, `entitlement.rs`, `extract.rs`, `config.rs`, and the AuthorForge
+  shell and API entitlement paths. It was not measured, and it was not checked route by route
+  across every cloud-gated operation.
 
 **Proposed, not ruled:**
 
@@ -131,18 +206,25 @@ not checked route by route across every cloud-gated operation.
 - (From the recording session.) The revocation latency is a policy number for the operator. A
   shorter TTL, a status check before a commercially sensitive operation, or both are the obvious
   options. CP0 section 7's rights table is the target.
+- (From the recording session.) Snapshot issuance could apply the device, installation and
+  `license_revocations` checks that lease issuance applies.
 
-**Owner:** the operator (commercial policy), then forgecustomer, with Author-Forge as consumer.
+**Owner:** unassigned. Proposed, not ruled: the operator for commercial policy, then
+forgecustomer, with Author-Forge as consumer.
 
 **Closure criteria:**
 
-1. The operator approves the revocation latency and the offline-lease policy.
-2. A test shows that after a revocation event, a commercially sensitive operation is refused
+1. Snapshot issuance refuses, or issues no cloud grant for, a revoked device, a deactivated
+   installation and an installation or device covered by a `license_revocations` row. A route
+   test shows each case.
+2. The operator approves the revocation latency for snapshots already issued and the
+   offline-lease policy.
+3. A test shows that after a revocation event, a commercially sensitive operation is refused
    within that latency.
 
 **Scope:** open. CP1 is stopped (CP0 disposition `STOP`), so this blocks no current release. It
-blocks any claim that commercial revocation is enforced. Related: `KI-FOC-20261118-002`;
-Author-Forge `KI-AUF-20261105-001`.
+blocks any claim that commercial revocation is enforced. Related: `KI-FOC-20261105-002`,
+`KI-FOC-20261118-002`; Author-Forge `KI-AUF-20261105-001`.
 
 ---
 
