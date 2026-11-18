@@ -7,7 +7,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Plan ID | BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 |
 | Title | ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code |
 | Lifecycle | authorized |
-| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates. No key operation, configuration change, deployment, merge or release is authorized. |
+| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates and their own operator authorization. No key operation, configuration change, deployment, merge or release is authorized. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-05 America/New_York |
 | Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |

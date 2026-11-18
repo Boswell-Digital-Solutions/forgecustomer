@@ -10,7 +10,7 @@ A JSON object `{ "<key_id>": "<base64 32-byte Ed25519 public key>" }`. It holds 
 
 The response is today `{ "schema": "forge.entitlements.v1", "keys": [ { "key_id", "public_key", "alg" } ] }`.
 
-**Proposed:** each entry adds `status` (`pending` | `active` | `retired`), `valid_from` and `retired_at`. These are the field names of DataForge `GET /receipt-keys`. Revoked keys are not listed. The existing three fields keep their meaning. Author-Forge's trust-set parser ignores nothing it needs, so this needs a decision (09 Decision 3).
+**Proposed:** each entry adds `status` (`pending` | `active` | `retired`), `valid_from` and `retired_at`. These are the field names of DataForge `GET /receipt-keys`. Revoked keys are not listed. The existing three fields keep their meaning. Author-Forge's trust-set parser ignores nothing it needs, so this was ruled in 09 Decision 3.
 
 ## C. Key registry (ports DataForge `verification_evidence_receipt_keys`)
 

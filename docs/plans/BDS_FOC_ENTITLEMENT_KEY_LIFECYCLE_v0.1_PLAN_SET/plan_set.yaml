@@ -21,7 +21,7 @@ source_lock:
 canonical_drive_destination: /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET
 compilation: "00-09 concatenated by hand into BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md"
 rulings: [R01, R02, R03, R04, R05, R06, R07, R08]
-rulings_status: proposed (R01-R08 bind on admission); decisions ruled 2026-11-06
+rulings_status: binding (R01-R08 bind since G0 PASS 2026-11-06); decisions ruled 2026-11-06
 reuse_matrix_ref: "03 §Reuse matrix"
 gaps:
   - { id: AUTHORITY_GAP-01, topic: no forgecustomer-admin credential from forge-command, blocks: ["WP-03 register step"] }

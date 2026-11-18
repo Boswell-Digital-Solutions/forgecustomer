@@ -16,7 +16,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Plan ID | BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 |
 | Title | ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code |
 | Lifecycle | authorized |
-| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates. No key operation, configuration change, deployment, merge or release is authorized. |
+| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates and their own operator authorization. No key operation, configuration change, deployment, merge or release is authorized. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-05 America/New_York |
 | Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
@@ -108,7 +108,7 @@ This component allocates authority and lists the gaps that block gates.
 
 **AUTHORITY_GAP-01 No admin credential from forge-command.** ForgeCustomer verifies admin tokens against the predecessor's `ADMIN_JWT_PUBLIC_KEY`. forge-command's issuer is not activated (`BDS-FCO-P3-TOKEN-ISSUER-001`, G4–G7 held). The admin key routes (WP-02) can be built and tested in ForgeCustomer now. forge-command cannot call them until that gate. Blocks WP-03 live use only.
 
-**AUTHORITY_GAP-02 No registry table in ForgeCustomer.** Inspected: migrations `0001`–`0016` hold no key table. Issued snapshots record `key_id` (`entitlement_snapshots`), and leases record it (`license_leases`). A registry with status events is new schema. It ports DataForge's `verification_evidence_receipt_keys` design. Blocks WP-02.
+**AUTHORITY_GAP-02 No registry table in ForgeCustomer.** Inspected: migrations `0001`–`0018` (re-inspected at main `96ba3bc`, 2026-11-18) hold no key table. Issued snapshots record `key_id` (`entitlement_snapshots`), and leases record it (`license_leases`). A registry with status events is new schema. It ports DataForge's `verification_evidence_receipt_keys` design. Blocks WP-02.
 
 **AUTHORITY_GAP-03 Trust-set statement on a release.** The forge-command guard needs to know which key ids a build trusts. ForgeCustomer release metadata has no such field (forge-command plan AUTHORITY_GAP-06). Blocks WP-04's guard input.
 
@@ -185,7 +185,7 @@ A JSON object `{ "<key_id>": "<base64 32-byte Ed25519 public key>" }`. It holds 
 
 The response is today `{ "schema": "forge.entitlements.v1", "keys": [ { "key_id", "public_key", "alg" } ] }`.
 
-**Proposed:** each entry adds `status` (`pending` | `active` | `retired`), `valid_from` and `retired_at`. These are the field names of DataForge `GET /receipt-keys`. Revoked keys are not listed. The existing three fields keep their meaning. Author-Forge's trust-set parser ignores nothing it needs, so this needs a decision (09 Decision 3).
+**Proposed:** each entry adds `status` (`pending` | `active` | `retired`), `valid_from` and `retired_at`. These are the field names of DataForge `GET /receipt-keys`. Revoked keys are not listed. The existing three fields keep their meaning. Author-Forge's trust-set parser ignores nothing it needs, so this was ruled in 09 Decision 3.
 
 ## C. Key registry (ports DataForge `verification_evidence_receipt_keys`)
 
@@ -396,8 +396,8 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 **WP-02 Registry and statuses (ForgeCustomer)**
 - **Outcome:** 05 §B (REQ-02, REQ-03).
 - **Starting evidence:** DataForge `verification_evidence_router.py`, its alembic migration and `doc/system/19`.
-- **Prerequisites:** G1; Decision 2.
-- **Permitted scope:** forgecustomer migration `0017_*`, repository, routes, tests, `contracts/openapi.yaml`, `doc/system/`.
+- **Prerequisites:** G1; Decision 2; the operator's execution authorization for this WP (not given).
+- **Permitted scope:** forgecustomer migration at the next free migration number at the WP-02 pin (today `0019_*`), repository, routes, tests, `contracts/openapi.yaml`, `doc/system/`.
 - **Boundaries:** additive migration only; additive response fields only (Decision 3).
 - **Deliverables:** code, migration, tests, OpenAPI, docs.
 - **Acceptance criteria:** AC-03, AC-04.
@@ -407,7 +407,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 **WP-03 Operator confirmation (forge-command)**
 - **Outcome:** 05 §C (REQ-04).
 - **Starting evidence:** predecessor `operator_signing.rs` and `operator_signing/*`.
-- **Prerequisites:** G2 for statuses; fleet-manager plan G1. The register step also needs AUTHORITY_GAP-01 closed.
+- **Prerequisites:** G2 for statuses; fleet-manager plan G1; the operator's execution authorization for this WP (not given). The register step also needs AUTHORITY_GAP-01 closed.
 - **Permitted scope:** forge-command, under `BDS-FCO-FLEET-MANAGER-v0.1`.
 - **Boundaries:** no key material in any IPC type.
 - **Deliverables:** discover and confirm commands, receipts, tests.
@@ -418,7 +418,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 **WP-04 Release-time trust set (Author-Forge)**
 - **Outcome:** 05 §D (REQ-05).
 - **Starting evidence:** `build-bundle.yml`, `entitlement_trust_set.json`, the RELACC 1.x-gate obligation.
-- **Prerequisites:** G1; a confirmation source (WP-03 receipts, or the interim of Decision 5).
+- **Prerequisites:** G1; a confirmation source (WP-03 receipts, or the interim of Decision 5); the operator's execution authorization for this WP (not given).
 - **Permitted scope:** Author-Forge workflow, a small script, tests, `doc/system/` §15 and §54.
 - **Boundaries:** the workflow holds no secret.
 - **Deliverables:** step, gate, tests, docs.
@@ -428,7 +428,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 
 **WP-05 Rotation rehearsal**
 - **Outcome:** 05 §E (REQ-06).
-- **Prerequisites:** G2, G3, G4.
+- **Prerequisites:** G2, G3, G4; the operator's execution authorization for this WP (not given).
 - **Permitted scope:** local services only.
 - **Boundaries:** no real key; no deployed service.
 - **Deliverables:** the rehearsal record.

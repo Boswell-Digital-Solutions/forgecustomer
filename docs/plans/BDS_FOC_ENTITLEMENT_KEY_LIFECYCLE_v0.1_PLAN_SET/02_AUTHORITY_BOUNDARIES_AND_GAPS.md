@@ -14,7 +14,7 @@ This component allocates authority and lists the gaps that block gates.
 
 **AUTHORITY_GAP-01 No admin credential from forge-command.** ForgeCustomer verifies admin tokens against the predecessor's `ADMIN_JWT_PUBLIC_KEY`. forge-command's issuer is not activated (`BDS-FCO-P3-TOKEN-ISSUER-001`, G4–G7 held). The admin key routes (WP-02) can be built and tested in ForgeCustomer now. forge-command cannot call them until that gate. Blocks WP-03 live use only.
 
-**AUTHORITY_GAP-02 No registry table in ForgeCustomer.** Inspected: migrations `0001`–`0016` hold no key table. Issued snapshots record `key_id` (`entitlement_snapshots`), and leases record it (`license_leases`). A registry with status events is new schema. It ports DataForge's `verification_evidence_receipt_keys` design. Blocks WP-02.
+**AUTHORITY_GAP-02 No registry table in ForgeCustomer.** Inspected: migrations `0001`–`0018` (re-inspected at main `96ba3bc`, 2026-11-18) hold no key table. Issued snapshots record `key_id` (`entitlement_snapshots`), and leases record it (`license_leases`). A registry with status events is new schema. It ports DataForge's `verification_evidence_receipt_keys` design. Blocks WP-02.
 
 **AUTHORITY_GAP-03 Trust-set statement on a release.** The forge-command guard needs to know which key ids a build trusts. ForgeCustomer release metadata has no such field (forge-command plan AUTHORITY_GAP-06). Blocks WP-04's guard input.
 
