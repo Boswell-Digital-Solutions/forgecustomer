@@ -8,12 +8,109 @@ is reported as new, and written in the same session it is found.
 
 > **Home paths.** Since 2026-11-17 this file writes the operator's home directory as `~`, and the home directory of another account as `~name`. This applies inside quoted source, commands and output too, so a quoted shebang or a quoted shell string shows `~` where the source held the absolute path. Reason: the KI store refuses an absolute home path in any field (plan BDS-KIDATA-v0.1, `KI-APPRENTICE-20261117-001` in the apprentice repository; operator decision (a), 2026-11-17).
 
+## KI-FOC-20261117-003 — a deployed binary cannot be shown to equal a build of the tested source
+
+**Found:** 2026-11-17, in the P3 G5 evidence refresh run from forge-command (Part C of the G5
+acceptance matrix). Operator ruling the same day (chat, unsigned): G5 accepts this as "an
+explicitly unproven G5 condition". It is "an accepted evidence boundary, not acceptance of binary
+equivalence". The ruling asked for this entry, with an owner and closure criteria.
+
+**What is wrong:** a test of the source does not prove what the deployed binary is. Render builds
+`deploy/Dockerfile` for each deploy of a new commit, with the build cache off. A deploy started by a
+settings save starts no build: the 18:10 UTC deploy of `KI-FOC-20261117-002` has no build event.
+Four inputs can change between two builds of one commit:
+
+1. `FROM rust:1-bookworm` (line 2) is a floating tag. The Rust toolchain can change to any 1.x
+   release.
+2. `FROM debian:bookworm-slim` (line 8) is a floating tag. The runtime image can change.
+3. `apt-get install -y --no-install-recommends ca-certificates` (lines 9–10) installs whatever
+   version the archive serves on that day.
+4. `cargo build --release --bin forgecustomer-api` (line 6) has no `--locked`. `Cargo.lock` is
+   copied, but the build does not fail if the lockfile and `Cargo.toml` disagree.
+
+No digest of the built image or binary is recorded, so nothing compares a deployed build with a
+tested build.
+
+**Root cause:** the Dockerfile was written for a working build, not a reproducible one.
+
+**Effect:** the G5 evidence covers the source at `3791b2f`, not the binary that Render runs. A
+local test used rustc 1.97.1. The toolchain in the deployed build is not known.
+
+**Proposed fix (not made):** pin both base images by digest (`rust:<version>-bookworm@sha256:…`,
+`debian:bookworm-slim@sha256:…`), add `--locked` to `cargo build`, and pin or record the
+`ca-certificates` version. Record the image digest of each deploy. Build the test binary from the
+same pinned image.
+
+**Owner:** the operator (forgecustomer). The fix changes the Dockerfile, which every deploy builds.
+So it needs its own authorization, and its merge redeploys Render.
+
+**Closure criteria:** all of these, each with evidence:
+
+1. The Dockerfile names no floating tag. Each `FROM` has a digest.
+2. `cargo build` runs with `--locked`.
+3. Two builds of one commit from the pinned Dockerfile give the same binary hash, or a recorded
+   difference that has an explanation.
+4. A deploy records its image digest, and that digest matches the image that was tested.
+
+**Scope:** open. It does not block G5 by ruling. It blocks any claim that a deployed binary equals
+a tested one.
+
+---
+
+## KI-FOC-20261117-002 — saving a Render dashboard setting redeploys the service
+
+**Found:** 2026-11-17, 18:10 UTC, with the Render API, read only, after the operator saved the
+health-check path. Operator ruling the same day (chat, unsigned): "Verified", and to be recorded as
+an operational hazard.
+
+**What is wrong:** a save of a service setting starts a deploy. Nobody starts it by hand, and no new
+commit is needed. The save of `healthCheckPath` started `dep-dbu9gtrrjlhs73a13bag` on
+`srv-d8l5pjm47okc73bffotg`. Its trigger is `service_updated`, with the event property "health check
+path". It redeployed `5a1a96d` with no new build and went live at 18:10:12 UTC.
+
+**Effect:** each settings change on this service is also a deploy. The service restarts, and its
+startup state is set again from the environment. A build filter or a docs-only rule probably does
+not stop it, because no commit starts it. That is an inference. It was not tested.
+
+**Root cause:** Render behavior on a setting change. It is not a defect in this repository. Which
+settings start a deploy was not tested. Only the health-check path is observed.
+
+**Fix:** none. Rule for operators and agents: a dashboard setting change on this service needs the
+same authorization as a deploy. Ask for both in one request. Plan the restart.
+
+**Related:** `KI-FOC-20261002-001` (a docs-only commit redeploys) and `KI-FOC-20261114-005` (the
+health-check path).
+
+**Scope:** open while the service redeploys on a settings save.
+
+---
+
+## KI-FOC-20261117-001 — `chrono` 0.4.45 is flagged unmaintained (RUSTSEC-2026-0543)
+
+**Found:** 2026-11-17, by `cargo audit` at `3791b2f` with the advisory database fetched that day
+(1527 advisories), during the P3 G5 evidence refresh run from forge-command.
+
+**What is wrong:** RustSec advisory RUSTSEC-2026-0543 (2026-09-14) marks `chrono` as
+unmaintained. `Cargo.lock` pins `chrono` 0.4.45. `cargo audit` reports it as an allowed warning and
+exits 0, so the dependency audit passes. It is not a vulnerability.
+
+**Root cause:** an upstream maintenance status, not a defect in this repository.
+
+**Fix:** none made. A replacement crate or a decision to keep `chrono` is an owner choice.
+
+**Scope:** open.
+
+---
+
 ## KI-FOC-20261114-005 — the operator plane failed while readiness stayed green, and the deployed service had no health-check path
 
 **Date found:** 2026-11-14
-**Status:** OPEN for the dashboard setting only. The code part merged and deployed:
-forgecustomer#63 merged as `3791b2f`, deployed on Render as `dep-dbs6ve2jnfac73bue4j0`, live
-14:29:43 UTC. It stays open until the operator sets the Render health-check path.
+**Status:** OPEN for deploy gating only. The code part merged and deployed: forgecustomer#63
+merged as `3791b2f`, deployed on Render as `dep-dbs6ve2jnfac73bue4j0`, live 14:29:43 UTC. The
+health-check path is set: on 2026-11-17 the operator saved `/v1/ready`, and the Render API read it
+back. Not verified: that Render gates a deploy on `/v1/ready`. The P3 G5 ruling of 2026-11-17
+assigns that proof to G7. See "Observed 2026-11-17, 18:10 UTC" below. Until 2026-11-17 this status
+read "OPEN for the dashboard setting only".
 
 **What is wrong:** During G5 preparation, the trusted-key JSON was saved into
 `ADMIN_JWT_PUBLIC_KEY` instead of into `ADMIN_JWT_TRUSTED_KEYS`. The code on `main` reads
@@ -62,7 +159,31 @@ path; that field is set by the operator only, in the Render dashboard, and is no
 
 **Scope:** open until the dashboard shows `/v1/ready` as the health-check path. The deployed
 operator routes return 401 to a dummy token since 13:38 UTC (measured 13:47 UTC), and again after
-the #63 deploy at 14:29:43 UTC.
+the #63 deploy at 14:29:43 UTC. **Update 2026-11-17:** the dashboard condition is met, because
+the Render API reads back `/v1/ready`. The scope is now: open until a deploy is seen to be gated on
+`/v1/ready`. The P3 G5 ruling of 2026-11-17 assigns that proof to G7.
+
+**Observed 2026-11-17 (read-only Render API, about 14:00 UTC).** `healthCheckPath` on
+`srv-d8l5pjm47okc73bffotg` is still empty, so no deploy is gated on `/v1/ready`. The endpoint works:
+`GET /v1/ready` returned 200 `{"status":"ready"}` at 14:01:29 UTC after a 12.5 s cold start, and the
+log shows "operator trusted-key set loaded" with `kids ["98Ue0PgZ"]`. A dummy token on
+`/v1/admin/customers` returned 401 `INVALID_TOKEN`. The owner authorized setting the path on
+2026-11-17 (chat, unsigned). It is not set: the Claude Code session had no tool that changes a
+Render service setting. The dashboard step 3 above is still the fix. Evidence: forge-command
+`docs/plans/BDS_FCO_P3_TOKEN_ISSUER_v0.1/evidence/G5/ACCEPTANCE_MATRIX.md`, section "Evidence
+refresh — 2026-11-17".
+
+**Observed 2026-11-17, 18:10 UTC (read-only Render API).** The operator saved `/v1/ready` as the
+health-check path in the dashboard. `get_service` returns `healthCheckPath: "/v1/ready"`, with
+`updatedAt` 18:10:12 UTC. The save started a deploy on its own: `dep-dbu9gtrrjlhs73a13bag`, trigger
+`service_updated`, event property "health check path". It redeployed commit `5a1a96d` with no new
+build, and went live at 18:10:12 UTC. The startup log shows `kids ["98Ue0PgZ"]` again. At 18:10:47
+UTC, `GET /v1/ready` returned 200 `{"status":"ready"}` in 0.43 s.
+
+**Not verified:** the request log for the deploy window shows no Render health-check call to
+`/v1/ready`. The only `/v1/ready` request is the probe above. Render can send its health checks
+outside the request log. So this deploy does not show that Render gated it on `/v1/ready`. That
+needs a deploy that fails the check, or a Render record of the check.
 
 ---
 
@@ -320,6 +441,11 @@ the #63 deploy at 14:29:43 UTC.
 
 **Scope:** open. Before the release, clients must handle a cold start (Author-Forge checklist O-04a). The entry closes when the instance type changes at the inaugural release (checklist O-04b).
 
+**Observed 2026-11-17 (read-only Render API).** The service is still on instance type `free`, build
+plan `starter`, as the 2026-11-06 ruling keeps it. The first request after idle took 12.5 s
+(`GET /v1/ready`, 14:01:29 UTC). `render.yaml` says `plan: starter`; the running service does not
+follow it (see `KI-FOC-20261002-001`).
+
 ---
 
 ## KI-FOC-20261105-001 — the entitlement key ring holds only the active key, so the documented rotation overlap does not exist
@@ -419,6 +545,18 @@ this service. Do not call the fix proven until a real documentation-only push sk
 **Fix needed (operator, in the Render dashboard):** set a build filter on the running service that ignores `*.md`, `doc/**` and `docs/**`, or turn off auto-deploy for it. Then re-test with a documentation-only merge and confirm that no deploy starts. The `render.yaml` change alone is not enough.
 
 **Scope:** open until a documentation-only merge is seen to skip the Render build on the running service. Merging a documentation change to `main` before then redeploys it.
+
+**Observed 2026-11-17 (read-only Render API).** The fault still occurs. Commit `5a1a96d` (#66)
+changes only `docs/KNOWN_ISSUES.md`, and it deployed as `dep-dbtvv2dckfvc73c11pv0` (trigger
+`new_commit`, live 07:17:57 UTC). The service has `autoDeploy: yes` on every commit. Its name is
+"Forge Customer" (`forge-customer`), not `render.yaml`'s `forgecustomer-api`, and its plan and
+health-check path differ from `render.yaml` too. That supports the inference that the Blueprint does
+not manage this service; it does not prove it.
+
+**Observed 2026-11-17, 18:10 UTC (read-only Render API).** A change to a service setting also
+redeploys. Saving the health-check path started `dep-dbu9gtrrjlhs73a13bag` (trigger
+`service_updated`) with no new commit. So, before
+you change any dashboard setting on this service, plan for a redeploy.
 
 ---
 
