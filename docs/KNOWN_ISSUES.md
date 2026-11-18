@@ -13,9 +13,10 @@ is reported as new, and written in the same session it is found.
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
-was `a55a9ef4` as of 2026-11-18T05:17Z, and this entry was checked against the trace at that
-commit. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was
-run.
+was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), and `13079833` as of
+2026-11-18 00:27 America/New_York (05:27Z). This entry was checked against the trace at
+`13079833`. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`.
+Nothing was run.
 
 **Source classes:**
 
@@ -121,9 +122,11 @@ the root cause, the effect and the closure criteria now describe the harness and
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md` (gap 5). PR #523 is an open draft. Its
-head was `a55a9ef4` as of 2026-11-18T05:17Z, and this entry was checked against the trace at
-that commit. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`.
-Nothing was run.
+head was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), and `13079833` as of
+2026-11-18 00:27 America/New_York (05:27Z). This entry was checked against the trace at
+`13079833`. The refund and dispute facts below go further than the trace, which lists them
+as not covered; they were read from forgecustomer source. The source was read at forgecustomer
+`ae62638` and Author-Forge `c539ac800`. Nothing was run.
 
 **Source classes:**
 
@@ -154,15 +157,43 @@ gate and the evaluation layers grant it. Activation does refuse these cases
 (lines 420-439). Offline-lease issuance applies the same checks
 (`repositories/entitlements.rs` lines 576-615). Snapshot issuance does not.
 
+What writes these states narrows (a) in practice. At `ae62638`:
+
+- The only writer that revokes a device is account deletion (`api/src/repositories/privacy.rs`
+  line 411). The same transaction sets the customer to `anonymized` (line 383), so `current`'s
+  `require_active` refuses with HTTP 403 (`auth/extract.rs` lines 93-98), and it revokes every
+  license of the customer (lines 429-452).
+- The only writers of `license_revocations` are the admin license revocation
+  (`api/src/repositories/admin.rs` lines 536-547) and account deletion (`privacy.rs` lines
+  441-452). Both insert license-wide rows (no `device_id`, no `installation_id`), and in the same
+  transaction both set `licenses.status = 'revoked'` (`admin.rs` line 532; `privacy.rs` lines
+  430-440).
+
+So through the API only a deactivated installation reaches (a) (`KI-FOC-20261105-002`). Two
+narrower cases remain. A license-wide revocation of one license, while the customer holds
+another active license for the product, does not deny: the `revoked` hard denial follows the
+effective license, the most recent active one (`repositories/entitlements.rs` lines 338-347).
+And a device-scoped or installation-scoped `license_revocations` row, or a device set to
+`revoked`, written outside the API, is not read by snapshot issuance.
+
 **(b) A snapshot already issued keeps its grant until it expires.** A new snapshot does reflect
 these, because `current` evaluates current commercial state on each call:
 
 - the subscription gate: cloud is off unless the current subscription is `trialing` or `active`
   (`api/src/domain/entitlement.rs` lines 92-98);
+- the commercial-policy layer: for AuthorForge, when an active policy document exists
+  (`repositories/entitlements.rs` lines 271-275), `apply_commercial_policy` sets
+  `authorforge.cloud.enabled` from the policy's cloud-token limit (lines 207-215), for the
+  included limits and for the `authorforge_included` and `authorforge_pro` plans
+  (`limits_for_plan`, lines 242-248);
 - the license grants, which count only active, unexpired licenses
   (`repositories/entitlements.rs` lines 313-325);
 - the hard denial for license status `revoked` (`entitlement.rs` line 101;
-  `repositories/entitlements.rs` lines 338-356);
+  `repositories/entitlements.rs` lines 338-356). It follows the customer's effective license:
+  the most recent active one when any exists, otherwise the most recent of any status
+  (lines 338-347);
+- promotional grants: unexpired `entitlement_grants` rows (`repositories/entitlements.rs`
+  lines 358-374);
 - admin overrides (`repositories/entitlements.rs` lines 376-392);
 - customer suspension: `current` calls `require_active` (`api/src/auth/extract.rs` lines 83-98),
   which refuses a suspended customer with HTTP 403 and issues no snapshot.
@@ -184,10 +215,11 @@ snapshot. In the AuthorForge shell, the cloud decision rests on the cached snaps
 when `forgecustomer_entitlement_refresh` runs. A refresh that gets no response body leaves the
 cached snapshot in place (`fleet_updates.rs` lines 1245-1274). That covers a missing session, a
 transport error, a non-2xx response and an unreadable body. It includes the HTTP 403 that a
-suspended customer gets. One path differs: if the session refresh asks the user to sign in again,
-the shell removes the session (lines 395-398). The verdict then refuses for lack of a session
-(lines 1211-1214), although the snapshot stays in the vault. The AuthorForge API does not verify
-a ForgeCustomer snapshot (Author-Forge `KI-AUF-20261105-001`).
+suspended customer gets. One path differs, read from Author-Forge source at `c539ac800`
+(`fleet_updates.rs` `refresh_session_if_needed`): if the session refresh asks the user to sign
+in again, the shell removes the session (lines 395-398). The verdict then refuses for lack of a
+session (lines 1211-1214), although the snapshot stays in the vault. The AuthorForge API does not
+verify a ForgeCustomer snapshot (Author-Forge `KI-AUF-20261105-001`).
 
 The lease is a separate matter. `POST /v1/entitlements/offline-lease` returns a lease valid for
 `OFFLINE_GRACE_DAYS`, 14 by default (`config.rs` line 203). The AuthorForge shell treats a lease as
@@ -203,24 +235,37 @@ commerce launch policy (CP0, section 7) later required these:
 - revocation on a full refund or a lost dispute;
 - restoration on a won dispute.
 
-The snapshot model has no way to deliver those inside its TTL.
+The snapshot model has no way to deliver those inside its TTL. No refund or dispute event is
+handled at all: the Stripe webhook accepts six event types and acknowledges and ignores the rest
+(`api/src/integrations/stripe.rs` lines 273-285). None of them is a refund or dispute event, and
+`api/src` has no refund or dispute handling. CP0 line 106 records the same: "No normalized
+orders, order items, payment settlement, refunds, or disputes".
 
 **Effect (inference):**
 
-- Case (a): after a device is revoked, an installation is deactivated or a `license_revocations`
-  row is written, the shell can keep fetching new snapshots that grant cloud, with no time bound,
-  as long as the subscription gate passes and the evaluation layers grant it.
+- Case (a): after an installation is deactivated, the shell can keep fetching new snapshots for
+  it that grant cloud, with no time bound, as long as the subscription gate passes and the
+  evaluation layers grant it. The same holds for the narrower cases above: a license-wide
+  revocation while another active license exists, and device or installation revocations
+  written outside the API. A device revoked through the API comes with account deletion, which
+  gets HTTP 403 from `current`, so case (b) applies to it instead.
 - Case (b): after a change that the next snapshot does reflect, a snapshot issued before it keeps
   granting cloud capability until `expires_at`, up to 24 hours with the default TTL. This covers
   a subscription leaving `trialing` or `active`, a license revoked or no longer active, and a
   customer suspended. For a suspended customer the 403 leaves the cached snapshot in place, so
   the same bound applies.
-- Not traced: how a full refund, a lost dispute or an open dispute changes the subscription or
-  license row. The 24-hour bound for those events holds only if they do. A license set to
-  `suspended` is not a hard denial. It only drops that license's grants, so cloud turns off only
-  when that license was the only grant. What sets a license to `suspended` was not traced.
+- A full refund, a lost dispute or an open dispute changes no row: no refund or dispute event
+  is handled (`stripe.rs` lines 273-285; CP0 line 106). So no snapshot, new or issued, reflects
+  one, and the 24-hour bound does not apply to them. In the code read, only the admin license
+  revocation (`admin.rs` lines 532-547) would change the license row after such an event.
+- A license set to `suspended` is not a hard denial. It only drops that license's grants, so
+  cloud turns off only when that license was the only grant. `suspended` is set by subscription
+  sync: `license_sync_action` suspends an active license when the subscription becomes
+  `unpaid`, `paused` or `incomplete` (`api/src/domain/license.rs` lines 65-91; written at
+  `licensing.rs` lines 894-898).
 - This is inferred from the code read: `licensing.rs`, `routes/entitlements.rs`,
-  `repositories/entitlements.rs`, `entitlement.rs`, `extract.rs`, `config.rs`, and the AuthorForge
+  `repositories/entitlements.rs`, `entitlement.rs`, `extract.rs`, `config.rs`, `privacy.rs`,
+  `admin.rs`, `stripe.rs`, `domain/license.rs`, and the AuthorForge
   shell and API entitlement paths. It was not measured, and it was not checked route by route
   across every cloud-gated operation.
 
@@ -250,7 +295,8 @@ forgecustomer, with Author-Forge as consumer.
 
 1. Snapshot issuance refuses, or issues no cloud grant for, a revoked device, a deactivated
    installation and an installation or device covered by a `license_revocations` row. A route
-   test shows each case.
+   test shows each case. Through the API at `ae62638`, the deactivated installation is the case
+   that reaches (a); the rest of this criterion is hardening against the narrower cases above.
 2. The operator approves the revocation latency for snapshots already issued and the
    offline-lease policy.
 3. A test shows that after a revocation event, a commercially sensitive operation is refused
