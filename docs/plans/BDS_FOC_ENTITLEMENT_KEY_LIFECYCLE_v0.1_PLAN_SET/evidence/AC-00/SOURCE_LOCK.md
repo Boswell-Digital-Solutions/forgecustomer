@@ -45,6 +45,38 @@ No row is wrong, so the stop condition does not apply.
 - **What it confirms:** the deployed ring publishes only its active key, as KI-FOC-20261105-001 states. No standby key exists yet (DEC-2).
 - **What it does not do:** the key is not copied into any trust set. Under DIR-1 and DEC-5 it reaches Author-Forge only through the release step, after you confirm the fingerprint.
 
+## 3a. Second reading, 2026-11-18 (deployed key state)
+
+- **Who and why:** the forge-command coordinator session made this read-only call on
+  2026-11-18, under an operator disposition given in that session ("Perform only an authorized
+  read-only verification of the deployed ForgeCustomer public-key configuration and standby-key
+  status ... Do not create or activate keys."). The disposition was relayed and is unsigned. No
+  secret was read, no environment variable was read, and nothing was changed.
+- **Deployed build, as the coordinator reported it:** Render service `srv-d8l5pjm47okc73bffotg`,
+  deploy `dep-dbuf07u0tbcc73cro880`, live since 2026-11-18T00:24Z, commit `ae62638b`. That
+  commit includes #43. Limit: KI-FOC-20261117-003, which says the deployed binary cannot be
+  shown to equal a build of the tested source.
+- **Call:** `GET https://forge-customer.onrender.com/v1/entitlements/keys`, unauthenticated. The
+  file name says 2026-11-18T05:47:41Z, and the server `date` header says
+  Wed, 18 Nov 2026 05:47:54 GMT.
+- **Answer:** HTTP 200, `schema` `forge.entitlements.v1`, **one** key: `key_id`
+  `forgecustomer-entitlement-prod-1`, `alg` `Ed25519`, 32 bytes, fingerprint
+  `sha256:c474f4f00337d0b1f5657393df593df27ccdbfaf78fa837e00a1f1e821118b20`. That is the same
+  key as the 2026-11-06 reading. The Author-Forge build plans session recomputed the fingerprint
+  from the stored answer.
+- **Raw evidence:**
+  - `deployed_keys_20261118T054741Z.json`, sha256
+    `28890366cede53e52c961613012d58265195898ba050ad3880de077a41edd541`;
+  - `deployed_keys_20261118T054741Z.headers.txt`.
+  - Both are copies of the files in `~/Forge/reports/`.
+- **What it shows:** no standby key is published. `doc/system/12` says every
+  `ENTITLEMENT_VERIFY_PUBLIC_KEYS` key is published on this route. So the variable is empty or
+  unset on the running deploy. That is an inference from the published list, not a read of the
+  variable.
+- **What it does not do:** it is one observation by an AI session. Under the operator's
+  disposition for the trust set, it is not the independently verified fingerprint evidence that
+  approval needs.
+
 ## 4. Result
 
 - WP-00 deliverable complete. AC-00 is recorded in `RESULT.md`.

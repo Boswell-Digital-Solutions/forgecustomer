@@ -492,6 +492,26 @@ an operator act.**
 - Closure: the public `GET /v1/entitlements/keys` on the deployed service lists the active key and
   a standby key.
 
+**Update (2026-11-18, later): deployed key state read; the entry stays open.**
+
+- The operator said in the forge-command coordinator session (relayed, unsigned): "Deployed key
+  state: Keep OPEN — EVIDENCE REQUIRED. Perform only an authorized read-only verification of the
+  deployed ForgeCustomer public-key configuration and standby-key status. Record fingerprints,
+  source provenance, and status without disclosing secret material. Do not create or activate
+  keys."
+- Evidence (**measured** by the coordinator session; the fingerprint was recomputed here):
+  - Deploy `dep-dbuf07u0tbcc73cro880` is live since 2026-11-18T00:24Z on commit `ae62638b`, which
+    includes #43.
+  - The public `GET /v1/entitlements/keys` (server date 2026-11-18 05:47:54 GMT) answers HTTP 200
+    with exactly one key: `forgecustomer-entitlement-prod-1`, Ed25519, fingerprint
+    `sha256:c474f4f00337d0b1f5657393df593df27ccdbfaf78fa837e00a1f1e821118b20`. That is unchanged
+    since 2026-11-06.
+  - No standby key is published, so `ENTITLEMENT_VERIFY_PUBLIC_KEYS` is empty or unset on the
+    running deploy. This is inferred from the published list; the variable was not read.
+  - Raw evidence: plan `evidence/AC-00/deployed_keys_20261118T054741Z.json` (sha256 `28890366…`)
+    and its headers. Plan `evidence/AC-00/SOURCE_LOCK.md` §3a.
+- The deployed overlap still does not exist. The closure criterion above is unchanged.
+
 **Scope:** open.
 
 ---

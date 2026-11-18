@@ -68,6 +68,6 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Handoff
 
-**Next action** (updated 2026-11-18; #43 merged 2026-11-06 and AC-01 and AC-02 passed on `main`): your acts. Create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5). Whether the variable is set on the deployed service was not checked. Then the gated work packages: WP-02 and WP-04 after G1, each needing its own authorization.
+**Next action** (updated 2026-11-18; #43 merged 2026-11-06 and AC-01 and AC-02 passed on `main`): your acts. Create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5). Deployed state, read on 2026-11-18 (`evidence/AC-00/SOURCE_LOCK.md` §3a): one key is published, `forgecustomer-entitlement-prod-1`, and no standby, so DEC-2 is not yet done. The operator said in the forge-command coordinator session on 2026-11-18 (relayed, unsigned): deployed key state "Keep OPEN — EVIDENCE REQUIRED"; AuthorForge trust-set approval "WITHHELD pending independently verified public-key fingerprint evidence and an explicit operator approval. Do not install, embed, or publish a key." Then the gated work packages: WP-02 and WP-04 after G1, each needing its own authorization.
 
 Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC from AC-03 NOT_RUN until it runs, and AUTHORITY_GAP-01 to -06.
