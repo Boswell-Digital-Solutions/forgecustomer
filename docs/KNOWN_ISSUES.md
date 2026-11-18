@@ -14,9 +14,9 @@ is reported as new, and written in the same session it is found.
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
 was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
-2026-11-18 00:27 America/New_York (05:27Z), and `65d6f26b` as of 2026-11-18 00:38
-America/New_York (05:38Z). This entry was checked against the trace at `13079833`; the trace's
-gap 6 row at `65d6f26b` describes the same harness. The source was read at forgecustomer
+2026-11-18 00:27 America/New_York (05:27Z), `65d6f26b` as of 2026-11-18 00:38
+America/New_York (05:38Z), and `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z). This entry was checked against the trace at `13079833`; the trace's
+gap 6 row at `65d6f26b` and at `09ad0984` describes the same harness. The source was read at forgecustomer
 `ae62638` and Author-Forge `c539ac800`. This entry ran nothing.
 
 **Source classes:**
@@ -27,8 +27,11 @@ gap 6 row at `65d6f26b` describes the same harness. The source was read at forge
 - CI result and installed artifact proof: the AC-02 run recorded in
   `docs/plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET/evidence/AC-02/RESULT.md`
   (2026-11-06, forgecustomer `c2b30f5`, Author-Forge `d0eacbf`), read from the record and not
-  rerun by this entry. The recheck that forgecustomer #69 records is cited as an open pull
-  request only; this entry does not rely on it.
+  rerun by this entry.
+- Proposed plan or unmerged PR: forge #523 (open draft, head `09ad0984` as of 2026-11-18 00:48
+  America/New_York, 05:48Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`,
+  where this finding was found; and forgecustomer #69 (open draft, head `5366b11a` as of the same
+  time), the AC-02 recheck on `main`, which this entry does not rely on until #69 merges.
 - AI research or review summary: the request to record this entry, and the bullet marked "From
   the pasted AI review", both from an AI review that the operator pasted into the session.
 
@@ -66,7 +69,7 @@ One test runs both sides together. It is the AC-02 harness of plan
 - Negative control: with `ENTITLEMENT_VERIFY_PUBLIC_KEYS` blank, the standby snapshot gives
   `UnknownKeyId`.
 - Result: AC-02 PASS on the candidate (`evidence/AC-02/RESULT.md`).
-- As of this commit, 2026-11-18 00:39 America/New_York (05:39Z), forgecustomer #69 (an open
+- As of 2026-11-18 00:48 America/New_York (05:48Z), forgecustomer #69 (an open
   draft, head `5366b11a`) records a recheck of this harness on `main` `ae62638`, with Author-Forge
   `c539ac800`, in `evidence/AC-02/RECHECK_MAIN.md`: PASS, with the same negative control. This
   entry does not rely on it until #69 merges.
@@ -137,15 +140,19 @@ the root cause, the effect and the closure criteria now describe the harness and
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md` (gap 5). PR #523 is an open draft. Its
 head was `a55a9ef4` as of 2026-11-18 00:17 America/New_York (05:17Z), `13079833` as of
-2026-11-18 00:27 America/New_York (05:27Z), and `65d6f26b` as of 2026-11-18 00:38
-America/New_York (05:38Z). This entry was checked against the trace at `13079833`. The refund and
-dispute facts below were read from forgecustomer source; the trace at `65d6f26b` now covers them
-too. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was run.
+2026-11-18 00:27 America/New_York (05:27Z), `65d6f26b` as of 2026-11-18 00:38
+America/New_York (05:38Z), and `09ad0984` as of 2026-11-18 00:48 America/New_York (05:48Z). This entry was checked against the trace at `13079833`. The refund
+and dispute facts below were read from forgecustomer source; the trace at `65d6f26b` and at
+`09ad0984` covers them too. The source was read at forgecustomer `ae62638` and Author-Forge `c539ac800`. Nothing was run.
 
 **Source classes:**
 
 - Canonical implemented reference and owned source modules: every code fact below, read from
   source.
+- Proposed plan or unmerged PR: forge #523 (open draft, head `09ad0984` as of 2026-11-18 00:48
+  America/New_York, 05:48Z), trace `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`
+  (gap 5, and "Consumer 1: the desktop shell" for the session paths), where this finding was
+  found.
 - AI research or review summary: the request to record this entry, and the bullets marked "From
   the pasted AI review" and "From a second pasted AI review". The operator pasted both reviews
   into the session. The second one reviewed this PR (#68) at `19ef195`.
@@ -229,10 +236,12 @@ snapshot. In the AuthorForge shell, the cloud decision rests on the cached snaps
 when `forgecustomer_entitlement_refresh` runs. A refresh that gets no response body leaves the
 cached snapshot in place (`fleet_updates.rs` lines 1245-1274). That covers a missing session, a
 transport error, a non-2xx response and an unreadable body. It includes the HTTP 403 that a
-suspended customer gets. One path differs, read from Author-Forge source at `c539ac800`
-(`fleet_updates.rs` `refresh_session_if_needed`): if the session refresh asks the user to sign
-in again, the shell removes the session (lines 395-398). The verdict then refuses for lack of a
-session (lines 1211-1214), although the snapshot stays in the vault. The AuthorForge API does not
+suspended customer gets. The session paths can end the cached grant sooner. One example, read
+from Author-Forge source at `c539ac800` (`fleet_updates.rs` `refresh_session_if_needed`): if the
+session refresh asks the user to sign in again, the shell removes the session (lines 395-398).
+The verdict then refuses for lack of a session (lines 1211-1214), although the snapshot stays in
+the vault. The fuller list of session paths that remove or replace the linked session is in the
+#523 trace at `09ad0984`, section "Consumer 1: the desktop shell". The AuthorForge API does not
 verify a ForgeCustomer snapshot (Author-Forge `KI-AUF-20261105-001`).
 
 The lease is a separate matter. `POST /v1/entitlements/offline-lease` returns a lease valid for
@@ -243,7 +252,7 @@ the snapshot is.
 
 **Root cause:** the snapshot was designed as a short-lived bearer artifact, and expiry is its only
 bound. Snapshot issuance and lease issuance check installation and device state differently. The
-commerce launch policy (CP0, section 7) later required these:
+commerce launch policy (CP0, section 7) describes these as the target:
 
 - suspension of commercial rights on an open dispute;
 - revocation on a full refund or a lost dispute;
@@ -252,7 +261,8 @@ commerce launch policy (CP0, section 7) later required these:
 The snapshot model has no way to deliver those inside its TTL. No refund or dispute event is
 applied: the webhook applies only six event types and keeps any other event only as an ignored
 receipt in `public.stripe_webhook_events` (`api/src/integrations/stripe.rs` lines 273-285,
-marked `Ignored` at lines 448-452; `api/src/repositories/commerce.rs` lines 171-207). None of the
+marked `Ignored` at lines 448-452; `api/src/repositories/commerce.rs`
+`process_stripe_webhook_event`, lines 171-207, with the row written at lines 265 and 317). None of the
 six is a refund or dispute event, and `api/src` has no refund or dispute handling. CP0 line 106
 records the same: "No normalized orders, order items, payment settlement, refunds, or disputes".
 
@@ -271,14 +281,22 @@ records the same: "No normalized orders, order items, payment settlement, refund
   the same bound applies.
 - A full refund, a lost dispute or an open dispute changes no subscription, license or
   entitlement row: the webhook applies only six event types and keeps any other event only as an
-  ignored receipt (`stripe.rs` lines 273-285, `commerce.rs` lines 171-207; CP0 line 106). So no
+  ignored receipt (`stripe.rs` lines 273-285; `commerce.rs` lines 171-207, written at lines 265
+  and 317; CP0 line 106). So no
   snapshot, new or issued, reflects one, and the 24-hour bound does not apply to them. No handler
-  reacts to the event itself. Only a separate action changes state afterwards: the admin license
-  revocation (`admin.rs` lines 532-547), a subscription change synced from Stripe (such as a
-  cancellation, which expires the license through `license_sync_action`, `domain/license.rs`
-  lines 76-80, called from `commerce.rs` lines 524 and 645 through
-  `sync_license_from_subscription_truth` and `licensing.rs` line 840), or an admin customer
-  suspension (`admin.rs` line 244).
+  reacts to the event itself. Only a separate action changes state afterwards. Examples:
+  - the admin license revocation (`admin.rs` lines 532-547);
+  - an admin entitlement override, `set_entitlement_override` (`admin.rs` lines 608-680). The
+    override layer merges last (`domain/entitlement.rs` lines 79-89; loaded at
+    `repositories/entitlements.rs` lines 376-392), so it can set `authorforge.cloud.enabled` to
+    `false`;
+  - a subscription change synced from Stripe, such as a cancellation, which expires an active
+    license through `license_sync_action` (`domain/license.rs` lines 76-80), called from
+    `commerce.rs` lines 524 and 645 through `sync_license_from_subscription_truth` and
+    `licensing.rs` line 840;
+  - an admin customer suspension (`admin.rs` line 244);
+  - account deletion (`privacy.rs`), which revokes every license of the customer (lines 429-452)
+    and deactivates the customer's entitlement overrides (line 479).
 - A license set to `suspended` is not a hard denial. It only drops that license's grants, so
   cloud turns off only when that license was the only grant. `suspended` is set by subscription
   sync: `license_sync_action` suspends an active license when the subscription becomes
