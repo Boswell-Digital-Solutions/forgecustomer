@@ -38,9 +38,9 @@ work_packages:
   - { id: WP-03, title: Operator confirmation, owner: forge-command, acceptance: [AC-05], status: proposed }
   - { id: WP-04, title: Release-time trust set, owner: Author-Forge, acceptance: [AC-06], status: proposed }
   - { id: WP-05, title: Rotation rehearsal, owner: cross-repository, acceptance: [AC-07], status: proposed }
-acceptance_criteria: { AC-00: PASS, AC-01: PASS_pre_merge_PR43, AC-02: PASS_pre_merge_PR43, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }
+acceptance_criteria: { AC-00: PASS, AC-01: PASS, AC-02: PASS, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }  # AC-01 and AC-02 PASS on main ae62638 (2026-11-18 recheck)
 gates: [G0, G1, G2, G3, G4, G5]
-gate_dispositions: { G0: PASS_2026-11-06 }
+gate_dispositions: { G0: PASS_2026-11-06, G1: PASS_2026-11-18 }
 gate_order: "G0 -> G1 -> {G2, G4} -> G3 -> G5"
 decisions_requested:
   - { id: DEC-1, topic: authorize WP-00 and WP-01, recommendation: yes, status: approved_2026-11-06 }
