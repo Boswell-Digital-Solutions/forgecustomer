@@ -21,26 +21,26 @@ source_lock:
 canonical_drive_destination: /Forge/Plans/BDS_FOC_ENTITLEMENT_KEY_LIFECYCLE_v0.1_PLAN_SET
 compilation: "00-09 concatenated by hand into BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md"
 rulings: [R01, R02, R03, R04, R05, R06, R07, R08]
-rulings_status: proposed (R01-R08 bind on admission); decisions ruled 2026-11-06
+rulings_status: binding (R01-R08 bind since G0 PASS 2026-11-06); decisions ruled 2026-11-06
 reuse_matrix_ref: "03 §Reuse matrix"
 gaps:
   - { id: AUTHORITY_GAP-01, topic: no forgecustomer-admin credential from forge-command, blocks: ["WP-03 register step"] }
   - { id: AUTHORITY_GAP-02, topic: no key registry table in ForgeCustomer, blocks: [WP-02] }
   - { id: AUTHORITY_GAP-03, topic: no trust-set statement on a release record, blocks: ["WP-04 guard input"] }
   - { id: AUTHORITY_GAP-04, topic: fleet pipeline not built, blocks: ["AC-07 delivered-fleet evidence"] }
-  - { id: AUTHORITY_GAP-05, topic: live key_id unread, blocks: [] }
+  - { id: AUTHORITY_GAP-05, topic: "live key_id read: forgecustomer-entitlement-prod-1 (SOURCE_LOCK §3, §3a)", blocks: [], status: closed_by_WP-00_2026-11-06 }
   - { id: AUTHORITY_GAP-06, topic: KI-FOC-20261105-002 adjacent, blocks: [] }
 requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08]
 work_packages:
   - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: complete }
-  - { id: WP-01, title: Overlap wiring, owner: forgecustomer, acceptance: [AC-01, AC-02], status: pr_open_forgecustomer_43 }
+  - { id: WP-01, title: Overlap wiring, owner: forgecustomer, acceptance: [AC-01, AC-02], status: complete }
   - { id: WP-02, title: Registry and statuses, owner: forgecustomer, acceptance: [AC-03, AC-04], status: proposed }
   - { id: WP-03, title: Operator confirmation, owner: forge-command, acceptance: [AC-05], status: proposed }
   - { id: WP-04, title: Release-time trust set, owner: Author-Forge, acceptance: [AC-06], status: proposed }
   - { id: WP-05, title: Rotation rehearsal, owner: cross-repository, acceptance: [AC-07], status: proposed }
-acceptance_criteria: { AC-00: PASS, AC-01: PASS_pre_merge_PR43, AC-02: PASS_pre_merge_PR43, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }
+acceptance_criteria: { AC-00: PASS, AC-01: PASS, AC-02: PASS, AC-03: NOT_RUN, AC-04: NOT_RUN, AC-05: NOT_RUN, AC-06: NOT_RUN, AC-07: NOT_RUN, AC-08: NOT_RUN }  # AC-01 and AC-02 PASS on main ae62638 (2026-11-18 recheck)
 gates: [G0, G1, G2, G3, G4, G5]
-gate_dispositions: { G0: PASS_2026-11-06 }
+gate_dispositions: { G0: PASS_2026-11-06, G1: PASS_2026-11-18 }
 gate_order: "G0 -> G1 -> {G2, G4} -> G3 -> G5"
 decisions_requested:
   - { id: DEC-1, topic: authorize WP-00 and WP-01, recommendation: yes, status: approved_2026-11-06 }

@@ -45,6 +45,51 @@ No row is wrong, so the stop condition does not apply.
 - **What it confirms:** the deployed ring publishes only its active key, as KI-FOC-20261105-001 states. No standby key exists yet (DEC-2).
 - **What it does not do:** the key is not copied into any trust set. Under DIR-1 and DEC-5 it reaches Author-Forge only through the release step, after you confirm the fingerprint.
 
+## 3a. Second reading, 2026-11-18 (deployed key state)
+
+- **Source classes:**
+  - Local note / imported browser register: the disposition text quoted below.
+  - AI research or review summary: the deployed build and the call, as the coordinator session
+    reported them.
+  - CI result and installed artifact proof: the two file sha256 values and the fingerprint,
+    recomputed from the stored files.
+- **Who and why:** the forge-command coordinator session made this read-only call on
+  2026-11-18 00:47:41 America/New_York (05:47:41Z). It acted under text entered by the operator
+  in the forge-command coordinator session (2026-11-18 00:46:39 America/New_York, 05:46:39Z;
+  chat, unsigned; relayed 00:48 / 05:48:34Z; authorship not attributed). The text says:
+  "Perform only an authorized read-only verification of the deployed ForgeCustomer public-key
+  configuration and standby-key status ... Do not create or activate keys." No secret was read,
+  no environment variable was read, and nothing was changed.
+- **Deployed build, as the coordinator reported it:** Render service `srv-d8l5pjm47okc73bffotg`,
+  deploy `dep-dbuf07u0tbcc73cro880`, commit `ae62638b`. It was live at the 05:47Z reading. The
+  coordinator reported that it went live at 2026-11-17 19:24 America/New_York (2026-11-18
+  00:24Z). That commit includes #43. Limit: KI-FOC-20261117-003, which says the deployed binary
+  cannot be shown to equal a build of the tested source.
+- **Call:** `GET https://forge-customer.onrender.com/v1/entitlements/keys`, unauthenticated. The
+  file name says 2026-11-18 00:47:41 America/New_York (05:47:41Z). The server `date` header says
+  Wed, 18 Nov 2026 05:47:54 GMT (00:47:54 America/New_York).
+- **Answer:** HTTP 200, `schema` `forge.entitlements.v1`, **one** key: `key_id`
+  `forgecustomer-entitlement-prod-1`, `alg` `Ed25519`, 32 bytes, fingerprint
+  `sha256:c474f4f00337d0b1f5657393df593df27ccdbfaf78fa837e00a1f1e821118b20`. That is the same
+  key as the 2026-11-06 reading. The Author-Forge build plans session recomputed the fingerprint
+  from the stored answer. The reviewer fix session recomputed it again on 2026-11-18, with both
+  file sha256 values below, and all three match.
+- **Raw evidence:**
+  - `deployed_keys_20261118T054741Z.json`, sha256
+    `28890366cede53e52c961613012d58265195898ba050ad3880de077a41edd541`;
+  - `deployed_keys_20261118T054741Z.headers.txt`, sha256
+    `960cd47c9591a8a903a9270b49b6b8c93e719378930fe34f6ddb722e7d4167dd`. It keeps the CRLF line
+    endings of the raw HTTP capture. The plan's `evidence/.gitattributes` marks
+    `*.headers.txt` as `-text -whitespace`, so git does not convert or flag the CRs.
+  - Both are copies of the files in `~/Forge/reports/`.
+- **What it shows:** no standby key is published. `doc/system/12` says every
+  `ENTITLEMENT_VERIFY_PUBLIC_KEYS` key is published on this route. So the variable is empty or
+  unset on the running deploy. That is an inference from the published list, not a read of the
+  variable.
+- **What it does not do:** it is one observation by an AI session. Under item 2 of the same
+  disposition text (the trust set), it is not the independently verified fingerprint evidence
+  that approval needs.
+
 ## 4. Result
 
 - WP-00 deliverable complete. AC-00 is recorded in `RESULT.md`.

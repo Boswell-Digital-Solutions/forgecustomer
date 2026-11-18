@@ -6,13 +6,13 @@ On 2026-11-05 the operator directed: "well build the plan ensuring current busin
 
 ## Status
 
-Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02).
+Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02). Updated 2026-11-18: #43 merged on 2026-11-06 (`7bce7f889`). AC-01 and AC-02 were rechecked on `main` `ae62638`, with Author-Forge `main` `c539ac800` for AC-02, and both PASS (`RECHECK_MAIN.md` in each). G1 is PASS. WP-01 is complete.
 
 ---
 
 ## Decision 1 — Authorize WP-00 and WP-01?
 
-**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the overlap half of KI-FOC-20261105-001. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
+**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
 
 **Alternative:** WP-00 without the public read. Then the live `key_id` stays unknown until you supply it.
 
@@ -68,6 +68,6 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Handoff
 
-**Next action:** your word to merge #43. The merge redeploys Render, and with the variable unset the deployed behavior does not change. Then recheck AC-01 and AC-02 on `main`. Then your acts: create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5).
+**Next action** (updated 2026-11-18; #43 merged 2026-11-06 and AC-01 and AC-02 passed on `main`): your acts. Create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5). Deployed state, read on 2026-11-18 00:47 America/New_York (05:47Z; `evidence/AC-00/SOURCE_LOCK.md` §3a): one key is published, `forgecustomer-entitlement-prod-1`, and no standby, so DEC-2 is not yet done. The text entered by the operator in the forge-command coordinator session (2026-11-18 00:46:39 America/New_York, 05:46:39Z; chat, unsigned; relayed 00:48 / 05:48:34Z; authorship not attributed) says: deployed key state "Keep OPEN — EVIDENCE REQUIRED"; AuthorForge trust-set approval "WITHHELD pending independently verified public-key fingerprint evidence and an explicit operator approval. Do not install, embed, or publish a key." Then the gated work packages: WP-02 and WP-04 after G1, each needing its own authorization.
 
-Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC NOT_RUN, and AUTHORITY_GAP-01 to -06.
+Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC from AC-03 NOT_RUN until it runs, and AUTHORITY_GAP-01 to -04 and -06.

@@ -1,4 +1,4 @@
-# 07 — QA, verification and acceptance-to-evidence map. ALL CHECKS NOT_RUN.
+# 07 — QA, verification and acceptance-to-evidence map. AC-00 to AC-02 PASS; AC-03 to AC-08 NOT_RUN.
 
 **Common evidence rule.** Every record states:
 - the repository SHA;

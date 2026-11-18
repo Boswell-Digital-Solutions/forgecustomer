@@ -1,0 +1,16 @@
+HTTP/2 200 
+date: Wed, 18 Nov 2026 05:47:54 GMT
+content-type: application/json
+cf-cache-status: DYNAMIC
+referrer-policy: no-referrer
+rndr-id: 4253ee29-5a27-4557
+server: cloudflare
+strict-transport-security: max-age=31536000; includeSubDomains
+vary: Accept-Encoding
+x-content-type-options: nosniff
+x-correlation-id: corr_419f341ffd9d4b779ac80f1f04198d05
+x-frame-options: DENY
+x-render-origin-server: Render
+cf-ray: a5c4ae930aa8fb12-BNA
+alt-svc: h3=":443"; ma=86400
+

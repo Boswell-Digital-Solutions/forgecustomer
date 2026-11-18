@@ -2,7 +2,7 @@
 
 - **Date:** 2026-11-06.
 - **Candidate:** forgecustomer PR #43, branch `feat/entitlement-verify-keys`, commit `c2b30f5` on `main` `53d255a`.
-- **Status:** candidate evidence. It does not satisfy acceptance until #43 merges and the result is rechecked on `main`.
+- **Status:** candidate evidence. It does not satisfy acceptance until #43 merges and the result is rechecked on `main`. **Update 2026-11-18:** #43 merged on 2026-11-06, and the recheck on `main` `ae62638` passed. See `RECHECK_MAIN.md`.
 - **Command:** the repository gate, `cd api && cargo fmt --all --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --all`.
 - **Observed:** exit 0. 146 unit tests and 36 integration tests pass; 1 ignored (`serve_isolated_local_commerce`, a manual server that predates this change). Log: `~/Forge/reports/foc_wp01_gate.log`, sha256 `789ddb7acc5b3d8be9d24c358cdb9abd6923b41da80392545a3bcee948b3244f`.
 

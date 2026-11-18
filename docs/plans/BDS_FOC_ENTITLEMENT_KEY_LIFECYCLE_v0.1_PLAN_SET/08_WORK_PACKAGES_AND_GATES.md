@@ -1,4 +1,4 @@
-# 08 — Work packages and gates. All PROPOSED.
+# 08 — Work packages and gates. WP-00 and WP-01 complete; WP-02 to WP-05 PROPOSED.
 
 **Shared rules for every WP:**
 - Reuse first (R01).
@@ -27,7 +27,7 @@
 - **Prerequisites:** G0.
 - **Permitted scope:** forgecustomer `api/src/{config,state}.rs`, tests, `doc/system/12` (new variable), `doc/system/11` (overlap now real), `docs/ENTITLEMENTS.md`, `docs/KNOWN_ISSUES.md`.
 - **Boundaries:** no crypto change; no wire-format change (R06).
-- **Deliverables:** code, tests, docs, KI-FOC-20261105-001 overlap half closed on merge.
+- **Deliverables:** code, tests, docs. The merge closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md`, KI-FOC-20261105-001 Status).
 - **Acceptance criteria:** AC-01, AC-02.
 - **Verification:** ForgeCustomer CI and the Author-Forge fixture test.
 - **Stop conditions:** done on AC-01 and AC-02.
@@ -35,8 +35,8 @@
 **WP-02 Registry and statuses (ForgeCustomer)**
 - **Outcome:** 05 §B (REQ-02, REQ-03).
 - **Starting evidence:** DataForge `verification_evidence_router.py`, its alembic migration and `doc/system/19`.
-- **Prerequisites:** G1; Decision 2.
-- **Permitted scope:** forgecustomer migration `0017_*`, repository, routes, tests, `contracts/openapi.yaml`, `doc/system/`.
+- **Prerequisites:** G1; Decision 2; the operator's execution authorization for this WP (not given).
+- **Permitted scope:** forgecustomer migration at the next free migration number at the WP-02 pin (today `0019_*`), repository, routes, tests, `contracts/openapi.yaml`, `doc/system/`.
 - **Boundaries:** additive migration only; additive response fields only (Decision 3).
 - **Deliverables:** code, migration, tests, OpenAPI, docs.
 - **Acceptance criteria:** AC-03, AC-04.
@@ -46,7 +46,7 @@
 **WP-03 Operator confirmation (forge-command)**
 - **Outcome:** 05 §C (REQ-04).
 - **Starting evidence:** predecessor `operator_signing.rs` and `operator_signing/*`.
-- **Prerequisites:** G2 for statuses; fleet-manager plan G1. The register step also needs AUTHORITY_GAP-01 closed.
+- **Prerequisites:** G2 for statuses; fleet-manager plan G1; the operator's execution authorization for this WP (not given). The register step also needs AUTHORITY_GAP-01 closed.
 - **Permitted scope:** forge-command, under `BDS-FCO-FLEET-MANAGER-v0.1`.
 - **Boundaries:** no key material in any IPC type.
 - **Deliverables:** discover and confirm commands, receipts, tests.
@@ -57,7 +57,7 @@
 **WP-04 Release-time trust set (Author-Forge)**
 - **Outcome:** 05 §D (REQ-05).
 - **Starting evidence:** `build-bundle.yml`, `entitlement_trust_set.json`, the RELACC 1.x-gate obligation.
-- **Prerequisites:** G1; a confirmation source (WP-03 receipts, or the interim of Decision 5).
+- **Prerequisites:** G1; a confirmation source (WP-03 receipts, or the interim of Decision 5); the operator's execution authorization for this WP (not given).
 - **Permitted scope:** Author-Forge workflow, a small script, tests, `doc/system/` §15 and §54.
 - **Boundaries:** the workflow holds no secret.
 - **Deliverables:** step, gate, tests, docs.
@@ -67,7 +67,7 @@
 
 **WP-05 Rotation rehearsal**
 - **Outcome:** 05 §E (REQ-06).
-- **Prerequisites:** G2, G3, G4.
+- **Prerequisites:** G2, G3, G4; the operator's execution authorization for this WP (not given).
 - **Permitted scope:** local services only.
 - **Boundaries:** no real key; no deployed service.
 - **Deliverables:** the rehearsal record.

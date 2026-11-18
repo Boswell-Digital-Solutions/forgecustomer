@@ -16,7 +16,7 @@ This component gives the plan identity, the purpose, the source state and the re
 | Plan ID | BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1 |
 | Title | ForgeCustomer entitlement-key lifecycle — overlap, publication and operator-confirmed rotation, built from existing code |
 | Lifecycle | authorized |
-| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates. No key operation, configuration change, deployment, merge or release is authorized. |
+| Authority | Operator ruling 2026-11-06 ("Proceed - in order authorized"): DEC-1 to DEC-5 accepted as recommended in the 2026-11-06 research brief. WP-00 and WP-01 are authorized. WP-02 onward need their gates and their own operator authorization. No key operation, configuration change, deployment, merge or release is authorized. |
 | Decision owner | Charles (Charlie) Boswell, BDS operator |
 | Prepared | 2026-11-05 America/New_York |
 | Parent / extension target | Operator direction 2026-11-05: "build the plan ensuring current business code that works is considered instead of reinvented"; "we build the plan in Drive /Forge using the protocols". Findings: KI-FOC-20261105-001 (forgecustomer #41). Consumer plans: forge-command `BDS-FCO-FLEET-MANAGER-v0.1` (its AUTHORITY_GAP-03 and -06), Author-Forge `BDS-AF-RELACC-v0.1` (DIR-1). Authority: ForgeCustomer `BDS_AUTHORFORGE_COMMERCE_LAUNCH_POLICY_v0.1`. |
@@ -50,7 +50,7 @@ It writes new code only where nothing exists: the configuration wiring, a `pendi
 
 ## Status
 
-Authorized 2026-11-06 for WP-00 and WP-01. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
+Authorized 2026-11-06 for WP-00 and WP-01. Updated 2026-11-18: AC-00 PASS (G0 PASS). AC-01 and AC-02 PASS on `main` `ae62638` after forgecustomer #43 merged (G1 PASS; `evidence/AC-01/RECHECK_MAIN.md`, `evidence/AC-02/RECHECK_MAIN.md`). AC-03 to AC-08 are NOT_RUN. "Inspected" marks a fact read in source at the pin.
 
 ## Read order and components
 
@@ -108,13 +108,13 @@ This component allocates authority and lists the gaps that block gates.
 
 **AUTHORITY_GAP-01 No admin credential from forge-command.** ForgeCustomer verifies admin tokens against the predecessor's `ADMIN_JWT_PUBLIC_KEY`. forge-command's issuer is not activated (`BDS-FCO-P3-TOKEN-ISSUER-001`, G4–G7 held). The admin key routes (WP-02) can be built and tested in ForgeCustomer now. forge-command cannot call them until that gate. Blocks WP-03 live use only.
 
-**AUTHORITY_GAP-02 No registry table in ForgeCustomer.** Inspected: migrations `0001`–`0016` hold no key table. Issued snapshots record `key_id` (`entitlement_snapshots`), and leases record it (`license_leases`). A registry with status events is new schema. It ports DataForge's `verification_evidence_receipt_keys` design. Blocks WP-02.
+**AUTHORITY_GAP-02 No registry table in ForgeCustomer.** Inspected: migrations `0001`–`0018` (re-inspected at main `96ba3bc`, 2026-11-18) hold no key table. Issued snapshots record `key_id` (`entitlement_snapshots`), and leases record it (`license_leases`). A registry with status events is new schema. It ports DataForge's `verification_evidence_receipt_keys` design. Blocks WP-02.
 
 **AUTHORITY_GAP-03 Trust-set statement on a release.** The forge-command guard needs to know which key ids a build trusts. ForgeCustomer release metadata has no such field (forge-command plan AUTHORITY_GAP-06). Blocks WP-04's guard input.
 
 **AUTHORITY_GAP-04 The fleet pipeline.** The updater is inactive until the Fleet pipeline is proven (KI-AUF-20261101-006). A rotation reaches desktops only through installs until then. Blocks AC-07's delivered-fleet evidence.
 
-**AUTHORITY_GAP-05 The deployed signing key is unread.** The live `key_id` is unknown. The default is `entitlement-key-1`. WP-00 reads `GET /v1/entitlements/keys`, a public route, only under the operator's instruction (09 Decision 1).
+**AUTHORITY_GAP-05 The deployed signing key was unread (closed).** Closed by WP-00 on 2026-11-06. WP-00 read `GET /v1/entitlements/keys`, a public route, under the operator's instruction (09 Decision 1): the live `key_id` is `forgecustomer-entitlement-prod-1` (`evidence/AC-00/SOURCE_LOCK.md` §3, read again in §3a). The id is kept so later references resolve.
 
 **AUTHORITY_GAP-06 Snapshot status at a deactivated installation.** KI-FOC-20261105-002 is adjacent, not in scope. It is recorded so that WP-02 does not widen it.
 
@@ -185,7 +185,7 @@ A JSON object `{ "<key_id>": "<base64 32-byte Ed25519 public key>" }`. It holds 
 
 The response is today `{ "schema": "forge.entitlements.v1", "keys": [ { "key_id", "public_key", "alg" } ] }`.
 
-**Proposed:** each entry adds `status` (`pending` | `active` | `retired`), `valid_from` and `retired_at`. These are the field names of DataForge `GET /receipt-keys`. Revoked keys are not listed. The existing three fields keep their meaning. Author-Forge's trust-set parser ignores nothing it needs, so this needs a decision (09 Decision 3).
+**Proposed:** each entry adds `status` (`pending` | `active` | `retired`), `valid_from` and `retired_at`. These are the field names of DataForge `GET /receipt-keys`. Revoked keys are not listed. The existing three fields keep their meaning. Author-Forge's trust-set parser ignores nothing it needs, so this was ruled in 09 Decision 3.
 
 ## C. Key registry (ports DataForge `verification_evidence_receipt_keys`)
 
@@ -224,7 +224,7 @@ This component specifies the mechanisms in order. Each step names the code it re
 
 In `AppState::build`, after `key_ring.add_signer(&signer)`, parse `ENTITLEMENT_VERIFY_PUBLIC_KEYS` and call the existing `key_ring.add_base64` for each entry. The existing `keys` route then publishes them, and the existing `verify_snapshot` accepts them.
 
-This is the whole fix for KI-FOC-20261105-001's overlap half. It changes no crypto, so the existing test `rotation_overlap_both_keys_verify` remains the unit proof. A new configuration-level test proves the wiring.
+This is the whole code fix for KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. It changes no crypto, so the existing test `rotation_overlap_both_keys_verify` remains the unit proof. A new configuration-level test proves the wiring.
 
 ## B. Registry and statuses (WP-02)
 
@@ -293,12 +293,12 @@ PASS | FAIL | BLOCKED | NOT_RUN. A skip is NOT_RUN.
 | G4 | G1, AC-06 | Release-time trust set |
 | G5 | G2, G3, G4, AC-07 | First rotation rehearsal |
 
-Order: G0 → G1 → {G2, G4} → G3 → G5. G1 alone closes KI-FOC-20261105-001's overlap half.
+Order: G0 → G1 → {G2, G4} → G3 → G5. G1 closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md`, KI-FOC-20261105-001 Status).
 
 
 ===== 07_ACCEPTANCE_AND_EVIDENCE.md =====
 
-# 07 — QA, verification and acceptance-to-evidence map. ALL CHECKS NOT_RUN.
+# 07 — QA, verification and acceptance-to-evidence map. AC-00 to AC-02 PASS; AC-03 to AC-08 NOT_RUN.
 
 **Common evidence rule.** Every record states:
 - the repository SHA;
@@ -359,7 +359,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 
 ===== 08_WORK_PACKAGES_AND_GATES.md =====
 
-# 08 — Work packages and gates. All PROPOSED.
+# 08 — Work packages and gates. WP-00 and WP-01 complete; WP-02 to WP-05 PROPOSED.
 
 **Shared rules for every WP:**
 - Reuse first (R01).
@@ -388,7 +388,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 - **Prerequisites:** G0.
 - **Permitted scope:** forgecustomer `api/src/{config,state}.rs`, tests, `doc/system/12` (new variable), `doc/system/11` (overlap now real), `docs/ENTITLEMENTS.md`, `docs/KNOWN_ISSUES.md`.
 - **Boundaries:** no crypto change; no wire-format change (R06).
-- **Deliverables:** code, tests, docs, KI-FOC-20261105-001 overlap half closed on merge.
+- **Deliverables:** code, tests, docs. The merge closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md`, KI-FOC-20261105-001 Status).
 - **Acceptance criteria:** AC-01, AC-02.
 - **Verification:** ForgeCustomer CI and the Author-Forge fixture test.
 - **Stop conditions:** done on AC-01 and AC-02.
@@ -396,8 +396,8 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 **WP-02 Registry and statuses (ForgeCustomer)**
 - **Outcome:** 05 §B (REQ-02, REQ-03).
 - **Starting evidence:** DataForge `verification_evidence_router.py`, its alembic migration and `doc/system/19`.
-- **Prerequisites:** G1; Decision 2.
-- **Permitted scope:** forgecustomer migration `0017_*`, repository, routes, tests, `contracts/openapi.yaml`, `doc/system/`.
+- **Prerequisites:** G1; Decision 2; the operator's execution authorization for this WP (not given).
+- **Permitted scope:** forgecustomer migration at the next free migration number at the WP-02 pin (today `0019_*`), repository, routes, tests, `contracts/openapi.yaml`, `doc/system/`.
 - **Boundaries:** additive migration only; additive response fields only (Decision 3).
 - **Deliverables:** code, migration, tests, OpenAPI, docs.
 - **Acceptance criteria:** AC-03, AC-04.
@@ -407,7 +407,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 **WP-03 Operator confirmation (forge-command)**
 - **Outcome:** 05 §C (REQ-04).
 - **Starting evidence:** predecessor `operator_signing.rs` and `operator_signing/*`.
-- **Prerequisites:** G2 for statuses; fleet-manager plan G1. The register step also needs AUTHORITY_GAP-01 closed.
+- **Prerequisites:** G2 for statuses; fleet-manager plan G1; the operator's execution authorization for this WP (not given). The register step also needs AUTHORITY_GAP-01 closed.
 - **Permitted scope:** forge-command, under `BDS-FCO-FLEET-MANAGER-v0.1`.
 - **Boundaries:** no key material in any IPC type.
 - **Deliverables:** discover and confirm commands, receipts, tests.
@@ -418,7 +418,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 **WP-04 Release-time trust set (Author-Forge)**
 - **Outcome:** 05 §D (REQ-05).
 - **Starting evidence:** `build-bundle.yml`, `entitlement_trust_set.json`, the RELACC 1.x-gate obligation.
-- **Prerequisites:** G1; a confirmation source (WP-03 receipts, or the interim of Decision 5).
+- **Prerequisites:** G1; a confirmation source (WP-03 receipts, or the interim of Decision 5); the operator's execution authorization for this WP (not given).
 - **Permitted scope:** Author-Forge workflow, a small script, tests, `doc/system/` §15 and §54.
 - **Boundaries:** the workflow holds no secret.
 - **Deliverables:** step, gate, tests, docs.
@@ -428,7 +428,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 
 **WP-05 Rotation rehearsal**
 - **Outcome:** 05 §E (REQ-06).
-- **Prerequisites:** G2, G3, G4.
+- **Prerequisites:** G2, G3, G4; the operator's execution authorization for this WP (not given).
 - **Permitted scope:** local services only.
 - **Boundaries:** no real key; no deployed service.
 - **Deliverables:** the rehearsal record.
@@ -447,13 +447,13 @@ On 2026-11-05 the operator directed: "well build the plan ensuring current busin
 
 ## Status
 
-Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02).
+Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02). Updated 2026-11-18: #43 merged on 2026-11-06 (`7bce7f889`). AC-01 and AC-02 were rechecked on `main` `ae62638`, with Author-Forge `main` `c539ac800` for AC-02, and both PASS (`RECHECK_MAIN.md` in each). G1 is PASS. WP-01 is complete.
 
 ---
 
 ## Decision 1 — Authorize WP-00 and WP-01?
 
-**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the overlap half of KI-FOC-20261105-001. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
+**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
 
 **Alternative:** WP-00 without the public read. Then the live `key_id` stays unknown until you supply it.
 
@@ -509,6 +509,6 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Handoff
 
-**Next action:** your word to merge #43. The merge redeploys Render, and with the variable unset the deployed behavior does not change. Then recheck AC-01 and AC-02 on `main`. Then your acts: create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5).
+**Next action** (updated 2026-11-18; #43 merged 2026-11-06 and AC-01 and AC-02 passed on `main`): your acts. Create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5). Deployed state, read on 2026-11-18 00:47 America/New_York (05:47Z; `evidence/AC-00/SOURCE_LOCK.md` §3a): one key is published, `forgecustomer-entitlement-prod-1`, and no standby, so DEC-2 is not yet done. The text entered by the operator in the forge-command coordinator session (2026-11-18 00:46:39 America/New_York, 05:46:39Z; chat, unsigned; relayed 00:48 / 05:48:34Z; authorship not attributed) says: deployed key state "Keep OPEN — EVIDENCE REQUIRED"; AuthorForge trust-set approval "WITHHELD pending independently verified public-key fingerprint evidence and an explicit operator approval. Do not install, embed, or publish a key." Then the gated work packages: WP-02 and WP-04 after G1, each needing its own authorization.
 
-Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC NOT_RUN, and AUTHORITY_GAP-01 to -06.
+Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC from AC-03 NOT_RUN until it runs, and AUTHORITY_GAP-01 to -04 and -06.

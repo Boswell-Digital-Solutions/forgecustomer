@@ -2,7 +2,7 @@
 
 - **Date:** 2026-11-06.
 - **Candidate:** forgecustomer `c2b30f5` (PR #43). Author-Forge `d0eacbf`, its verifier compiled unchanged.
-- **Status:** candidate evidence. It is rechecked after #43 merges.
+- **Status:** candidate evidence. It is rechecked after #43 merges. **Update 2026-11-18:** rechecked on forgecustomer `main` `ae62638` with Author-Forge `main` `c539ac800`, and it passed. See `RECHECK_MAIN.md`.
 - **Method:** the harness in `harness/`. Its manifest is stored as `Cargo.toml.txt`, so repository tooling does not read it as a crate. Rename it to `Cargo.toml` to run it.
   1. It starts ForgeCustomer's `AppState` with active key `entitlement-key-2` and standby key `entitlement-key-1` in `ENTITLEMENT_VERIFY_PUBLIC_KEYS`. Both are test seeds, not real keys.
   2. It reads the real `GET /v1/entitlements/keys` answer through the router.

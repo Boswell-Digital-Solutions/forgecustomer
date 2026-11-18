@@ -832,7 +832,7 @@ follow it (see `KI-FOC-20261002-001`).
 ## KI-FOC-20261105-001 — the entitlement key ring holds only the active key, so the documented rotation overlap does not exist
 
 **Date found:** 2026-11-05
-**Status:** open. Not fixed. Found by a read-only source lock for Author-Forge plan `BDS-AF-RELACC-v0.1` (WP-00).
+**Status:** open. The code half is fixed: forgecustomer #43 merged on 2026-11-06 (`7bce7f889`). The deployed overlap waits on plan DEC-2. See the updates of 2026-11-18 below. Found by a read-only source lock for Author-Forge plan `BDS-AF-RELACC-v0.1` (WP-00).
 
 **What is wrong:** `doc/system/11` says that "Key rotation requires an overlap window where old and new public keys both verify existing snapshots". `docs/ENTITLEMENTS.md` and the doc comment on `routes/entitlements.rs::keys` say the same. The code builds no overlap:
 - `AppState` creates the ring with `VerifyingKeyRing::new()` and then `add_signer(&signer)` only (`api/src/state.rs:45-46`).
@@ -850,7 +850,62 @@ So a key change does not invalidate every document at once. It breaks compatibil
 
 **Root cause:** the ring type supports several keys, but no configuration path loads a retained key into the deployed ring.
 
-**Fix:** none made. A candidate is an optional configuration value that lists retained `key_id` to public-key pairs, loaded with `add_base64` and published by `keys`, plus a test that a snapshot signed by the retired key still verifies. Changing deployed configuration is the operator's act.
+**Fix** (updated 2026-11-18): the code fix merged in forgecustomer #43 (`7bce7f889`); see the updates of 2026-11-18 below. The deployed overlap waits on plan DEC-2. The candidate as written on 2026-11-05 was an optional configuration value that lists retained `key_id` to public-key pairs, loaded with `add_base64` and published by `keys`, plus a test that a snapshot signed by the retired key still verifies. Changing deployed configuration is the operator's act.
+
+**Update (2026-11-18): the code half is fixed and verified on `main`; the deployed half waits on
+an operator act.**
+
+- Source classes:
+  - Canonical implemented reference and owned source modules: the #43 merge and the code paths
+    named in the next item.
+  - CI result and installed artifact proof: the AC-01 and AC-02 recheck runs on `ae62638`.
+- forgecustomer #43 merged on 2026-11-06 14:45 America/New_York (19:45Z) as `7bce7f889`, an
+  ancestor of `ae62638`. It adds
+  `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, a JSON object of retained and standby `key_id` to public-key
+  pairs. `AppState` loads it with `add_base64`, and `GET /v1/entitlements/keys` publishes each key
+  beside the active one (`api/src/state.rs`, `doc/system/12`, `doc/system/11`). This was work
+  package WP-01 of plan `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`.
+- Evidence (**measured**, 2026-11-18, on `main` `ae62638`, with test keys only):
+  - the repository gate passes, and so do all ten AC-01 tests. Plan
+    `evidence/AC-01/RECHECK_MAIN.md`.
+  - the AC-02 harness, with the Author-Forge verifier at `c539ac800`, verifies a snapshot from the
+    active key and one from a standby key. With the variable blank, the standby snapshot gives
+    `UnknownKeyId`. Plan `evidence/AC-02/RECHECK_MAIN.md`.
+- Still open: the deployed ring holds only the active key until the operator creates the standby
+  key and sets `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (plan DEC-2). WP-00 read the live key list on
+  2026-11-06, before #43 merged, and it held one key, `forgecustomer-entitlement-prod-1`. This
+  update did not read the deployed state. The next update reads the published key list.
+- Closure: the public `GET /v1/entitlements/keys` on the deployed service lists the active key and
+  a standby key.
+
+**Update (2026-11-18, later): deployed key state read; the entry stays open.**
+
+- Source classes:
+  - Local note / imported browser register: the disposition text quoted in the next item.
+  - AI research or review summary: the deploy id, the commit and the GET, as the coordinator
+    session reported them.
+  - CI result and installed artifact proof: the file sha256 and the key fingerprint, recomputed
+    here from the stored answer.
+- The text entered by the operator in the forge-command coordinator session (2026-11-18 00:46:39
+  America/New_York, 05:46:39Z; chat, unsigned; relayed 00:48 / 05:48:34Z; authorship not
+  attributed) says: "Deployed key state: Keep OPEN — EVIDENCE REQUIRED. Perform only an authorized
+  read-only verification of the deployed ForgeCustomer public-key configuration and standby-key
+  status. Record fingerprints, source provenance, and status without disclosing secret material.
+  Do not create or activate keys."
+- Evidence (reported by the coordinator session; measured here: the fingerprint and file sha256
+  recomputed from the stored answer):
+  - Deploy `dep-dbuf07u0tbcc73cro880` was live at the 05:47Z reading (2026-11-18 00:47
+    America/New_York), on commit `ae62638b`, which includes #43. The coordinator reported that it
+    went live at 2026-11-17 19:24 America/New_York (2026-11-18 00:24Z).
+  - The public `GET /v1/entitlements/keys` (server date 2026-11-18 00:47:54 America/New_York,
+    05:47:54Z) answers HTTP 200 with exactly one key: `forgecustomer-entitlement-prod-1`, Ed25519,
+    fingerprint `sha256:c474f4f00337d0b1f5657393df593df27ccdbfaf78fa837e00a1f1e821118b20`. That is
+    the same key as the reading of 2026-11-06 01:00 America/New_York (06:00Z).
+  - No standby key is published, so `ENTITLEMENT_VERIFY_PUBLIC_KEYS` is empty or unset on the
+    running deploy. This is inferred from the published list; the variable was not read.
+  - Raw evidence: plan `evidence/AC-00/deployed_keys_20261118T054741Z.json` (sha256 `28890366…`)
+    and its headers (sha256 `960cd47c…`). Plan `evidence/AC-00/SOURCE_LOCK.md` §3a.
+- The deployed overlap still does not exist. The closure criterion above is unchanged.
 
 **Scope:** open.
 
