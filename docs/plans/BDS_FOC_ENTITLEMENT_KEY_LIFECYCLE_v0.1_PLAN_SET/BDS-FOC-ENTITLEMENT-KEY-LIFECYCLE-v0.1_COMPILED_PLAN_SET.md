@@ -50,7 +50,7 @@ It writes new code only where nothing exists: the configuration wiring, a `pendi
 
 ## Status
 
-Authorized 2026-11-06 for WP-00 and WP-01. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
+Authorized 2026-11-06 for WP-00 and WP-01. Updated 2026-11-18: AC-00 PASS (G0 PASS). AC-01 and AC-02 PASS on `main` `ae62638` after forgecustomer #43 merged (G1 PASS; `evidence/AC-01/RECHECK_MAIN.md`, `evidence/AC-02/RECHECK_MAIN.md`). AC-03 to AC-08 are NOT_RUN. "Inspected" marks a fact read in source at the pin.
 
 ## Read order and components
 
@@ -298,7 +298,7 @@ Order: G0 → G1 → {G2, G4} → G3 → G5. G1 alone closes KI-FOC-20261105-001
 
 ===== 07_ACCEPTANCE_AND_EVIDENCE.md =====
 
-# 07 — QA, verification and acceptance-to-evidence map. ALL CHECKS NOT_RUN.
+# 07 — QA, verification and acceptance-to-evidence map. AC-00 to AC-02 PASS; AC-03 to AC-08 NOT_RUN.
 
 **Common evidence rule.** Every record states:
 - the repository SHA;
@@ -447,7 +447,7 @@ On 2026-11-05 the operator directed: "well build the plan ensuring current busin
 
 ## Status
 
-Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02).
+Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution authorization: WP-00 and WP-01. WP-00 complete 2026-11-06: AC-00 PASS, G0 PASS (evidence/AC-00). The live key list holds one key, `forgecustomer-entitlement-prod-1`. WP-01 is built as forgecustomer PR #43 (`c2b30f5`): AC-01 and AC-02 PASS on the candidate (evidence/AC-01, evidence/AC-02). Updated 2026-11-18: #43 merged on 2026-11-06 (`7bce7f889`). AC-01 and AC-02 were rechecked on `main` `ae62638`, with Author-Forge `main` `c539ac800` for AC-02, and both PASS (`RECHECK_MAIN.md` in each). G1 is PASS. WP-01 is complete.
 
 ---
 
@@ -509,6 +509,6 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Handoff
 
-**Next action:** your word to merge #43. The merge redeploys Render, and with the variable unset the deployed behavior does not change. Then recheck AC-01 and AC-02 on `main`. Then your acts: create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5).
+**Next action** (updated 2026-11-18; #43 merged 2026-11-06 and AC-01 and AC-02 passed on `main`): your acts. Create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5). Whether the variable is set on the deployed service was not checked. Then the gated work packages: WP-02 and WP-04 after G1, each needing its own authorization.
 
-Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC NOT_RUN, and AUTHORITY_GAP-01 to -06.
+Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC from AC-03 NOT_RUN until it runs, and AUTHORITY_GAP-01 to -06.

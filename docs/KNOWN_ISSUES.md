@@ -471,6 +471,27 @@ So a key change does not invalidate every document at once. It breaks compatibil
 
 **Fix:** none made. A candidate is an optional configuration value that lists retained `key_id` to public-key pairs, loaded with `add_base64` and published by `keys`, plus a test that a snapshot signed by the retired key still verifies. Changing deployed configuration is the operator's act.
 
+**Update (2026-11-18): the code half is fixed and verified on `main`; the deployed half waits on
+an operator act.**
+
+- forgecustomer #43 merged on 2026-11-06 (`7bce7f889`, an ancestor of `ae62638`). It adds
+  `ENTITLEMENT_VERIFY_PUBLIC_KEYS`, a JSON object of retained and standby `key_id` to public-key
+  pairs. `AppState` loads it with `add_base64`, and `GET /v1/entitlements/keys` publishes each key
+  beside the active one (`api/src/state.rs`, `doc/system/12`, `doc/system/11`). This was work
+  package WP-01 of plan `BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1`.
+- Evidence (**measured**, 2026-11-18, on `main` `ae62638`, with test keys only):
+  - the repository gate passes, and so do all ten AC-01 tests. Plan
+    `evidence/AC-01/RECHECK_MAIN.md`.
+  - the AC-02 harness, with the Author-Forge verifier at `c539ac800`, verifies a snapshot from the
+    active key and one from a standby key. With the variable blank, the standby snapshot gives
+    `UnknownKeyId`. Plan `evidence/AC-02/RECHECK_MAIN.md`.
+- Still open: the deployed ring holds only the active key until the operator creates the standby
+  key and sets `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (plan DEC-2). WP-00 read the live key list on
+  2026-11-06, before #43 merged, and it held one key, `forgecustomer-entitlement-prod-1`. Whether
+  the variable is set now was not checked, because this session reads no deployed configuration.
+- Closure: the public `GET /v1/entitlements/keys` on the deployed service lists the active key and
+  a standby key.
+
 **Scope:** open.
 
 ---

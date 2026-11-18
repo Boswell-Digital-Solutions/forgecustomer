@@ -33,7 +33,7 @@ gaps:
 requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08]
 work_packages:
   - { id: WP-00, title: Source lock, owner: plan (read-only), acceptance: [AC-00], status: complete }
-  - { id: WP-01, title: Overlap wiring, owner: forgecustomer, acceptance: [AC-01, AC-02], status: pr_open_forgecustomer_43 }
+  - { id: WP-01, title: Overlap wiring, owner: forgecustomer, acceptance: [AC-01, AC-02], status: complete }
   - { id: WP-02, title: Registry and statuses, owner: forgecustomer, acceptance: [AC-03, AC-04], status: proposed }
   - { id: WP-03, title: Operator confirmation, owner: forge-command, acceptance: [AC-05], status: proposed }
   - { id: WP-04, title: Release-time trust set, owner: Author-Forge, acceptance: [AC-06], status: proposed }

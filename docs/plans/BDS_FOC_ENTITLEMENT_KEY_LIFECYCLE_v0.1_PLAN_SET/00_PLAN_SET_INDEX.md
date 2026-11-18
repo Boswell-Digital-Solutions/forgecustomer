@@ -41,7 +41,7 @@ It writes new code only where nothing exists: the configuration wiring, a `pendi
 
 ## Status
 
-Authorized 2026-11-06 for WP-00 and WP-01. All acceptance criteria are NOT_RUN. "Inspected" marks a fact read in source at the pin.
+Authorized 2026-11-06 for WP-00 and WP-01. Updated 2026-11-18: AC-00 PASS (G0 PASS). AC-01 and AC-02 PASS on `main` `ae62638` after forgecustomer #43 merged (G1 PASS; `evidence/AC-01/RECHECK_MAIN.md`, `evidence/AC-02/RECHECK_MAIN.md`). AC-03 to AC-08 are NOT_RUN. "Inspected" marks a fact read in source at the pin.
 
 ## Read order and components
 
