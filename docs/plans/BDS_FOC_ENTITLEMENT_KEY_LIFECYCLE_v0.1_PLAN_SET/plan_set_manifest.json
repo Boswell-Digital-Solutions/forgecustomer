@@ -17,6 +17,7 @@
     "BDS-FOC-ENTITLEMENT-KEY-LIFECYCLE-v0.1_COMPILED_PLAN_SET.md",
     "FOLDER_METADATA.json",
     "REGISTRY_ENTRY.json",
+    "evidence/.gitattributes",
     "evidence/AC-00/RESULT.md",
     "evidence/AC-00/SOURCE_LOCK.md",
     "evidence/AC-00/deployed_keys_20261118T054741Z.headers.txt",

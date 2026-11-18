@@ -6,7 +6,7 @@ This component specifies the mechanisms in order. Each step names the code it re
 
 In `AppState::build`, after `key_ring.add_signer(&signer)`, parse `ENTITLEMENT_VERIFY_PUBLIC_KEYS` and call the existing `key_ring.add_base64` for each entry. The existing `keys` route then publishes them, and the existing `verify_snapshot` accepts them.
 
-This is the whole fix for KI-FOC-20261105-001's overlap half. It changes no crypto, so the existing test `rotation_overlap_both_keys_verify` remains the unit proof. A new configuration-level test proves the wiring.
+This is the whole code fix for KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. It changes no crypto, so the existing test `rotation_overlap_both_keys_verify` remains the unit proof. A new configuration-level test proves the wiring.
 
 ## B. Registry and statuses (WP-02)
 

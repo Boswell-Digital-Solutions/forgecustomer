@@ -1,2 +1,2 @@
 # Raw HTTP header captures keep their CRLF line endings byte for byte.
-docs/plans/**/evidence/**/*.headers.txt -text -whitespace
+*.headers.txt -text -whitespace

@@ -12,7 +12,7 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Decision 1 — Authorize WP-00 and WP-01?
 
-**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the overlap half of KI-FOC-20261105-001. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
+**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
 
 **Alternative:** WP-00 without the public read. Then the live `key_id` stays unknown until you supply it.
 

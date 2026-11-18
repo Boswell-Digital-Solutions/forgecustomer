@@ -224,7 +224,7 @@ This component specifies the mechanisms in order. Each step names the code it re
 
 In `AppState::build`, after `key_ring.add_signer(&signer)`, parse `ENTITLEMENT_VERIFY_PUBLIC_KEYS` and call the existing `key_ring.add_base64` for each entry. The existing `keys` route then publishes them, and the existing `verify_snapshot` accepts them.
 
-This is the whole fix for KI-FOC-20261105-001's overlap half. It changes no crypto, so the existing test `rotation_overlap_both_keys_verify` remains the unit proof. A new configuration-level test proves the wiring.
+This is the whole code fix for KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. It changes no crypto, so the existing test `rotation_overlap_both_keys_verify` remains the unit proof. A new configuration-level test proves the wiring.
 
 ## B. Registry and statuses (WP-02)
 
@@ -293,7 +293,7 @@ PASS | FAIL | BLOCKED | NOT_RUN. A skip is NOT_RUN.
 | G4 | G1, AC-06 | Release-time trust set |
 | G5 | G2, G3, G4, AC-07 | First rotation rehearsal |
 
-Order: G0 → G1 → {G2, G4} → G3 → G5. G1 alone closes KI-FOC-20261105-001's overlap half.
+Order: G0 → G1 → {G2, G4} → G3 → G5. G1 closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md:454`).
 
 
 ===== 07_ACCEPTANCE_AND_EVIDENCE.md =====
@@ -359,7 +359,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 
 ===== 08_WORK_PACKAGES_AND_GATES.md =====
 
-# 08 — Work packages and gates. All PROPOSED.
+# 08 — Work packages and gates. WP-00 and WP-01 complete; WP-02 to WP-05 PROPOSED.
 
 **Shared rules for every WP:**
 - Reuse first (R01).
@@ -388,7 +388,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 - **Prerequisites:** G0.
 - **Permitted scope:** forgecustomer `api/src/{config,state}.rs`, tests, `doc/system/12` (new variable), `doc/system/11` (overlap now real), `docs/ENTITLEMENTS.md`, `docs/KNOWN_ISSUES.md`.
 - **Boundaries:** no crypto change; no wire-format change (R06).
-- **Deliverables:** code, tests, docs, KI-FOC-20261105-001 overlap half closed on merge.
+- **Deliverables:** code, tests, docs. The merge closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md:454`).
 - **Acceptance criteria:** AC-01, AC-02.
 - **Verification:** ForgeCustomer CI and the Author-Forge fixture test.
 - **Stop conditions:** done on AC-01 and AC-02.
@@ -453,7 +453,7 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 ## Decision 1 — Authorize WP-00 and WP-01?
 
-**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the overlap half of KI-FOC-20261105-001. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
+**Recommendation: yes.** WP-01 is the smallest real fix. It wires ForgeCustomer's existing multi-key ring to one new configuration value, and it closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act. WP-00 includes one unauthenticated read of the public `GET /v1/entitlements/keys`, to learn the live `key_id`.
 
 **Alternative:** WP-00 without the public read. Then the live `key_id` stays unknown until you supply it.
 

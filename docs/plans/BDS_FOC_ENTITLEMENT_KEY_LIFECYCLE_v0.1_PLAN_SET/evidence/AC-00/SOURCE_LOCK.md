@@ -79,9 +79,8 @@ No row is wrong, so the stop condition does not apply.
     `28890366cede53e52c961613012d58265195898ba050ad3880de077a41edd541`;
   - `deployed_keys_20261118T054741Z.headers.txt`, sha256
     `960cd47c9591a8a903a9270b49b6b8c93e719378930fe34f6ddb722e7d4167dd`. It keeps the CRLF line
-    endings of the raw HTTP capture. The root `.gitattributes` marks
-    `docs/plans/**/evidence/**/*.headers.txt` as `-text -whitespace`, so git does not convert or
-    flag the CRs.
+    endings of the raw HTTP capture. The plan's `evidence/.gitattributes` marks
+    `*.headers.txt` as `-text -whitespace`, so git does not convert or flag the CRs.
   - Both are copies of the files in `~/Forge/reports/`.
 - **What it shows:** no standby key is published. `doc/system/12` says every
   `ENTITLEMENT_VERIFY_PUBLIC_KEYS` key is published on this route. So the variable is empty or

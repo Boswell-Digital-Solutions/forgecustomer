@@ -1,4 +1,4 @@
-# 08 — Work packages and gates. All PROPOSED.
+# 08 — Work packages and gates. WP-00 and WP-01 complete; WP-02 to WP-05 PROPOSED.
 
 **Shared rules for every WP:**
 - Reuse first (R01).
@@ -27,7 +27,7 @@
 - **Prerequisites:** G0.
 - **Permitted scope:** forgecustomer `api/src/{config,state}.rs`, tests, `doc/system/12` (new variable), `doc/system/11` (overlap now real), `docs/ENTITLEMENTS.md`, `docs/KNOWN_ISSUES.md`.
 - **Boundaries:** no crypto change; no wire-format change (R06).
-- **Deliverables:** code, tests, docs, KI-FOC-20261105-001 overlap half closed on merge.
+- **Deliverables:** code, tests, docs. The merge closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md:454`).
 - **Acceptance criteria:** AC-01, AC-02.
 - **Verification:** ForgeCustomer CI and the Author-Forge fixture test.
 - **Stop conditions:** done on AC-01 and AC-02.
