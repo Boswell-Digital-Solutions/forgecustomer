@@ -114,7 +114,7 @@ This component allocates authority and lists the gaps that block gates.
 
 **AUTHORITY_GAP-04 The fleet pipeline.** The updater is inactive until the Fleet pipeline is proven (KI-AUF-20261101-006). A rotation reaches desktops only through installs until then. Blocks AC-07's delivered-fleet evidence.
 
-**AUTHORITY_GAP-05 The deployed signing key is unread.** The live `key_id` is unknown. The default is `entitlement-key-1`. WP-00 reads `GET /v1/entitlements/keys`, a public route, only under the operator's instruction (09 Decision 1).
+**AUTHORITY_GAP-05 The deployed signing key was unread (closed).** Closed by WP-00 on 2026-11-06. WP-00 read `GET /v1/entitlements/keys`, a public route, under the operator's instruction (09 Decision 1): the live `key_id` is `forgecustomer-entitlement-prod-1` (`evidence/AC-00/SOURCE_LOCK.md` §3, read again in §3a). The id is kept so later references resolve.
 
 **AUTHORITY_GAP-06 Snapshot status at a deactivated installation.** KI-FOC-20261105-002 is adjacent, not in scope. It is recorded so that WP-02 does not widen it.
 
@@ -293,7 +293,7 @@ PASS | FAIL | BLOCKED | NOT_RUN. A skip is NOT_RUN.
 | G4 | G1, AC-06 | Release-time trust set |
 | G5 | G2, G3, G4, AC-07 | First rotation rehearsal |
 
-Order: G0 → G1 → {G2, G4} → G3 → G5. G1 closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md:454`).
+Order: G0 → G1 → {G2, G4} → G3 → G5. G1 closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md`, KI-FOC-20261105-001 Status).
 
 
 ===== 07_ACCEPTANCE_AND_EVIDENCE.md =====
@@ -388,7 +388,7 @@ Delivered-fleet evidence is blocked on AUTHORITY_GAP-04.
 - **Prerequisites:** G0.
 - **Permitted scope:** forgecustomer `api/src/{config,state}.rs`, tests, `doc/system/12` (new variable), `doc/system/11` (overlap now real), `docs/ENTITLEMENTS.md`, `docs/KNOWN_ISSUES.md`.
 - **Boundaries:** no crypto change; no wire-format change (R06).
-- **Deliverables:** code, tests, docs. The merge closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md:454`).
+- **Deliverables:** code, tests, docs. The merge closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md`, KI-FOC-20261105-001 Status).
 - **Acceptance criteria:** AC-01, AC-02.
 - **Verification:** ForgeCustomer CI and the Author-Forge fixture test.
 - **Stop conditions:** done on AC-01 and AC-02.
@@ -511,4 +511,4 @@ Planning v0.1 drafted. Rulings DEC-1 to DEC-5 approved 2026-11-06. Execution aut
 
 **Next action** (updated 2026-11-18; #43 merged 2026-11-06 and AC-01 and AC-02 passed on `main`): your acts. Create the standby key and set `ENTITLEMENT_VERIFY_PUBLIC_KEYS` (DEC-2), and confirm the live fingerprint in `evidence/AC-00/SOURCE_LOCK.md` §3 (DEC-5). Deployed state, read on 2026-11-18 00:47 America/New_York (05:47Z; `evidence/AC-00/SOURCE_LOCK.md` §3a): one key is published, `forgecustomer-entitlement-prod-1`, and no standby, so DEC-2 is not yet done. The text entered by the operator in the forge-command coordinator session (2026-11-18 00:46:39 America/New_York, 05:46:39Z; chat, unsigned; relayed 00:48 / 05:48:34Z; authorship not attributed) says: deployed key state "Keep OPEN — EVIDENCE REQUIRED"; AuthorForge trust-set approval "WITHHELD pending independently verified public-key fingerprint evidence and an explicit operator approval. Do not install, embed, or publish a key." Then the gated work packages: WP-02 and WP-04 after G1, each needing its own authorization.
 
-Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC from AC-03 NOT_RUN until it runs, and AUTHORITY_GAP-01 to -06.
+Keep R01 (reuse first), R02 (no key outside ForgeCustomer), every AC from AC-03 NOT_RUN until it runs, and AUTHORITY_GAP-01 to -04 and -06.

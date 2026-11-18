@@ -20,6 +20,6 @@ This component allocates authority and lists the gaps that block gates.
 
 **AUTHORITY_GAP-04 The fleet pipeline.** The updater is inactive until the Fleet pipeline is proven (KI-AUF-20261101-006). A rotation reaches desktops only through installs until then. Blocks AC-07's delivered-fleet evidence.
 
-**AUTHORITY_GAP-05 The deployed signing key is unread.** The live `key_id` is unknown. The default is `entitlement-key-1`. WP-00 reads `GET /v1/entitlements/keys`, a public route, only under the operator's instruction (09 Decision 1).
+**AUTHORITY_GAP-05 The deployed signing key was unread (closed).** Closed by WP-00 on 2026-11-06. WP-00 read `GET /v1/entitlements/keys`, a public route, under the operator's instruction (09 Decision 1): the live `key_id` is `forgecustomer-entitlement-prod-1` (`evidence/AC-00/SOURCE_LOCK.md` §3, read again in §3a). The id is kept so later references resolve.
 
 **AUTHORITY_GAP-06 Snapshot status at a deactivated installation.** KI-FOC-20261105-002 is adjacent, not in scope. It is recorded so that WP-02 does not widen it.

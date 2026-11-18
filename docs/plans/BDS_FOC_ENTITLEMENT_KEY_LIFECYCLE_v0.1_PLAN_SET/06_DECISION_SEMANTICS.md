@@ -26,4 +26,4 @@ PASS | FAIL | BLOCKED | NOT_RUN. A skip is NOT_RUN.
 | G4 | G1, AC-06 | Release-time trust set |
 | G5 | G2, G3, G4, AC-07 | First rotation rehearsal |
 
-Order: G0 → G1 → {G2, G4} → G3 → G5. G1 closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md:454`).
+Order: G0 → G1 → {G2, G4} → G3 → G5. G1 closes the code half of KI-FOC-20261105-001's overlap. The deployed closure waits on the operator's DEC-2 act (`docs/KNOWN_ISSUES.md`, KI-FOC-20261105-001 Status).

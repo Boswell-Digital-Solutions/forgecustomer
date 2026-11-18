@@ -28,7 +28,7 @@ gaps:
   - { id: AUTHORITY_GAP-02, topic: no key registry table in ForgeCustomer, blocks: [WP-02] }
   - { id: AUTHORITY_GAP-03, topic: no trust-set statement on a release record, blocks: ["WP-04 guard input"] }
   - { id: AUTHORITY_GAP-04, topic: fleet pipeline not built, blocks: ["AC-07 delivered-fleet evidence"] }
-  - { id: AUTHORITY_GAP-05, topic: live key_id unread, blocks: [] }
+  - { id: AUTHORITY_GAP-05, topic: "live key_id read: forgecustomer-entitlement-prod-1 (SOURCE_LOCK §3, §3a)", blocks: [], status: closed_by_WP-00_2026-11-06 }
   - { id: AUTHORITY_GAP-06, topic: KI-FOC-20261105-002 adjacent, blocks: [] }
 requirements: [REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08]
 work_packages:
