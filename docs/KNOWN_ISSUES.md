@@ -10,6 +10,8 @@ is reported as new, and written in the same session it is found.
 
 ## KI-FOC-20261118-002 — the only test that signs an entitlement snapshot here and verifies it with the AuthorForge shell is a manual harness that no CI runs; nothing detects drift
 
+- **Status**: Open (from this entry's Scope line).
+
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
 `docs/audits/bds_entitlement_contract_trace_2026-11-18.md`. PR #523 is an open draft. Its head
@@ -155,6 +157,8 @@ test keys only.
 ---
 
 ## KI-FOC-20261118-001 — revocation does not reach an issued entitlement snapshot before it expires, and some revocations do not reach a new one
+
+- **Status**: Open (from this entry's Scope line).
 
 **Found:** 2026-11-17 America/New_York (2026-11-18 UTC). The id carries the UTC date. Found in a
 read-only entitlement contract trace, forge PR #523,
@@ -391,6 +395,8 @@ blocks any claim that commercial revocation is enforced. Related: `KI-FOC-202611
 
 ## KI-FOC-20261117-003 — a deployed binary cannot be shown to equal a build of the tested source
 
+- **Status**: Open (from this entry's Scope line).
+
 **Found:** 2026-11-17, in the P3 G5 evidence refresh run from forge-command (Part C of the G5
 acceptance matrix). Operator ruling the same day (chat, unsigned): G5 accepts this as "an
 explicitly unproven G5 condition". It is "an accepted evidence boundary, not acceptance of binary
@@ -440,6 +446,8 @@ a tested one.
 
 ## KI-FOC-20261117-002 — saving a Render dashboard setting redeploys the service
 
+- **Status**: Open (from this entry's Scope line).
+
 **Found:** 2026-11-17, 18:10 UTC, with the Render API, read only, after the operator saved the
 health-check path. Operator ruling the same day (chat, unsigned): "Verified", and to be recorded as
 an operational hazard.
@@ -467,6 +475,8 @@ health-check path).
 ---
 
 ## KI-FOC-20261117-001 — `chrono` 0.4.45 is flagged unmaintained (RUSTSEC-2026-0543)
+
+- **Status**: Open (from this entry's Scope line).
 
 **Found:** 2026-11-17, by `cargo audit` at `3791b2f` with the advisory database fetched that day
 (1527 advisories), during the P3 G5 evidence refresh run from forge-command.
@@ -660,7 +670,7 @@ needs a deploy that fails the check, or a Render record of the check.
 ## KI-FOC-20261112-002 — the Rake issuer plan's `plan_set.yaml` gave stale acceptance statuses
 
 **Date found:** 2026-11-12
-**Status:** CLOSED in the same change as this entry. Found by the operator's review of forgecustomer #58. Source read at the #58 branch, based on `origin/main` `071000d`.
+**Status:** CLOSED 2026-11-12 (from PR #58, merge commit 868c9f5) in the same change as this entry. Found by the operator's review of forgecustomer #58. Source read at the #58 branch, based on `origin/main` `071000d`.
 
 **What is wrong:** `docs/plans/BDS_FOC_RAKE_ACCESS_ISSUER_v0.1_PLAN_SET/plan_set.yaml` listed AC-05 and AC-06 as `NOT_RUN`, and AC-01 to AC-04 as `PASS_pre_merge`. Components 00 and 07 and the evidence records give AC-01 to AC-03, AC-05 and AC-06 as PASS, with after-merge evidence on `main`. They give AC-04 as PASS except its deletion row, which is UNVERIFIED. The same file gave G3 as PASS, which needs AC-05 and AC-06.
 
@@ -677,7 +687,7 @@ needs a deploy that fails the check, or a Render record of the check.
 ## KI-FOC-20261112-001 — doc/system §13 did not list the Rake access HTTP smoke job
 
 **Date found:** 2026-11-12
-**Status:** CLOSED in the same change as this entry. Found while adding the account-deletion check to `scripts/rake_access_http_smoke.py` for plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1` gate G2. Source read at `origin/main` `071000d`.
+**Status:** CLOSED 2026-11-12 (from PR #57, merge commit a49b73e) in the same change as this entry. Found while adding the account-deletion check to `scripts/rake_access_http_smoke.py` for plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1` gate G2. Source read at `origin/main` `071000d`.
 
 **What is wrong:** `.github/workflows/ci.yml` has the job `rake-access-http-smoke` since WP-02. `doc/system/13-verification-status.md` did not name it in the CI class table or in the list of DB-backed checks.
 
@@ -694,7 +704,7 @@ needs a deploy that fails the check, or a Render record of the check.
 ## KI-FOC-20261111-001 — doc/system §4 listed migrations only through 0011
 
 **Date found:** 2026-11-11
-**Status:** CLOSED in the same change as this entry. Found while adding migration `0017` for plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1` WP-02. Source read at the WP-02 branch base (forgecustomer #53 head `ebd1dfc`).
+**Status:** CLOSED 2026-11-11 (from PR #55, merge commit 8e0cf28) in the same change as this entry. Found while adding migration `0017` for plan `BDS-FOC-RAKE-ACCESS-ISSUER-v0.1` WP-02. Source read at the WP-02 branch base (forgecustomer #53 head `ebd1dfc`).
 
 **What is wrong:** the "Migration domains" table in `doc/system/04-data-model.md` ended at `0011_fleet_release_update_domain.sql`. Migrations `0012` to `0016` exist in `supabase/migrations/` and were not listed.
 
@@ -711,7 +721,7 @@ needs a deploy that fails the check, or a Render record of the check.
 ## KI-FOC-20261109-004 — doc/system §10 says admin routes use a shared secret; the code verifies EdDSA tokens with a public key
 
 **Date found:** 2026-11-09
-**Status:** CLOSED in the same change as this entry. Found by the Rake credential-authority research (forge `docs/architecture/rake_credential_authority_review.md` follow-up). Source read at `origin/main` `4bbe968`.
+**Status:** CLOSED 2026-11-09 (from PR #49, merge commit fd10ccf) in the same change as this entry. Found by the Rake credential-authority research (forge `docs/architecture/rake_credential_authority_review.md` follow-up). Source read at `origin/main` `4bbe968`.
 
 **What is wrong:** `doc/system/10-authority-boundaries.md` said "Admin routes use a separate issuer, audience, and secret." `api/src/state.rs:94-98` builds the admin validator with `JwtValidator::eddsa` from `ADMIN_JWT_PUBLIC_KEY`, `ADMIN_JWT_ISSUER` and `ADMIN_JWT_AUDIENCE` (`api/src/config.rs:197-199`). No admin secret exists. `doc/system/03-api-contract.md:141-145` already states this correctly.
 
@@ -999,7 +1009,7 @@ you change any dashboard setting on this service, plan for a redeploy.
 ## KI-FOC-20260924-001 — `cargo audit` fails on `main`: RUSTSEC-2026-0285 in `rustls` 0.23.40
 
 **Date found:** 2026-09-24
-**Status:** closed (fixed in the same change)
+**Status:** closed 2026-09-24 (from PR #28, merge commit 4b1778e) (fixed in the same change)
 
 **What is wrong:** The CI `dependency audit` job fails on the `main` lockfile. `Cargo.lock`
 locks `rustls` 0.23.40. RUSTSEC-2026-0285 applies to that version: "TLS 1.3 handshake messages
